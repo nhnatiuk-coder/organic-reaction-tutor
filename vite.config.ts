@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // The Ketcher structure editor expects the Node-style `global` in the browser.
+    define: { global: "globalThis" },
+  },
 });
+
