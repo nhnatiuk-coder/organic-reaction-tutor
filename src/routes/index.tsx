@@ -198,6 +198,7 @@ function PracticePage() {
                   <KetcherCanvas
                     onInit={(k) => {
                       ketcherRef.current = k;
+                      (window as unknown as { ketcher?: Ketcher }).ketcher = k;
                     }}
                   />
                 </Suspense>
