@@ -11,6 +11,9 @@ import ReactionScheme from "@/components/ReactionScheme";
 
 const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
 
+const TOPIC_FILTERS = ["Mixed", "SN1", "SN2", "E1", "E2"] as const;
+type TopicFilter = (typeof TOPIC_FILTERS)[number];
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -44,10 +47,18 @@ function PracticePage() {
   const [result, setResult] = useState<GradeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [topicFilter, setTopicFilter] = useState<TopicFilter>("Mixed");
+  const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>([QUESTIONS[0]!.id]);
   const ketcherRef = useRef<Ketcher | null>(null);
 
   const grade = useServerFn(gradeAnswer);
   const question = QUESTIONS[index]!;
+  const activeQuestions = QUESTIONS.filter(
+    (item) => topicFilter === "Mixed" || item.mechanism === topicFilter,
+  );
+  const completedInCurrentSet = seenQuestionIds.filter((id) =>
+    activeQuestions.some((item) => item.id === id),
+  ).length;
 
   async function check() {
     const ketcher = ketcherRef.current;
@@ -74,11 +85,46 @@ function PracticePage() {
     }
   }
 
-  async function goTo(next: number) {
+  async function showQuestion(next: number) {
     setIndex(next);
     setResult(null);
     setError(null);
     await ketcherRef.current?.setMolecule("");
+  }
+
+  async function goTo(next: number) {
+    const nextQuestion = QUESTIONS[next]!;
+    setSeenQuestionIds((seen) =>
+      seen.includes(nextQuestion.id) ? seen : [...seen, nextQuestion.id],
+    );
+    await showQuestion(next);
+  }
+
+  async function startTopicPractice(nextTopic: TopicFilter) {
+    setTopicFilter(nextTopic);
+    const matching = QUESTIONS.filter(
+      (item) => nextTopic === "Mixed" || item.mechanism === nextTopic,
+    );
+    const first = matching[Math.floor(Math.random() * matching.length)]!;
+    setSeenQuestionIds([first.id]);
+    await showQuestion(QUESTIONS.indexOf(first));
+  }
+
+  async function nextRandomProblem() {
+    const unvisited = activeQuestions.filter(
+      (item) => !seenQuestionIds.includes(item.id),
+    );
+    const choices =
+      unvisited.length > 0
+        ? unvisited
+        : activeQuestions.filter((item) => item.id !== question.id);
+    const fallbackChoices = choices.length > 0 ? choices : activeQuestions;
+    const next =
+      fallbackChoices[Math.floor(Math.random() * fallbackChoices.length)]!;
+    setSeenQuestionIds((seen) =>
+      unvisited.length > 0 ? [...seen, next.id] : [next.id],
+    );
+    await showQuestion(QUESTIONS.indexOf(next));
   }
 
   return (
@@ -100,8 +146,60 @@ function PracticePage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-8">
+        <section
+          aria-labelledby="endless-practice-heading"
+          className="mb-6 rounded-xl border border-border bg-card p-4 shadow-sm"
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Endless practice
+              </p>
+              <h2
+                id="endless-practice-heading"
+                className="mt-1 text-lg font-semibold text-card-foreground"
+              >
+                Keep practicing with verified reaction problems
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {completedInCurrentSet} of {activeQuestions.length} problems visited in this{" "}
+                {topicFilter.toLowerCase()} set.
+                {completedInCurrentSet === activeQuestions.length
+                  ? " You have completed the set — the next problem starts a fresh cycle."
+                  : ""}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <label className="text-sm font-medium text-card-foreground">
+                Topic
+                <select
+                  value={topicFilter}
+                  onChange={(event) =>
+                    startTopicPractice(event.target.value as TopicFilter)
+                  }
+                  className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground sm:w-32"
+                >
+                  {TOPIC_FILTERS.map((topic) => (
+                    <option key={topic} value={topic}>
+                      {topic}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                onClick={nextRandomProblem}
+                className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                New random problem
+              </button>
+            </div>
+          </div>
+        </section>
+
         <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
-          {QUESTIONS.map((q, i) => (
+          {activeQuestions.map((q) => {
+            const i = QUESTIONS.indexOf(q);
+            return (
             <li key={q.id}>
               <button
                 onClick={() => goTo(i)}
@@ -124,7 +222,8 @@ function PracticePage() {
                 )}
               </button>
             </li>
-          ))}
+            );
+          })}
         </ol>
 
         {question.format === "scheme" && question.substrateSmiles && (
@@ -180,10 +279,10 @@ function PracticePage() {
                 {checking ? "Checking…" : "Check my structure"}
               </button>
               <button
-                onClick={() => goTo((index + 1) % QUESTIONS.length)}
+                onClick={nextRandomProblem}
                 className="rounded-md border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-accent"
               >
-                Next
+                Random next
               </button>
             </div>
 
