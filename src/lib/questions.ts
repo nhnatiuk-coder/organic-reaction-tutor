@@ -18,6 +18,7 @@ export const QUESTIONS: Question[] = [
   {
     id: "q1",
     mechanism: "SN2",
+    format: "text",
     title: "Primary halide with a strong nucleophile",
     substrate: "1-bromobutane",
     reagents: "NaCN",
@@ -29,6 +30,7 @@ export const QUESTIONS: Question[] = [
   {
     id: "q2",
     mechanism: "SN1",
+    format: "text",
     title: "Tertiary halide solvolysis",
     substrate: "2-bromo-2-methylpropane (tert-butyl bromide)",
     reagents: "excess CH₃CH₂OH (solvent)",
@@ -39,6 +41,7 @@ export const QUESTIONS: Question[] = [
   {
     id: "q3",
     mechanism: "E2",
+    format: "text",
     title: "Bulky base selectivity",
     substrate: "2-bromo-2-methylbutane",
     reagents: "potassium tert-butoxide (KOC(CH₃)₃)",
@@ -50,6 +53,7 @@ export const QUESTIONS: Question[] = [
   {
     id: "q4",
     mechanism: "E1",
+    format: "text",
     title: "Acid-catalysed dehydration",
     substrate: "2-methylcyclohexan-1-ol",
     reagents: "concentrated H₂SO₄",
@@ -60,6 +64,7 @@ export const QUESTIONS: Question[] = [
   {
     id: "q5",
     mechanism: "SN2",
+    format: "text",
     title: "Stereochemistry at the reacting carbon",
     substrate: "(S)-2-bromobutane",
     reagents: "NaOH",
