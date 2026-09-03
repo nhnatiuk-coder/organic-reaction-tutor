@@ -2,12 +2,16 @@
 export type Question = {
   id: string;
   mechanism: "SN1" | "SN2" | "E1" | "E2";
+  /** "text" = written prompt only. "scheme" = rendered reaction scheme. */
+  format: "text" | "scheme";
   title: string;
   substrate: string;
   reagents: string;
   conditions: string;
   prompt: string;
   stereochemistryMatters: boolean;
+  /** SMILES of the starting material — only used to draw scheme questions. */
+  substrateSmiles?: string;
 };
 
 export const QUESTIONS: Question[] = [
