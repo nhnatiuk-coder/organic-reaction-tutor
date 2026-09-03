@@ -2,6 +2,8 @@
 import { DISABLED_QUESTION_IDS } from "./question-settings";
 export type Question = {
   id: string;
+  /** Carbon skeleton identifier. Each active skeleton appears only once. */
+  skeletonId: string;
   mechanism: "SN1" | "SN2" | "E1" | "E2";
   /** "text" = written prompt only. "scheme" = rendered reaction scheme. */
   format: "text" | "scheme";
@@ -18,6 +20,7 @@ export type Question = {
 const CORE_QUESTIONS: Question[] = [
   {
     id: "q1",
+    skeletonId: "butane",
     mechanism: "SN2",
     format: "text",
     title: "Primary halide with a strong nucleophile",
@@ -30,6 +33,7 @@ const CORE_QUESTIONS: Question[] = [
   },
   {
     id: "q2",
+    skeletonId: "2-methylpropane",
     mechanism: "SN1",
     format: "text",
     title: "Tertiary halide solvolysis",
@@ -41,6 +45,7 @@ const CORE_QUESTIONS: Question[] = [
   },
   {
     id: "q3",
+    skeletonId: "2-methylbutane",
     mechanism: "E2",
     format: "text",
     title: "Bulky base selectivity",
@@ -53,6 +58,7 @@ const CORE_QUESTIONS: Question[] = [
   },
   {
     id: "q4",
+    skeletonId: "methylcyclohexane",
     mechanism: "E1",
     format: "text",
     title: "Acid-catalysed dehydration",
@@ -64,6 +70,7 @@ const CORE_QUESTIONS: Question[] = [
   },
   {
     id: "q5",
+    skeletonId: "butane",
     mechanism: "SN2",
     format: "text",
     title: "Stereochemistry at the reacting carbon",
@@ -76,6 +83,7 @@ const CORE_QUESTIONS: Question[] = [
   },
   {
     id: "q6",
+    skeletonId: "propane",
     mechanism: "SN2",
     format: "scheme",
     title: "Primary halide with an alkoxide",
@@ -89,6 +97,7 @@ const CORE_QUESTIONS: Question[] = [
   },
   {
     id: "q7",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary halide in aqueous acetone",
@@ -101,6 +110,7 @@ const CORE_QUESTIONS: Question[] = [
   },
   {
     id: "q8",
+    skeletonId: "2-methylbutane",
     mechanism: "E1",
     format: "scheme",
     title: "Acid-catalysed dehydration of a tertiary alcohol",
@@ -113,6 +123,7 @@ const CORE_QUESTIONS: Question[] = [
   },
   {
     id: "q9",
+    skeletonId: "pentane",
     mechanism: "E2",
     format: "scheme",
     title: "E2 with a small strong base (Zaitsev)",
@@ -126,6 +137,7 @@ const CORE_QUESTIONS: Question[] = [
   },
   {
     id: "q10",
+    skeletonId: "hexane",
     mechanism: "E2",
     format: "scheme",
     title: "E2 with a bulky base (Hofmann)",
@@ -142,6 +154,7 @@ const CORE_QUESTIONS: Question[] = [
 const EXPANDED_QUESTIONS: Question[] = [
   {
     id: "q11",
+    skeletonId: "butane",
     mechanism: "SN2",
     format: "text",
     title: "Iodide leaving group with cyanide",
@@ -153,6 +166,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q12",
+    skeletonId: "butane",
     mechanism: "SN2",
     format: "text",
     title: "Primary chloride with cyanide",
@@ -164,6 +178,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q13",
+    skeletonId: "hexane",
     mechanism: "E2",
     format: "text",
     title: "Bulky-base elimination from a secondary iodide",
@@ -175,6 +190,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q14",
+    skeletonId: "butane",
     mechanism: "SN2",
     format: "scheme",
     title: "Primary iodide with cyanide",
@@ -187,6 +203,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q15",
+    skeletonId: "butane",
     mechanism: "SN2",
     format: "scheme",
     title: "Primary bromide with cyanide",
@@ -199,6 +216,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q16",
+    skeletonId: "propane",
     mechanism: "SN2",
     format: "scheme",
     title: "Primary bromide with methoxide",
@@ -211,6 +229,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q17",
+    skeletonId: "propane",
     mechanism: "SN2",
     format: "scheme",
     title: "Primary iodide with methoxide",
@@ -223,6 +242,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q18",
+    skeletonId: "propane",
     mechanism: "SN2",
     format: "scheme",
     title: "Primary chloride with methoxide",
@@ -235,6 +255,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q19",
+    skeletonId: "propane",
     mechanism: "SN2",
     format: "scheme",
     title: "Primary bromide with methoxide in polar aprotic solvent",
@@ -247,6 +268,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q20",
+    skeletonId: "butane",
     mechanism: "SN2",
     format: "scheme",
     title: "Primary iodide with cyanide",
@@ -259,6 +281,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q21",
+    skeletonId: "propane",
     mechanism: "SN2",
     format: "scheme",
     title: "Primary bromide with an alkoxide",
@@ -271,6 +294,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q22",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary cyclohexyl bromide hydrolysis",
@@ -283,6 +307,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q23",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary cyclohexyl chloride hydrolysis",
@@ -295,6 +320,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q24",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary cyclohexyl iodide hydrolysis",
@@ -307,6 +333,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q25",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary bromide solvolysis",
@@ -319,6 +346,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q26",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Silver-assisted tertiary halide hydrolysis",
@@ -331,6 +359,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q27",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Warm tertiary chloride solvolysis",
@@ -343,6 +372,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q28",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary iodide solvolysis",
@@ -355,6 +385,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q29",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary bromide in aqueous solvent",
@@ -367,6 +398,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q30",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary chloride in aqueous solvent",
@@ -379,6 +411,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q31",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary iodide in aqueous solvent",
@@ -391,6 +424,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q32",
+    skeletonId: "methylcyclohexane",
     mechanism: "SN1",
     format: "scheme",
     title: "Tertiary bromide substitution review",
@@ -403,6 +437,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q33",
+    skeletonId: "2-methylbutane",
     mechanism: "E1",
     format: "scheme",
     title: "Tertiary alcohol dehydration",
@@ -415,6 +450,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q34",
+    skeletonId: "2-methylbutane",
     mechanism: "E1",
     format: "scheme",
     title: "Tertiary bromide elimination",
@@ -427,6 +463,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q35",
+    skeletonId: "2-methylbutane",
     mechanism: "E1",
     format: "scheme",
     title: "Tertiary chloride elimination",
@@ -439,6 +476,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q36",
+    skeletonId: "2-methylbutane",
     mechanism: "E1",
     format: "scheme",
     title: "Tertiary iodide elimination",
@@ -451,6 +489,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q37",
+    skeletonId: "methylcyclohexane",
     mechanism: "E1",
     format: "scheme",
     title: "Methylcyclohexanol dehydration",
@@ -463,6 +502,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q38",
+    skeletonId: "methylcyclohexane",
     mechanism: "E1",
     format: "scheme",
     title: "Tertiary cyclohexyl bromide elimination",
@@ -475,6 +515,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q39",
+    skeletonId: "methylcyclohexane",
     mechanism: "E1",
     format: "scheme",
     title: "Tertiary cyclohexyl chloride elimination",
@@ -487,6 +528,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q40",
+    skeletonId: "methylcyclohexane",
     mechanism: "E1",
     format: "scheme",
     title: "Tertiary cyclohexyl iodide elimination",
@@ -499,6 +541,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q41",
+    skeletonId: "methylcyclohexane",
     mechanism: "E1",
     format: "scheme",
     title: "Phosphoric-acid dehydration",
@@ -511,6 +554,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q42",
+    skeletonId: "2-methylbutane",
     mechanism: "E1",
     format: "scheme",
     title: "Tertiary alcohol dehydration review",
@@ -523,6 +567,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q43",
+    skeletonId: "hexane",
     mechanism: "E2",
     format: "scheme",
     title: "Bulky-base elimination from a secondary chloride",
@@ -535,6 +580,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q44",
+    skeletonId: "hexane",
     mechanism: "E2",
     format: "scheme",
     title: "Bulky-base elimination from a secondary bromide",
@@ -547,6 +593,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q45",
+    skeletonId: "hexane",
     mechanism: "E2",
     format: "scheme",
     title: "Bulky-base elimination from a secondary iodide",
@@ -559,6 +606,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q46",
+    skeletonId: "2-methylbutane",
     mechanism: "E2",
     format: "scheme",
     title: "Bulky-base elimination from a tertiary bromide",
@@ -571,6 +619,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q47",
+    skeletonId: "2-methylbutane",
     mechanism: "E2",
     format: "scheme",
     title: "Bulky-base elimination from a tertiary chloride",
@@ -583,6 +632,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q48",
+    skeletonId: "2-methylbutane",
     mechanism: "E2",
     format: "scheme",
     title: "Bulky-base elimination from a tertiary iodide",
@@ -595,6 +645,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q49",
+    skeletonId: "pentane",
     mechanism: "E2",
     format: "scheme",
     title: "Small-base elimination from a secondary bromide",
@@ -607,6 +658,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q50",
+    skeletonId: "pentane",
     mechanism: "E2",
     format: "scheme",
     title: "Small-base elimination from a secondary chloride",
@@ -619,6 +671,7 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
   {
     id: "q51",
+    skeletonId: "pentane",
     mechanism: "E2",
     format: "scheme",
     title: "Small-base elimination from a secondary bromide",
@@ -633,9 +686,17 @@ const EXPANDED_QUESTIONS: Question[] = [
 
 export const QUESTIONS: Question[] = [...CORE_QUESTIONS, ...EXPANDED_QUESTIONS];
 
-/** Questions currently available to students. */
+/** Questions currently available to students.
+ * The first active question for a carbon skeleton is used; later variants remain
+ * in the authoring bank but are not shown to students.
+ */
 export const PRACTICE_QUESTIONS = QUESTIONS.filter(
   (question) => !DISABLED_QUESTION_IDS.has(question.id),
+).filter(
+  (question, index, activeQuestions) =>
+    activeQuestions.findIndex(
+      (candidate) => candidate.skeletonId === question.skeletonId,
+    ) === index,
 );
 
 export const getQuestion = (id: string) => QUESTIONS.find((q) => q.id === id);
