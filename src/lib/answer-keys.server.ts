@@ -17,6 +17,51 @@ export type AnswerKey = {
 
 const skeleton = (key: string) => key.split("-")[0]!;
 
+/** Extra scenario IDs reuse a verified product key. */
+const VARIANT_ANSWER_KEY_IDS: Record<string, string> = {
+  "q11": "q1",
+  "q12": "q1",
+  "q13": "q10",
+  "q14": "q1",
+  "q15": "q1",
+  "q16": "q6",
+  "q17": "q6",
+  "q18": "q6",
+  "q19": "q6",
+  "q20": "q1",
+  "q21": "q6",
+  "q22": "q7",
+  "q23": "q7",
+  "q24": "q7",
+  "q25": "q7",
+  "q26": "q7",
+  "q27": "q7",
+  "q28": "q7",
+  "q29": "q7",
+  "q30": "q7",
+  "q31": "q7",
+  "q32": "q7",
+  "q33": "q8",
+  "q34": "q8",
+  "q35": "q8",
+  "q36": "q8",
+  "q37": "q4",
+  "q38": "q4",
+  "q39": "q4",
+  "q40": "q4",
+  "q41": "q4",
+  "q42": "q8",
+  "q43": "q10",
+  "q44": "q10",
+  "q45": "q10",
+  "q46": "q3",
+  "q47": "q3",
+  "q48": "q3",
+  "q49": "q9",
+  "q50": "q9",
+  "q51": "q9",
+};
+
 export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q1",
@@ -165,7 +210,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
 ];
 
 export function gradeStructure(questionId: string, inchiKey: string) {
-  const key = ANSWER_KEYS.find((k) => k.id === questionId);
+  const keyId = VARIANT_ANSWER_KEY_IDS[questionId] ?? questionId;
+  const key = ANSWER_KEYS.find((k) => k.id === keyId);
   if (!key || !isQuestionActive(questionId)) return null;
 
   const submitted = inchiKey.trim().toUpperCase();
