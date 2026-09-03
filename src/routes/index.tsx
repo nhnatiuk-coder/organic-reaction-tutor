@@ -7,6 +7,8 @@ import type { Ketcher } from "ketcher-core";
 import { QUESTIONS } from "@/lib/questions";
 import { gradeAnswer, type GradeResult } from "@/lib/grading.functions";
 
+import ReactionScheme from "@/components/ReactionScheme";
+
 const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
 
 export const Route = createFileRoute("/")({
