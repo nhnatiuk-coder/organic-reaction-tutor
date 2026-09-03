@@ -7,6 +7,8 @@ import type { Ketcher } from "ketcher-core";
 import { QUESTIONS } from "@/lib/questions";
 import { gradeAnswer, type GradeResult } from "@/lib/grading.functions";
 
+import ReactionScheme from "@/components/ReactionScheme";
+
 const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
 
 export const Route = createFileRoute("/")({
@@ -16,13 +18,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Draw the major product for five substitution and elimination reactions in a real structure editor and get instant, structure-aware feedback.",
+          "Draw the major product for ten substitution and elimination reactions — text prompts and full reaction schemes — in a real structure editor with instant feedback.",
       },
       { property: "og:title", content: "Organic Reaction Drawing Practice" },
       {
         property: "og:description",
         content:
-          "Practice SN1, SN2, E1 and E2 major products by drawing them — graded on molecular structure, not multiple choice.",
+          "Practice SN1, SN2, E1, Zaitsev and Hofmann E2 products by drawing them — graded on molecular structure, not multiple choice.",
       },
     ],
   }),
@@ -98,11 +100,15 @@ function PracticePage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <ol className="mb-6 flex flex-wrap gap-2">
+        <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
           {QUESTIONS.map((q, i) => (
             <li key={q.id}>
               <button
                 onClick={() => goTo(i)}
+                aria-current={i === index ? "step" : undefined}
+                aria-label={`Question ${i + 1}, ${q.mechanism}, ${
+                  q.format === "scheme" ? "reaction scheme" : "text prompt"
+                }`}
                 className={
                   "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors " +
                   (i === index
@@ -111,10 +117,26 @@ function PracticePage() {
                 }
               >
                 {i + 1}. {q.mechanism}
+                {q.format === "scheme" && (
+                  <span aria-hidden="true" className="ml-1 opacity-70">
+                    ⌬
+                  </span>
+                )}
               </button>
             </li>
           ))}
         </ol>
+
+        {question.format === "scheme" && question.substrateSmiles && (
+          <div className="mb-6">
+            <ReactionScheme
+              substrateSmiles={question.substrateSmiles}
+              substrateName={question.substrate}
+              above={question.reagents}
+              below={question.conditions}
+            />
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <section className="space-y-4">
