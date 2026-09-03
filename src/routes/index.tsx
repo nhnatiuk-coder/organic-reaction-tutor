@@ -11,23 +11,26 @@ import ReactionScheme from "@/components/ReactionScheme";
 
 const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
 
-const TOPIC_FILTERS = ["Mixed", "SN1", "SN2", "E1", "E2"] as const;
-type TopicFilter = (typeof TOPIC_FILTERS)[number];
+type PracticeResult = GradeResult & { revealMechanism: boolean };
+
+function hideMechanismNames(text: string) {
+  return text.replace(/\b(SN1|SN2|E1|E2)\b/g, "the expected pathway");
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Organic Reaction Drawing Practice | SN1, SN2, E1, E2" },
+      { title: "Organic Reaction Drawing Practice" },
       {
         name: "description",
         content:
-          "Draw the major product for ten substitution and elimination reactions — text prompts and full reaction schemes — in a real structure editor with instant feedback.",
+          "Draw the major product for organic reaction practice problems in a real structure editor with instant feedback.",
       },
       { property: "og:title", content: "Organic Reaction Drawing Practice" },
       {
         property: "og:description",
         content:
-          "Practice SN1, SN2, E1, Zaitsev and Hofmann E2 products by drawing them — graded on molecular structure, not multiple choice.",
+          "Draw and receive immediate feedback on major organic reaction products.",
       },
     ],
   }),
@@ -44,13 +47,13 @@ function EditorSkeleton() {
 
 function PracticePage() {
   const [index, setIndex] = useState(0);
-  const [result, setResult] = useState<GradeResult | null>(null);
+  const [result, setResult] = useState<PracticeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
-  const [topicFilter, setTopicFilter] = useState<TopicFilter>("Mixed");
   const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>([
     PRACTICE_QUESTIONS[0]?.id ?? "",
   ]);
+  const [attemptsByQuestion, setAttemptsByQuestion] = useState<Record<string, number>>({});
   const ketcherRef = useRef<Ketcher | null>(null);
 
   const grade = useServerFn(gradeAnswer);
@@ -73,9 +76,7 @@ function PracticePage() {
   }
 
   const question = PRACTICE_QUESTIONS[index]!;
-  const activeQuestions = PRACTICE_QUESTIONS.filter(
-    (item) => topicFilter === "Mixed" || item.mechanism === topicFilter,
-  );
+  const activeQuestions = PRACTICE_QUESTIONS;
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
     activeQuestions.some((item) => item.id === id),
   ).length;
@@ -97,7 +98,16 @@ function PracticePage() {
         return;
       }
       const inchiKey = (await ketcher.getInChIKey()).trim();
-      setResult(await grade({ data: { questionId: question.id, inchiKey } }));
+      const attemptNumber = (attemptsByQuestion[question.id] ?? 0) + 1;
+      const graded = await grade({ data: { questionId: question.id, inchiKey } });
+      setAttemptsByQuestion((attempts) => ({
+        ...attempts,
+        [question.id]: attemptNumber,
+      }));
+      setResult({
+        ...graded,
+        revealMechanism: attemptNumber === 1 && graded.verdict === "incorrect",
+      });
     } catch {
       setError("Could not read that structure. Check for open valences or unfinished bonds.");
     } finally {
@@ -118,16 +128,6 @@ function PracticePage() {
       seen.includes(nextQuestion.id) ? seen : [...seen, nextQuestion.id],
     );
     await showQuestion(next);
-  }
-
-  async function startTopicPractice(nextTopic: TopicFilter) {
-    setTopicFilter(nextTopic);
-    const matching = PRACTICE_QUESTIONS.filter(
-      (item) => nextTopic === "Mixed" || item.mechanism === nextTopic,
-    );
-    const first = matching[Math.floor(Math.random() * matching.length)]!;
-    setSeenQuestionIds([first.id]);
-    await showQuestion(PRACTICE_QUESTIONS.indexOf(first));
   }
 
   async function nextRandomProblem() {
@@ -182,30 +182,13 @@ function PracticePage() {
                 Keep practicing with verified reaction problems
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {completedInCurrentSet} of {activeQuestions.length} problems visited in this{" "}
-                {topicFilter.toLowerCase()} set.
+                {completedInCurrentSet} of {activeQuestions.length} problems visited in this practice set.
                 {completedInCurrentSet === activeQuestions.length
                   ? " You have completed the set — the next problem starts a fresh cycle."
                   : ""}
               </p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <label className="text-sm font-medium text-card-foreground">
-                Topic
-                <select
-                  value={topicFilter}
-                  onChange={(event) =>
-                    startTopicPractice(event.target.value as TopicFilter)
-                  }
-                  className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground sm:w-32"
-                >
-                  {TOPIC_FILTERS.map((topic) => (
-                    <option key={topic} value={topic}>
-                      {topic}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <div>
               <button
                 onClick={nextRandomProblem}
                 className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
@@ -224,7 +207,7 @@ function PracticePage() {
               <button
                 onClick={() => goTo(i)}
                 aria-current={i === index ? "step" : undefined}
-                aria-label={`Question ${i + 1}, ${q.mechanism}, ${
+                aria-label={`Question ${i + 1}, ${
                   q.format === "scheme" ? "reaction scheme" : "text prompt"
                 }`}
                 className={
@@ -234,7 +217,7 @@ function PracticePage() {
                     : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
                 }
               >
-                {i + 1}. {q.mechanism}
+                Question {i + 1}
                 {q.format === "scheme" && (
                   <span aria-hidden="true" className="ml-1 opacity-70">
                     ⌬
@@ -264,7 +247,7 @@ function PracticePage() {
                 Question {index + 1} of {PRACTICE_QUESTIONS.length}
               </p>
               <h2 className="mt-1 text-lg font-semibold text-card-foreground">
-                {question.title}
+                Draw the major product
               </h2>
               <dl className="mt-4 space-y-3 text-sm">
                 <div>
@@ -324,7 +307,14 @@ function PracticePage() {
                 }
               >
                 <p className="font-semibold">{result.message}</p>
-                <p className="mt-2 text-muted-foreground">{result.explanation}</p>
+                <p className="mt-2 text-muted-foreground">
+                  {hideMechanismNames(result.explanation)}
+                </p>
+                {result.revealMechanism && (
+                  <p className="mt-3 rounded-md bg-primary/10 px-3 py-2 font-semibold text-primary">
+                    Mechanism revealed: {question.mechanism}
+                  </p>
+                )}
               </div>
             )}
           </section>
