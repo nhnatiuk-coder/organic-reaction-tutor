@@ -88,6 +88,79 @@ export const ANSWER_KEYS: AnswerKey[] = [
         "That is but-2-ene. Hydroxide in a polar aprotic solvent with a secondary substrate gives mainly substitution.",
     },
   },
+  {
+    id: "q6",
+    correct: "VNKYTQGIUYNRMY-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "1-methoxypropane (methyl propyl ether)",
+    explanation:
+      "Methoxide is a strong nucleophile and the substrate is primary, so a clean SN2 (Williamson ether synthesis) replaces Br with OCH\u2083.",
+    distractors: {
+      CYNYIHKIEHGYOZ: "That is the starting bromide \u2014 no reaction has been drawn.",
+      QQONPFPTGQHPMA:
+        "That is propene, the E2 product. Methoxide is basic, but a primary substrate with an unhindered base gives substitution as the major pathway.",
+      BDERNNFJNOPAEC:
+        "That is propan-1-ol. The nucleophile here is methoxide, not hydroxide or water.",
+    },
+  },
+  {
+    id: "q7",
+    correct: "VTBOTOBFGSVRMA-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "1-methylcyclohexan-1-ol",
+    explanation:
+      "Aqueous acetone is a weakly nucleophilic solvent, so the tertiary bromide ionises first (SN1) and water captures the carbocation to give the tertiary alcohol.",
+    distractors: {
+      VSGXTQWTJYAQHO: "That is the starting bromide \u2014 no reaction has been drawn.",
+      CTMHWPIWNRWQEG:
+        "That is 1-methylcyclohexene, the E1 by-product. With no added base and mild solvolysis conditions, substitution dominates.",
+      YULMNMJFAZWLLN:
+        "That is methylenecyclohexane, a minor E1 alkene, not the major solvolysis product.",
+    },
+  },
+  {
+    id: "q8",
+    correct: "BKOOMYPCSUNDGP-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "2-methylbut-2-ene",
+    explanation:
+      "Protonation and loss of water gives a tertiary carbocation. A weak base removes the \u03b2-hydrogen that leads to the more substituted (Zaitsev) alkene.",
+    distractors: {
+      MSXVEPNJUHWQHW: "That is the starting alcohol \u2014 no reaction has been drawn.",
+      MHNNAWXXUZQSNM:
+        "That is 2-methylbut-1-ene, the less substituted alkene. E1 under thermodynamic acid conditions favours the more substituted Zaitsev alkene.",
+    },
+  },
+  {
+    id: "q9",
+    correct: "QMMOXUPEWRXHJS-HWKANZROSA-N",
+    requireStereo: false,
+    correctName: "pent-2-ene (E isomer favoured)",
+    explanation:
+      "Ethoxide is a strong but small base, so it removes the \u03b2-hydrogen giving the more substituted Zaitsev alkene, pent-2-ene, mainly as the E isomer.",
+    distractors: {
+      LGAJYTCRJPCZRJ: "That is the starting bromide \u2014 no reaction has been drawn.",
+      YWAKXRMUMFPDSH:
+        "That is pent-1-ene, the Hofmann alkene. You only get that as the major product with a bulky base.",
+      XFKPOLRDQWCGPV:
+        "That is the SN2 ether. Hot ethoxide with a secondary substrate favours E2 elimination.",
+    },
+  },
+  {
+    id: "q10",
+    correct: "LIKMAJRDDDTEIG-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "hex-1-ene",
+    explanation:
+      "tert-Butoxide is too bulky to reach the internal \u03b2-hydrogen easily, so it removes a terminal methyl hydrogen and gives the less substituted Hofmann alkene.",
+    distractors: {
+      NEBYCXAKZCQWAW: "That is the starting bromide \u2014 no reaction has been drawn.",
+      RYPKRALMXUUNKS:
+        "That is hex-2-ene, the Zaitsev alkene. A bulky base such as tert-butoxide reverses the usual preference.",
+      DUIFXXUJVREKGP:
+        "That is the substitution product. tert-Butoxide is far too hindered for SN2 on a secondary carbon.",
+    },
+  },
 ];
 
 export function gradeStructure(questionId: string, inchiKey: string) {
