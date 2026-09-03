@@ -18,13 +18,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Draw the major product for five substitution and elimination reactions in a real structure editor and get instant, structure-aware feedback.",
+          "Draw the major product for ten substitution and elimination reactions — text prompts and full reaction schemes — in a real structure editor with instant feedback.",
       },
       { property: "og:title", content: "Organic Reaction Drawing Practice" },
       {
         property: "og:description",
         content:
-          "Practice SN1, SN2, E1 and E2 major products by drawing them — graded on molecular structure, not multiple choice.",
+          "Practice SN1, SN2, E1, Zaitsev and Hofmann E2 products by drawing them — graded on molecular structure, not multiple choice.",
       },
     ],
   }),
