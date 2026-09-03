@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Suspense, lazy, useRef, useState } from "react";
 import type { Ketcher } from "ketcher-core";
 
-import { QUESTIONS } from "@/lib/questions";
+import { PRACTICE_QUESTIONS } from "@/lib/questions";
 import { gradeAnswer, type GradeResult } from "@/lib/grading.functions";
 
 import ReactionScheme from "@/components/ReactionScheme";
@@ -48,12 +48,32 @@ function PracticePage() {
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [topicFilter, setTopicFilter] = useState<TopicFilter>("Mixed");
-  const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>([QUESTIONS[0]!.id]);
+  const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>([
+    PRACTICE_QUESTIONS[0]?.id ?? "",
+  ]);
   const ketcherRef = useRef<Ketcher | null>(null);
 
   const grade = useServerFn(gradeAnswer);
-  const question = QUESTIONS[index]!;
-  const activeQuestions = QUESTIONS.filter(
+  if (PRACTICE_QUESTIONS.length === 0) {
+    return (
+      <main className="min-h-screen bg-background p-6">
+        <section className="mx-auto max-w-xl rounded-xl border border-border bg-card p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Instructor setup needed
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold text-card-foreground">
+            No practice problems are active.
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Restore at least one question in the instructor question settings before students use this page.
+          </p>
+        </section>
+      </main>
+    );
+  }
+
+  const question = PRACTICE_QUESTIONS[index]!;
+  const activeQuestions = PRACTICE_QUESTIONS.filter(
     (item) => topicFilter === "Mixed" || item.mechanism === topicFilter,
   );
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
@@ -93,7 +113,7 @@ function PracticePage() {
   }
 
   async function goTo(next: number) {
-    const nextQuestion = QUESTIONS[next]!;
+    const nextQuestion = PRACTICE_QUESTIONS[next]!;
     setSeenQuestionIds((seen) =>
       seen.includes(nextQuestion.id) ? seen : [...seen, nextQuestion.id],
     );
@@ -102,12 +122,12 @@ function PracticePage() {
 
   async function startTopicPractice(nextTopic: TopicFilter) {
     setTopicFilter(nextTopic);
-    const matching = QUESTIONS.filter(
+    const matching = PRACTICE_QUESTIONS.filter(
       (item) => nextTopic === "Mixed" || item.mechanism === nextTopic,
     );
     const first = matching[Math.floor(Math.random() * matching.length)]!;
     setSeenQuestionIds([first.id]);
-    await showQuestion(QUESTIONS.indexOf(first));
+    await showQuestion(PRACTICE_QUESTIONS.indexOf(first));
   }
 
   async function nextRandomProblem() {
@@ -124,7 +144,7 @@ function PracticePage() {
     setSeenQuestionIds((seen) =>
       unvisited.length > 0 ? [...seen, next.id] : [next.id],
     );
-    await showQuestion(QUESTIONS.indexOf(next));
+    await showQuestion(PRACTICE_QUESTIONS.indexOf(next));
   }
 
   return (
@@ -198,7 +218,7 @@ function PracticePage() {
 
         <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
           {activeQuestions.map((q) => {
-            const i = QUESTIONS.indexOf(q);
+            const i = PRACTICE_QUESTIONS.indexOf(q);
             return (
             <li key={q.id}>
               <button
@@ -241,7 +261,7 @@ function PracticePage() {
           <section className="space-y-4">
             <article className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Question {index + 1} of {QUESTIONS.length}
+                Question {index + 1} of {PRACTICE_QUESTIONS.length}
               </p>
               <h2 className="mt-1 text-lg font-semibold text-card-foreground">
                 {question.title}

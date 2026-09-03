@@ -1,4 +1,5 @@
 // Client-safe question data. NEVER put answer structures or keys in this file.
+import { DISABLED_QUESTION_IDS } from "./question-settings";
 export type Question = {
   id: string;
   mechanism: "SN1" | "SN2" | "E1" | "E2";
@@ -138,4 +139,12 @@ export const QUESTIONS: Question[] = [
   },
 ];
 
+/** Questions currently available to students. */
+export const PRACTICE_QUESTIONS = QUESTIONS.filter(
+  (question) => !DISABLED_QUESTION_IDS.has(question.id),
+);
+
 export const getQuestion = (id: string) => QUESTIONS.find((q) => q.id === id);
+
+export const isQuestionActive = (id: string) =>
+  PRACTICE_QUESTIONS.some((question) => question.id === id);

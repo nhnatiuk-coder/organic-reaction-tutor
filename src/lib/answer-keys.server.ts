@@ -1,6 +1,7 @@
 // SERVER ONLY. Never import this from a component or a *.functions.ts module scope.
 // Structures are stored as standard InChIKeys (skeleton block = connectivity,
 // full key = connectivity + stereochemistry).
+import { isQuestionActive } from "./questions";
 
 export type AnswerKey = {
   id: string;
@@ -165,7 +166,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
 
 export function gradeStructure(questionId: string, inchiKey: string) {
   const key = ANSWER_KEYS.find((k) => k.id === questionId);
-  if (!key) return null;
+  if (!key || !isQuestionActive(questionId)) return null;
 
   const submitted = inchiKey.trim().toUpperCase();
   const sameSkeleton = skeleton(submitted) === skeleton(key.correct);
