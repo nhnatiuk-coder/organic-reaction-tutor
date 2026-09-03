@@ -100,11 +100,15 @@ function PracticePage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <ol className="mb-6 flex flex-wrap gap-2">
+        <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
           {QUESTIONS.map((q, i) => (
             <li key={q.id}>
               <button
                 onClick={() => goTo(i)}
+                aria-current={i === index ? "step" : undefined}
+                aria-label={`Question ${i + 1}, ${q.mechanism}, ${
+                  q.format === "scheme" ? "reaction scheme" : "text prompt"
+                }`}
                 className={
                   "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors " +
                   (i === index
@@ -113,10 +117,26 @@ function PracticePage() {
                 }
               >
                 {i + 1}. {q.mechanism}
+                {q.format === "scheme" && (
+                  <span aria-hidden="true" className="ml-1 opacity-70">
+                    ⌬
+                  </span>
+                )}
               </button>
             </li>
           ))}
         </ol>
+
+        {question.format === "scheme" && question.substrateSmiles && (
+          <div className="mb-6">
+            <ReactionScheme
+              substrateSmiles={question.substrateSmiles}
+              substrateName={question.substrate}
+              above={question.reagents}
+              below={question.conditions}
+            />
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <section className="space-y-4">
