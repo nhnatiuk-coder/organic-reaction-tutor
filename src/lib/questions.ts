@@ -13,6 +13,8 @@ export type Question = {
   conditions: string;
   prompt: string;
   stereochemistryMatters: boolean;
+  /** Optional instructor-supplied conformational constraint for stereospecific E2 practice. */
+  conformationalHint?: string;
   /** SMILES of the starting material — only used to draw scheme questions. */
   substrateSmiles?: string;
 };
@@ -723,6 +725,48 @@ const EXPANDED_QUESTIONS: Question[] = [
     conditions: "tert-butanol, heat",
     prompt: "Draw the major alkene product.",
     stereochemistryMatters: false,
+  },
+  {
+    id: "q55",
+    skeletonId: "2,2-dimethylcyclohexane",
+    mechanism: "E2",
+    format: "scheme",
+    title: "Conformationally constrained cyclohexane elimination",
+    substrate: "1-bromo-2,2-dimethylcyclohexane",
+    substrateSmiles: "BrC1C(C)(C)CCCC1",
+    reagents: "potassium tert-butoxide",
+    conditions: "tert-butanol, heat",
+    prompt: "Draw the single alkene allowed by the anti-periplanar β-hydrogen in the supplied conformer.",
+    stereochemistryMatters: false,
+    conformationalHint: "Use the locked chair conformer: Br at C1 is axial, and C2 has no β-hydrogen. The only anti-periplanar β-hydrogen is axial at C6.",
+  },
+  {
+    id: "q56",
+    skeletonId: "2,2-dimethylcyclopentane",
+    mechanism: "E2",
+    format: "scheme",
+    title: "Conformationally constrained cyclopentane elimination",
+    substrate: "1-bromo-2,2-dimethylcyclopentane",
+    substrateSmiles: "BrC1C(C)(C)CCC1",
+    reagents: "potassium tert-butoxide",
+    conditions: "tert-butanol, heat",
+    prompt: "Draw the alkene formed by anti-periplanar elimination. Only one β-carbon bears an available hydrogen.",
+    stereochemistryMatters: false,
+    conformationalHint: "The conformer shown is locked for this exercise: the β-carbon bearing the two methyl groups has no hydrogen. Remove the β-hydrogen anti to C–Br.",
+  },
+  {
+    id: "q57",
+    skeletonId: "2,2-dimethylcycloheptane",
+    mechanism: "E2",
+    format: "scheme",
+    title: "Conformationally constrained cycloheptane elimination",
+    substrate: "1-bromo-2,2-dimethylcycloheptane",
+    substrateSmiles: "BrC1C(C)(C)CCCCCC1",
+    reagents: "potassium tert-butoxide",
+    conditions: "tert-butanol, heat",
+    prompt: "Draw the single alkene permitted by the anti-periplanar β-hydrogen in the supplied conformer.",
+    stereochemistryMatters: false,
+    conformationalHint: "Use the locked conformer: the gem-dimethyl β-carbon has no hydrogen, leaving one anti-periplanar β-hydrogen available for elimination.",
   }
 ];
 

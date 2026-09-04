@@ -514,6 +514,30 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correctName: "methylenecyclooctane",
     explanation: "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
     distractors: {},
+  },
+  {
+    id: "q55",
+    correct: "BWYHTITWPWGSHN-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "3,3-dimethylcyclohex-1-ene",
+    explanation: "Only the β-hydrogen anti-periplanar to the axial bromide can be removed. The gem-dimethyl β-carbon has no hydrogen, so only one alkene is possible.",
+    distractors: {},
+  },
+  {
+    id: "q56",
+    correct: "FONFXXNTLGAHGI-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "3,3-dimethylcyclopent-1-ene",
+    explanation: "The β-carbon bearing the two methyl groups has no hydrogen. The remaining anti-periplanar β-hydrogen gives the single allowed alkene.",
+    distractors: {},
+  },
+  {
+    id: "q57",
+    correct: "JDRWZCSQCGVIFT-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "3,3-dimethylcyclohept-1-ene",
+    explanation: "The gem-dimethyl β-carbon cannot donate a β-hydrogen. Elimination therefore occurs only at the β-carbon with the anti-periplanar hydrogen.",
+    distractors: {},
   }
 ];
 

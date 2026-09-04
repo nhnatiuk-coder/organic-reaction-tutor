@@ -8,4 +8,7 @@
  */
 export const DISABLED_QUESTION_IDS = new Set<string>([
   "q2",
+  "q47",
+  "q48",
+  "q49",
 ]);

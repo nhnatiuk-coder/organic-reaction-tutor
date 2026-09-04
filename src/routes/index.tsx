@@ -236,6 +236,7 @@ function PracticePage() {
               substrateName={question.substrate}
               above={question.reagents}
               below={question.conditions}
+              conformationalHint={question.conformationalHint}
             />
           </div>
         )}

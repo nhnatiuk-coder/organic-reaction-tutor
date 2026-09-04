@@ -10,6 +10,8 @@ type Props = {
   above: string;
   /** Text shown below the reaction arrow (conditions). */
   below: string;
+  /** Optional anti-periplanar/chair-conformation instruction. */
+  conformationalHint?: string;
 };
 
 function StructureFallback({ label }: { label: string }) {
@@ -25,6 +27,7 @@ export default function ReactionScheme({
   substrateName,
   above,
   below,
+  conformationalHint,
 }: Props) {
   return (
     <figure
@@ -75,6 +78,12 @@ export default function ReactionScheme({
           </span>
         </div>
       </div>
+      {conformationalHint && (
+        <p className="mt-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-card-foreground">
+          <span className="font-semibold">Conformational constraint: </span>
+          {conformationalHint}
+        </p>
+      )}
       <figcaption className="sr-only">
         {substrateName} plus {above}, {below}. The product is left blank for you to draw in
         the structure editor.
