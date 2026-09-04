@@ -538,6 +538,22 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correctName: "3,3-dimethylcyclohept-1-ene",
     explanation: "The gem-dimethyl β-carbon cannot donate a β-hydrogen. Elimination therefore occurs only at the β-carbon with the anti-periplanar hydrogen.",
     distractors: {},
+  },
+  {
+    id: "q58",
+    correct: "SOSOLNHZGZXTFK-ZHACJKMWSA-N",
+    requireStereo: true,
+    correctName: "(E)-1-tert-butyl-2-methyl-2-phenylethene",
+    explanation: "Only one β-hydrogen is available, and the stated anti-periplanar arrangement fixes the substituents on opposite sides of the new double bond. The product is therefore the E alkene.",
+    distractors: {},
+  },
+  {
+    id: "q59",
+    correct: "HZSSEAVJEGAJAU-QXMHVHEDSA-N",
+    requireStereo: true,
+    correctName: "(Z)-1-tert-butyl-2-ethyl-2-phenylethene",
+    explanation: "Only one β-hydrogen is available, and the stated anti-periplanar arrangement fixes the tert-butyl and phenyl groups on the same side of the new double bond. The product is therefore the Z alkene.",
+    distractors: {},
   }
 ];
 
