@@ -13,6 +13,40 @@ const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
 
 type PracticeResult = GradeResult & { revealMechanism: boolean };
 
+type Mechanism = "SN1" | "SN2" | "E1" | "E2";
+
+type PracticeMode = {
+  id: "mixed" | "sn1" | "sn2" | "e1" | "e2" | "substitution" | "elimination";
+  label: string;
+  description: string;
+  mechanisms: readonly Mechanism[];
+};
+
+const PRACTICE_MODES: readonly PracticeMode[] = [
+  {
+    id: "mixed",
+    label: "Mixed",
+    description: "All reaction types",
+    mechanisms: ["SN1", "SN2", "E1", "E2"],
+  },
+  { id: "sn1", label: "SN1", description: "SN1 reactions", mechanisms: ["SN1"] },
+  { id: "sn2", label: "SN2", description: "SN2 reactions", mechanisms: ["SN2"] },
+  { id: "e1", label: "E1", description: "E1 reactions", mechanisms: ["E1"] },
+  { id: "e2", label: "E2", description: "E2 reactions", mechanisms: ["E2"] },
+  {
+    id: "substitution",
+    label: "SN1 + SN2",
+    description: "Substitution reactions",
+    mechanisms: ["SN1", "SN2"],
+  },
+  {
+    id: "elimination",
+    label: "E1 + E2",
+    description: "Elimination reactions",
+    mechanisms: ["E1", "E2"],
+  },
+];
+
 function hideMechanismNames(text: string) {
   return text.replace(/\b(SN1|SN2|E1|E2)\b/g, "the expected pathway");
 }
@@ -46,7 +80,10 @@ function EditorSkeleton() {
 }
 
 function PracticePage() {
-  const [index, setIndex] = useState(0);
+  const [practiceModeId, setPracticeModeId] = useState<PracticeMode["id"]>("mixed");
+  const [currentQuestionId, setCurrentQuestionId] = useState(
+    PRACTICE_QUESTIONS[0]?.id ?? "",
+  );
   const [result, setResult] = useState<PracticeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -57,7 +94,12 @@ function PracticePage() {
   const ketcherRef = useRef<Ketcher | null>(null);
 
   const grade = useServerFn(gradeAnswer);
-  if (PRACTICE_QUESTIONS.length === 0) {
+  const practiceMode = PRACTICE_MODES.find((mode) => mode.id === practiceModeId)!;
+  const activeQuestions = PRACTICE_QUESTIONS.filter((question) =>
+    practiceMode.mechanisms.includes(question.mechanism),
+  );
+
+  if (activeQuestions.length === 0) {
     return (
       <main className="min-h-screen bg-background p-6">
         <section className="mx-auto max-w-xl rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -75,8 +117,9 @@ function PracticePage() {
     );
   }
 
-  const question = PRACTICE_QUESTIONS[index]!;
-  const activeQuestions = PRACTICE_QUESTIONS;
+  const question =
+    activeQuestions.find((item) => item.id === currentQuestionId) ?? activeQuestions[0]!;
+  const index = activeQuestions.indexOf(question);
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
     activeQuestions.some((item) => item.id === id),
   ).length;
@@ -115,19 +158,18 @@ function PracticePage() {
     }
   }
 
-  async function showQuestion(next: number) {
-    setIndex(next);
+  async function showQuestion(nextQuestionId: string) {
+    setCurrentQuestionId(nextQuestionId);
     setResult(null);
     setError(null);
     await ketcherRef.current?.setMolecule("");
   }
 
-  async function goTo(next: number) {
-    const nextQuestion = PRACTICE_QUESTIONS[next]!;
+  async function goTo(nextQuestion: (typeof activeQuestions)[number]) {
     setSeenQuestionIds((seen) =>
       seen.includes(nextQuestion.id) ? seen : [...seen, nextQuestion.id],
     );
-    await showQuestion(next);
+    await showQuestion(nextQuestion.id);
   }
 
   async function nextRandomProblem() {
@@ -144,7 +186,22 @@ function PracticePage() {
     setSeenQuestionIds((seen) =>
       unvisited.length > 0 ? [...seen, next.id] : [next.id],
     );
-    await showQuestion(PRACTICE_QUESTIONS.indexOf(next));
+    await showQuestion(next.id);
+  }
+
+  async function selectPracticeMode(nextMode: PracticeMode) {
+    const modeQuestions = PRACTICE_QUESTIONS.filter((item) =>
+      nextMode.mechanisms.includes(item.mechanism),
+    );
+    const firstQuestion = modeQuestions[0];
+    if (!firstQuestion) return;
+
+    setPracticeModeId(nextMode.id);
+    setCurrentQuestionId(firstQuestion.id);
+    setSeenQuestionIds([firstQuestion.id]);
+    setResult(null);
+    setError(null);
+    await ketcherRef.current?.setMolecule("");
   }
 
   return (
@@ -182,7 +239,7 @@ function PracticePage() {
                 Keep practicing with verified reaction problems
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {completedInCurrentSet} of {activeQuestions.length} problems visited in this practice set.
+                {practiceMode.description} · {completedInCurrentSet} of {activeQuestions.length} problems visited in this practice set.
                 {completedInCurrentSet === activeQuestions.length
                   ? " You have completed the set — the next problem starts a fresh cycle."
                   : ""}
@@ -197,15 +254,36 @@ function PracticePage() {
               </button>
             </div>
           </div>
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Choose a practice set
+            </p>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Choose a practice set">
+              {PRACTICE_MODES.map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => selectPracticeMode(mode)}
+                  aria-pressed={mode.id === practiceMode.id}
+                  className={
+                    "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors " +
+                    (mode.id === practiceMode.id
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
+                  }
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </section>
 
         <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
-          {activeQuestions.map((q) => {
-            const i = PRACTICE_QUESTIONS.indexOf(q);
+          {activeQuestions.map((q, i) => {
             return (
             <li key={q.id}>
               <button
-                onClick={() => goTo(i)}
+                onClick={() => goTo(q)}
                 aria-current={i === index ? "step" : undefined}
                 aria-label={`Question ${i + 1}, ${
                   q.format === "scheme" ? "reaction scheme" : "text prompt"
@@ -245,7 +323,7 @@ function PracticePage() {
           <section className="space-y-4">
             <article className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Question {index + 1} of {PRACTICE_QUESTIONS.length}
+                Question {index + 1} of {activeQuestions.length}
               </p>
               <h2 className="mt-1 text-lg font-semibold text-card-foreground">
                 Draw the major product
