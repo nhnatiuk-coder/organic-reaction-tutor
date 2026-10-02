@@ -554,6 +554,114 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correctName: "(Z)-1-tert-butyl-2-ethyl-2-phenylethene",
     explanation: "Only one β-hydrogen is available, and the stated anti-periplanar arrangement fixes the tert-butyl and phenyl groups on the same side of the new double bond. The product is therefore the Z alkene.",
     distractors: {},
+  },
+  {
+    id: "q60",
+    correct: "RRMMRGUHEYXOQZ-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "1-iodo-4-methylheptane",
+    explanation:
+      "Iodide is a strong nucleophile and replaces bromide at the primary carbon. Acetone helps drive this halogen exchange by precipitating sodium bromide.",
+    distractors: {},
+  },
+  {
+    id: "q61",
+    correct: "JHKJQWFHNIOUKY-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "iodomethylcyclopropane",
+    explanation:
+      "Iodide replaces bromide at the primary cyclopropylmethyl carbon; the cyclopropane ring is unchanged during the halogen exchange.",
+    distractors: {},
+  },
+  {
+    id: "q62",
+    correct: "ASGAOGZVKDPMHV-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "3-ethylhexan-1-amine",
+    explanation:
+      "Excess ammonia attacks the primary bromide and, after proton transfer, gives the neutral primary amine. Excess ammonia minimises further alkylation.",
+    distractors: {},
+  },
+  {
+    id: "q63",
+    correct: "NQJLVGQKPMVHTD-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "4-cyclohexylbutan-1-amine",
+    explanation:
+      "The primary bromide is replaced by an amino group. The cyclohexyl ring is a spectator and remains attached to the four-carbon chain.",
+    distractors: {},
+  },
+  {
+    id: "q64",
+    correct: "BDTAOZDLJWEHSP-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "1-azido-3-methoxypropane",
+    explanation:
+      "Azide is a strong nucleophile and weak base, so it cleanly replaces bromide at the primary carbon. Keep the methoxy group unchanged.",
+    distractors: {},
+  },
+  {
+    id: "q65",
+    correct: "YVPUHRTVWANKKE-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "1-(azidomethyl)-4-tert-butylbenzene",
+    explanation:
+      "Azide substitutes for bromide at the benzylic carbon. The tert-butyl group remains in the para position on the aromatic ring.",
+    distractors: {},
+  },
+  {
+    id: "q66",
+    correct: "QJEZJFBJQUYOCP-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "1-ethoxy-4-ethylhexane",
+    explanation:
+      "Iodide is an excellent leaving group on a primary carbon. Ethoxide displaces it to form an ether, with the carbon skeleton unchanged.",
+    distractors: {},
+  },
+  {
+    id: "q67",
+    correct: "ICMVGKQFVMTRLB-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "4-phenylbutanenitrile",
+    explanation:
+      "Cyanide attacks through carbon and replaces iodide. The nitrile carbon becomes a new carbon at the end of the original propyl chain.",
+    distractors: {},
+  },
+  {
+    id: "q68",
+    correct: "MQUOOEBCMHJVBN-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "1-azido-2-methoxyethane",
+    explanation:
+      "Azide substitutes for iodide at the primary carbon. The ether oxygen remains part of the product and is not the leaving group.",
+    distractors: {},
+  },
+  {
+    id: "q69",
+    correct: "FAUQRRGKJKMEIW-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "2-cyclopropylacetonitrile",
+    explanation:
+      "Tosylate is a good leaving group. Cyanide displaces it through carbon, producing the nitrile and adding the nitrile carbon to the chain.",
+    distractors: {},
+  },
+  {
+    id: "q70",
+    correct: "SVQQGGBOCJRIFS-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "4-azidobutylcyclopentane",
+    explanation:
+      "Azide replaces the tosylate group at the primary carbon. Keep the cyclopentyl group attached to the end of the four-carbon chain.",
+    distractors: {},
+  },
+  {
+    id: "q71",
+    correct: "CGNLNKFBSBFJHY-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "5-phenylpentan-1-amine",
+    explanation:
+      "Excess ammonia displaces the tosylate group and gives the neutral primary amine. The phenyl group remains at the far end of the chain.",
+    distractors: {},
   }
 ];
 
