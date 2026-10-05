@@ -662,6 +662,78 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "Excess ammonia displaces the tosylate group and gives the neutral primary amine. The phenyl group remains at the far end of the chain.",
     distractors: {},
+  },
+  {
+    id: "q72",
+    correct: "ACBMYYVZWKYLIP-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "2-methylheptan-2-ol",
+    explanation:
+      "Bromide leaves first, giving a secondary carbocation at C3. A 1,2-hydride shift from C2 moves the positive charge to the more stable tertiary C2 carbocation; water then attacks that rearranged cation.",
+    distractors: {
+      QGVFLDUEHSIZIG:
+        "That is the unrearranged alcohol. Water has been placed at the original C3 carbocation, but a 1,2-hydride shift gives a more stable tertiary cation before water attacks.",
+    },
+  },
+  {
+    id: "q73",
+    correct: "BFKOEFFCVFMWPF-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "2,3-dimethylhexan-2-ol",
+    explanation:
+      "Ionisation first gives a secondary carbocation at C3. Because the adjacent C2 has no hydride to shift, a 1,2-methyl shift occurs instead, placing the positive charge at tertiary C2 before water attacks.",
+    distractors: {
+      PFHLGQKVKALLMD:
+        "That is the unrearranged alcohol. Before water attacks, a methyl group migrates from the adjacent quaternary carbon to make a more stable tertiary carbocation.",
+    },
+  },
+  {
+    id: "q74",
+    correct: "PQOSNJHBSNZITJ-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "3-methylheptan-3-ol",
+    explanation:
+      "Loss of bromide gives a secondary C2 carbocation. A 1,2-hydride shift from C3 produces a tertiary carbocation at C3, and water captures that rearranged intermediate.",
+    distractors: {
+      SZERMVMTUUAYML:
+        "That is the unrearranged alcohol. A hydride shift from the adjacent, more substituted carbon forms a tertiary carbocation before water attacks.",
+    },
+  },
+  {
+    id: "q75",
+    correct: "RGYAVZGBAJFMIZ-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "2,3-dimethylhex-2-ene",
+    explanation:
+      "After water leaves, the secondary carbocation is adjacent to a quaternary carbon. A 1,2-methyl shift produces a tertiary carbocation, and E1 deprotonation then gives the tetrasubstituted alkene.",
+    distractors: {
+      RXYYKIMRVXDSFR:
+        "That alkene comes from eliminating without rearranging. A methyl shift first gives a more stable tertiary carbocation and leads to the more substituted major alkene.",
+    },
+  },
+  {
+    id: "q76",
+    correct: "XTUXVDJHGIEBAA-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "3,4-dimethylhex-3-ene",
+    explanation:
+      "Water leaves from C2 to give a secondary carbocation. A 1,2-hydride shift from C3 makes a tertiary C3 carbocation; removal of a beta hydrogen from C4 then gives the tetrasubstituted major alkene.",
+    distractors: {
+      FMNLVKMLDPGPRY:
+        "That is the unrearranged alkene. A hydride shift first gives a tertiary carbocation, which can eliminate to the more substituted 3,4-dimethylhex-3-ene.",
+    },
+  },
+  {
+    id: "q77",
+    correct: "VJKWRJZRTVBJTH-UHFFFAOYSA-N",
+    requireStereo: false,
+    correctName: "1,2-diethylcyclohexene",
+    explanation:
+      "After protonation and loss of water, one ethyl group migrates from the adjacent gem-diethyl carbon. The resulting tertiary carbocation eliminates to give the tetrasubstituted 1,2-diethylcyclohexene.",
+    distractors: {
+      SPDOKYMOIPQIQN:
+        "That alkene is formed without rearrangement. An ethyl shift gives a more stable tertiary carbocation, which then forms the more substituted major alkene.",
+    },
   }
 ];
 
