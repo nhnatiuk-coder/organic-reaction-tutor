@@ -137,9 +137,10 @@ const CORE_QUESTIONS: Question[] = [
     id: "q5",
     skeletonId: "butane",
     mechanism: "SN2",
-    format: "text",
+    format: "scheme",
     title: "Stereochemistry at the reacting carbon",
     substrate: "(S)-2-bromobutane",
+    substrateSmiles: "C[C@H](Br)CC",
     reagents: "NaOH",
     conditions: "DMSO, 50 °C",
     prompt:

@@ -915,6 +915,7 @@ export function PracticePage({
               above={question.reagents}
               below={question.conditions}
               conformationalHint={question.conformationalHint}
+              stereochemistryMatters={question.stereochemistryMatters}
             />
           </div>
         )}
