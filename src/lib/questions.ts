@@ -1289,6 +1289,20 @@ export const QUESTIONS: Question[] = [
   ...GENERATED_QUESTIONS,
 ];
 
+/**
+ * Permanent instructor/student references for questions. New questions should
+ * always be appended to QUESTIONS so an existing reference never changes.
+ */
+const QUESTION_REFERENCES = new Map(
+  QUESTIONS.map((question, index) => [
+    question.id,
+    `RXN-${String(index + 1).padStart(4, "0")}`,
+  ]),
+);
+
+export const getQuestionReference = (question: Pick<Question, "id">) =>
+  QUESTION_REFERENCES.get(question.id) ?? `RXN-${question.id.toUpperCase()}`;
+
 /** Questions currently available to students.
  * The first active question for a carbon skeleton is used; later variants remain
  * in the authoring bank but are not shown to students.

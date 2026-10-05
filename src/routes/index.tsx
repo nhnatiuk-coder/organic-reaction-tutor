@@ -8,6 +8,7 @@ import {
   getQuestionDifficulty,
   getMechanismRevealLabel,
   getQuestionMechanisms,
+  getQuestionReference,
   PRACTICE_QUESTIONS,
   type DifficultyLevel,
   type ElementaryMechanism,
@@ -404,6 +405,7 @@ export function PracticePage({
     sessionQuestions[0] ??
     activeQuestions[0]!;
   const index = sessionQuestions.indexOf(question);
+  const questionReference = getQuestionReference(question);
   const isCompetition = question.answerMode === "competition";
   const isMechanismHintShown = hintQuestionIds.includes(question.id);
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
@@ -414,9 +416,14 @@ export function PracticePage({
     (sessionQuestion, questionNumber) => {
       const report = reportByQuestionId[sessionQuestion.id];
       return report
-        ? { questionNumber: questionNumber + 1, ...report }
+        ? {
+            questionNumber: questionNumber + 1,
+            reference: getQuestionReference(sessionQuestion),
+            ...report,
+          }
         : {
             questionNumber: questionNumber + 1,
+            reference: getQuestionReference(sessionQuestion),
             attempts: 0,
             firstAttempt: "incorrect",
             latestAttempt: "incorrect",
@@ -921,6 +928,9 @@ export function PracticePage({
                   : sessionLength === "all"
                     ? `Question ${index + 1} of ${activeQuestions.length}`
                     : `Practice problem ${completedInCurrentSet} of ${questionsInSession}`}
+              </p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Problem reference: {questionReference}
               </p>
               <h2 className="mt-1 text-lg font-semibold text-card-foreground">
                 {isCompetition

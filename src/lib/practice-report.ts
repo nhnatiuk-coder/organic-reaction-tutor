@@ -2,6 +2,7 @@ export type PracticeReportVerdict = "correct" | "partial" | "incorrect";
 
 export type PracticeReportOutcome = {
   questionNumber: number;
+  reference: string;
   attempts: number;
   firstAttempt: PracticeReportVerdict;
   latestAttempt: PracticeReportVerdict;
@@ -168,8 +169,8 @@ export function createPracticeReportPdf(data: PracticeReportData) {
     data.outcomes.forEach((outcome) => {
       lines.push(
         outcome.attempts > 0
-          ? `Question ${outcome.questionNumber}: ${verdictLabel(outcome.latestAttempt)} after ${outcome.attempts} ${outcome.attempts === 1 ? "check" : "checks"} (first check: ${verdictLabel(outcome.firstAttempt)})`
-          : `Question ${outcome.questionNumber}: Not checked`,
+          ? `${outcome.reference} (session question ${outcome.questionNumber}): ${verdictLabel(outcome.latestAttempt)} after ${outcome.attempts} ${outcome.attempts === 1 ? "check" : "checks"} (first check: ${verdictLabel(outcome.firstAttempt)})`
+          : `${outcome.reference} (session question ${outcome.questionNumber}): Not checked`,
       );
     });
   } else {
