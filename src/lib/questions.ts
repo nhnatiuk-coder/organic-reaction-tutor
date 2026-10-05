@@ -1,10 +1,19 @@
 // Client-safe question data. NEVER put answer structures or keys in this file.
 import { DISABLED_QUESTION_IDS } from "./question-settings";
+
+export type ElementaryMechanism = "SN1" | "SN2" | "E1" | "E2";
+export type QuestionMechanism =
+  | ElementaryMechanism
+  | "SN1/E1"
+  | "SN2/E2";
+
 export type Question = {
   id: string;
   /** Carbon skeleton identifier. Each active skeleton appears only once. */
   skeletonId: string;
-  mechanism: "SN1" | "SN2" | "E1" | "E2";
+  mechanism: QuestionMechanism;
+  /** Competition questions require one substitution and one elimination product. */
+  answerMode?: "single" | "competition";
   /** "text" = written prompt only. "scheme" = rendered reaction scheme. */
   format: "text" | "scheme";
   title: string;
@@ -18,6 +27,22 @@ export type Question = {
   /** SMILES of the starting material — only used to draw scheme questions. */
   substrateSmiles?: string;
 };
+
+/** Elementary pathways represented by a question, used for student practice filters. */
+export function getQuestionMechanisms(
+  question: Question,
+): readonly ElementaryMechanism[] {
+  if (question.mechanism === "SN1/E1") return ["SN1", "E1"];
+  if (question.mechanism === "SN2/E2") return ["SN2", "E2"];
+  return [question.mechanism];
+}
+
+/** Shown only after a student's first incorrect submission. */
+export function getMechanismRevealLabel(question: Question) {
+  if (question.mechanism === "SN1/E1") return "SN1 and E1";
+  if (question.mechanism === "SN2/E2") return "SN2 and E2";
+  return question.mechanism;
+}
 
 const CORE_QUESTIONS: Question[] = [
   {
@@ -1049,6 +1074,96 @@ const EXPANDED_QUESTIONS: Question[] = [
     conditions: "heat",
     prompt:
       "Draw the major alkene product. Consider whether the carbocation can rearrange after water leaves.",
+    stereochemistryMatters: false,
+  },
+  {
+    id: "q78",
+    skeletonId: "2-methyloctane",
+    mechanism: "SN1/E1",
+    answerMode: "competition",
+    format: "scheme",
+    title: "Tertiary bromide solvolysis",
+    substrate: "2-bromo-2-methyloctane",
+    substrateSmiles: "CC(Br)(C)CCCCCC",
+    reagents: "H₂O",
+    conditions: "aqueous ethanol, heat",
+    prompt:
+      "Draw both major organic products: the product from substitution and the major alkene from elimination.",
+    stereochemistryMatters: false,
+  },
+  {
+    id: "q79",
+    skeletonId: "tert-butylcycloheptane",
+    mechanism: "SN1/E1",
+    answerMode: "competition",
+    format: "scheme",
+    title: "Tertiary cycloheptyl bromide solvolysis",
+    substrate: "1-bromo-1-tert-butylcycloheptane",
+    substrateSmiles: "CC(C)(C)C1(Br)CCCCCC1",
+    reagents: "H₂O",
+    conditions: "aqueous acetone, heat",
+    prompt:
+      "Draw both major organic products: the product from substitution and the major alkene from elimination.",
+    stereochemistryMatters: false,
+  },
+  {
+    id: "q80",
+    skeletonId: "2-phenylbutane",
+    mechanism: "SN1/E1",
+    answerMode: "competition",
+    format: "scheme",
+    title: "Tertiary benzylic bromide solvolysis",
+    substrate: "2-bromo-2-phenylbutane",
+    substrateSmiles: "CC(Br)(c1ccccc1)CC",
+    reagents: "H₂O",
+    conditions: "aqueous acetone, heat",
+    prompt:
+      "Draw both major organic products: the product from substitution and the major alkene from elimination.",
+    stereochemistryMatters: false,
+  },
+  {
+    id: "q81",
+    skeletonId: "4-methyloctane",
+    mechanism: "SN2/E2",
+    answerMode: "competition",
+    format: "scheme",
+    title: "Secondary bromide with a small alkoxide",
+    substrate: "2-bromo-4-methyloctane",
+    substrateSmiles: "CC(Br)CC(C)CCCC",
+    reagents: "NaOCH₂CH₃",
+    conditions: "ethanol, heat",
+    prompt:
+      "Draw both major organic products: the product from substitution and the major alkene from elimination.",
+    stereochemistryMatters: false,
+  },
+  {
+    id: "q82",
+    skeletonId: "cyclopentylcyclohexane",
+    mechanism: "SN2/E2",
+    answerMode: "competition",
+    format: "scheme",
+    title: "Secondary cyclohexyl bromide with methoxide",
+    substrate: "1-bromo-2-cyclopentylcyclohexane",
+    substrateSmiles: "BrC1C(C2CCCC2)CCCC1",
+    reagents: "NaOCH₃",
+    conditions: "DMSO, heat",
+    prompt:
+      "Draw both major organic products: the product from substitution and the major alkene from elimination.",
+    stereochemistryMatters: false,
+  },
+  {
+    id: "q83",
+    skeletonId: "3-phenylbutane",
+    mechanism: "SN2/E2",
+    answerMode: "competition",
+    format: "scheme",
+    title: "Secondary bromide with ethoxide",
+    substrate: "2-bromo-3-phenylbutane",
+    substrateSmiles: "CC(Br)C(C)c1ccccc1",
+    reagents: "NaOCH₂CH₃",
+    conditions: "ethanol, heat",
+    prompt:
+      "Draw both major organic products: the product from substitution and the major alkene from elimination.",
     stereochemistryMatters: false,
   },
 ];

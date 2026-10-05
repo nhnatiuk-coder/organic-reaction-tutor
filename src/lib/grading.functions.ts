@@ -3,6 +3,7 @@ import { z } from "zod";
 
 const GradeInput = z.object({
   questionId: z.string().min(1).max(20),
+  productSlot: z.enum(["main", "substitution", "elimination"]).default("main"),
   inchiKey: z
     .string()
     .trim()
@@ -19,7 +20,7 @@ export const gradeAnswer = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => GradeInput.parse(input))
   .handler(async ({ data }): Promise<GradeResult> => {
     const { gradeStructure } = await import("./answer-keys.server");
-    const result = gradeStructure(data.questionId, data.inchiKey);
+    const result = gradeStructure(data.questionId, data.inchiKey, data.productSlot);
     if (!result) throw new Error("Unknown question");
     return result;
   });

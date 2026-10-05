@@ -3,8 +3,7 @@
 // full key = connectivity + stereochemistry).
 import { isQuestionActive } from "./questions";
 
-export type AnswerKey = {
-  id: string;
+export type AnswerTarget = {
   /** Full standard InChIKey of the correct major product. */
   correct: string;
   /** Whether the stereo block of the key must also match. */
@@ -14,6 +13,19 @@ export type AnswerKey = {
   /** Recognised wrong answers keyed by InChIKey skeleton (first 14 chars). */
   distractors: Record<string, string>;
 };
+
+export type AnswerKey =
+  | (AnswerTarget & {
+      id: string;
+      substitution?: never;
+      elimination?: never;
+    })
+  | {
+      id: string;
+      /** Present only when students must draw both products of a competition reaction. */
+      substitution: AnswerTarget;
+      elimination: AnswerTarget;
+    };
 
 const skeleton = (key: string) => key.split("-")[0]!;
 
@@ -162,7 +174,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
       DUIFXXUJVREKGP:
         "That is the substitution product. tert-Butoxide is far too hindered for SN2 on a secondary carbon.",
     },
-  },,
+  },
   {
     id: "q11",
     correct: "LFQSCWFLJHTTHZ-UHFFFAOYSA-N",
@@ -734,38 +746,164 @@ export const ANSWER_KEYS: AnswerKey[] = [
       SPDOKYMOIPQIQN:
         "That alkene is formed without rearrangement. An ethyl shift gives a more stable tertiary carbocation, which then forms the more substituted major alkene.",
     },
-  }
+  },
+  {
+    id: "q78",
+    substitution: {
+      correct: "KBCNUEXDHWDIFX-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "2-methyloctan-2-ol",
+      explanation:
+        "The tertiary bromide ionises readily, and water captures the carbocation to give the substitution product.",
+      distractors: {},
+    },
+    elimination: {
+      correct: "YBOZNTGUYASNRA-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "2-methyloct-2-ene",
+      explanation:
+        "The same tertiary carbocation can lose a beta hydrogen. The more substituted internal alkene is the major elimination product.",
+      distractors: {},
+    },
+  },
+  {
+    id: "q79",
+    substitution: {
+      correct: "FOMZWAPKCOUTAU-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "1-tert-butylcycloheptan-1-ol",
+      explanation:
+        "Ionisation gives a tertiary ring carbocation, which is trapped by water to form the substitution product.",
+      distractors: {},
+    },
+    elimination: {
+      correct: "UWBJPUXTTHBACI-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "1-tert-butylcycloheptene",
+      explanation:
+        "A beta hydrogen can be removed from the tertiary carbocation to form the more substituted ring alkene.",
+      distractors: {},
+    },
+  },
+  {
+    id: "q80",
+    substitution: {
+      correct: "XGLHYBVJPSZXIF-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "2-phenylbutan-2-ol",
+      explanation:
+        "The tertiary benzylic carbocation is stabilised by the aromatic ring, and water capture gives the substitution product.",
+      distractors: {},
+    },
+    elimination: {
+      correct: "UGUYQBMBIJFNRM-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "2-phenylbut-2-ene",
+      explanation:
+        "Elimination from the same carbocation gives the more substituted alkene, which is also conjugated with the phenyl ring.",
+      distractors: {},
+    },
+  },
+  {
+    id: "q81",
+    substitution: {
+      correct: "WQFKYNXJNJCUFL-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "2-ethoxy-4-methyloctane",
+      explanation:
+        "Ethoxide can attack the secondary carbon and replace bromide, giving the ether substitution product.",
+      distractors: {},
+    },
+    elimination: {
+      correct: "HJJLGGXQXVNFBB-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "4-methyloct-2-ene",
+      explanation:
+        "Ethoxide can also remove a beta hydrogen as bromide leaves. The more substituted internal alkene is the major elimination product.",
+      distractors: {},
+    },
+  },
+  {
+    id: "q82",
+    substitution: {
+      correct: "XEESOCAITTXSRE-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "1-cyclopentyl-2-methoxycyclohexane",
+      explanation:
+        "Methoxide can replace bromide at the secondary ring carbon to give the methoxy substitution product.",
+      distractors: {},
+    },
+    elimination: {
+      correct: "BACFZZWHDQYTDB-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "1-cyclopentylcyclohexene",
+      explanation:
+        "Methoxide can also remove a beta hydrogen. The alkene beside the cyclopentyl group is the more substituted elimination product.",
+      distractors: {},
+    },
+  },
+  {
+    id: "q83",
+    substitution: {
+      correct: "ZQHVDWDUIDKJDA-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "2-ethoxy-3-phenylpentane",
+      explanation:
+        "Ethoxide can substitute for bromide at the secondary carbon, giving the ether product.",
+      distractors: {},
+    },
+    elimination: {
+      correct: "WSZVSPSKVZOVQE-UHFFFAOYSA-N",
+      requireStereo: false,
+      correctName: "3-phenylpent-2-ene",
+      explanation:
+        "Ethoxide can also remove a beta hydrogen. The major alkene is the more substituted product that is conjugated with the phenyl ring.",
+      distractors: {},
+    },
+  },
 ];
 
-export function gradeStructure(questionId: string, inchiKey: string) {
+export function gradeStructure(
+  questionId: string,
+  inchiKey: string,
+  productSlot: "main" | "substitution" | "elimination" = "main",
+) {
   const key = ANSWER_KEYS.find((k) => k.id === questionId);
   if (!key || !isQuestionActive(questionId)) return null;
 
-  const submitted = inchiKey.trim().toUpperCase();
-  const sameSkeleton = skeleton(submitted) === skeleton(key.correct);
-  const sameStereo = submitted.split("-")[1] === key.correct.split("-")[1];
+  const target: AnswerTarget | undefined =
+    productSlot === "main"
+      ? "correct" in key
+        ? key
+        : undefined
+      : key[productSlot];
+  if (!target) return null;
 
-  if (sameSkeleton && (!key.requireStereo || sameStereo)) {
+  const submitted = inchiKey.trim().toUpperCase();
+  const sameSkeleton = skeleton(submitted) === skeleton(target.correct);
+  const sameStereo = submitted.split("-")[1] === target.correct.split("-")[1];
+
+  if (sameSkeleton && (!target.requireStereo || sameStereo)) {
     return {
       verdict: "correct" as const,
-      message: `Correct — that's ${key.correctName}.`,
-      explanation: key.explanation,
+      message: `Correct — that's ${target.correctName}.`,
+      explanation: target.explanation,
     };
   }
 
-  if (sameSkeleton && key.requireStereo) {
+  if (sameSkeleton && target.requireStereo) {
     return {
       verdict: "partial" as const,
       message:
         "Right connectivity, wrong stereochemistry at the reacting carbon. Check your wedge/dash bonds.",
-      explanation: key.explanation,
+      explanation: target.explanation,
     };
   }
 
-  const hint = key.distractors[skeleton(submitted)];
+  const hint = target.distractors[skeleton(submitted)];
   return {
     verdict: "incorrect" as const,
     message: hint ?? "That isn't the major product of this reaction.",
-    explanation: key.explanation,
+    explanation: target.explanation,
   };
 }

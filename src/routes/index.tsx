@@ -4,22 +4,38 @@ import { useServerFn } from "@tanstack/react-start";
 import { Suspense, lazy, useRef, useState } from "react";
 import type { Ketcher } from "ketcher-core";
 
-import { PRACTICE_QUESTIONS } from "@/lib/questions";
+import {
+  getMechanismRevealLabel,
+  getQuestionMechanisms,
+  PRACTICE_QUESTIONS,
+  type ElementaryMechanism,
+} from "@/lib/questions";
 import { gradeAnswer, type GradeResult } from "@/lib/grading.functions";
 
 import ReactionScheme from "@/components/ReactionScheme";
 
 const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
 
-type PracticeResult = GradeResult & { revealMechanism: boolean };
+type SinglePracticeResult = {
+  kind: "single";
+  grade: GradeResult;
+  revealMechanism: boolean;
+};
 
-type Mechanism = "SN1" | "SN2" | "E1" | "E2";
+type CompetitionPracticeResult = {
+  kind: "competition";
+  substitution: GradeResult;
+  elimination: GradeResult;
+  revealMechanism: boolean;
+};
+
+type PracticeResult = SinglePracticeResult | CompetitionPracticeResult;
 
 type PracticeMode = {
   id: "mixed" | "sn1" | "sn2" | "e1" | "e2" | "substitution" | "elimination";
   label: string;
   description: string;
-  mechanisms: readonly Mechanism[];
+  mechanisms: readonly ElementaryMechanism[];
 };
 
 const PRACTICE_MODES: readonly PracticeMode[] = [
@@ -51,6 +67,37 @@ function hideMechanismNames(text: string) {
   return text.replace(/\b(SN1|SN2|E1|E2)\b/g, "the expected pathway");
 }
 
+function GradeFeedback({
+  label,
+  grade,
+}: {
+  label?: string;
+  grade: GradeResult;
+}) {
+  return (
+    <div
+      className={
+        "rounded-xl border p-4 text-sm " +
+        (grade.verdict === "correct"
+          ? "border-primary bg-accent text-accent-foreground"
+          : grade.verdict === "partial"
+            ? "border-chart-4 bg-card text-card-foreground"
+            : "border-destructive/40 bg-card text-card-foreground")
+      }
+    >
+      {label && (
+        <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          {label}
+        </p>
+      )}
+      <p className="font-semibold">{grade.message}</p>
+      <p className="mt-2 text-muted-foreground">
+        {hideMechanismNames(grade.explanation)}
+      </p>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -79,6 +126,29 @@ function EditorSkeleton() {
   );
 }
 
+function ProductEditor({
+  title,
+  onInit,
+}: {
+  title: string;
+  onInit: (ketcher: Ketcher) => void;
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        {title}
+      </div>
+      <div className="h-[560px]">
+        <ClientOnly fallback={<EditorSkeleton />}>
+          <Suspense fallback={<EditorSkeleton />}>
+            <KetcherCanvas onInit={onInit} />
+          </Suspense>
+        </ClientOnly>
+      </div>
+    </section>
+  );
+}
+
 function PracticePage() {
   const [practiceModeId, setPracticeModeId] = useState<PracticeMode["id"]>("mixed");
   const [currentQuestionId, setCurrentQuestionId] = useState(
@@ -92,11 +162,15 @@ function PracticePage() {
   ]);
   const [attemptsByQuestion, setAttemptsByQuestion] = useState<Record<string, number>>({});
   const ketcherRef = useRef<Ketcher | null>(null);
+  const substitutionKetcherRef = useRef<Ketcher | null>(null);
+  const eliminationKetcherRef = useRef<Ketcher | null>(null);
 
   const grade = useServerFn(gradeAnswer);
   const practiceMode = PRACTICE_MODES.find((mode) => mode.id === practiceModeId)!;
   const activeQuestions = PRACTICE_QUESTIONS.filter((question) =>
-    practiceMode.mechanisms.includes(question.mechanism),
+    getQuestionMechanisms(question).some((mechanism) =>
+      practiceMode.mechanisms.includes(mechanism),
+    ),
   );
 
   if (activeQuestions.length === 0) {
@@ -120,35 +194,96 @@ function PracticePage() {
   const question =
     activeQuestions.find((item) => item.id === currentQuestionId) ?? activeQuestions[0]!;
   const index = activeQuestions.indexOf(question);
+  const isCompetition = question.answerMode === "competition";
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
     activeQuestions.some((item) => item.id === id),
   ).length;
 
+  async function readInchiKey(
+    ketcher: Ketcher | null,
+    label: string,
+  ): Promise<string | null> {
+    if (!ketcher) {
+      setError(`${label} editor is still loading.`);
+      return null;
+    }
+
+    const smiles = (await ketcher.getSmiles()).trim();
+    if (!smiles) {
+      setError(`${label} is empty — draw that product first.`);
+      return null;
+    }
+    if (smiles.includes(">")) {
+      setError(`${label} should contain only a product structure, not a full reaction arrow.`);
+      return null;
+    }
+    return (await ketcher.getInChIKey()).trim();
+  }
+
   async function check() {
-    const ketcher = ketcherRef.current;
-    if (!ketcher) return;
     setChecking(true);
     setError(null);
     setResult(null);
     try {
-      const smiles = (await ketcher.getSmiles()).trim();
-      if (!smiles) {
-        setError("The canvas is empty — draw your product first.");
-        return;
-      }
-      if (smiles.includes(">")) {
-        setError("Draw only the product structure, not a full reaction arrow.");
-        return;
-      }
-      const inchiKey = (await ketcher.getInChIKey()).trim();
       const attemptNumber = (attemptsByQuestion[question.id] ?? 0) + 1;
-      const graded = await grade({ data: { questionId: question.id, inchiKey } });
+
+      if (isCompetition) {
+        const substitutionInchiKey = await readInchiKey(
+          substitutionKetcherRef.current,
+          "The substitution product drawing",
+        );
+        if (!substitutionInchiKey) return;
+
+        const eliminationInchiKey = await readInchiKey(
+          eliminationKetcherRef.current,
+          "The elimination product drawing",
+        );
+        if (!eliminationInchiKey) return;
+
+        const [substitution, elimination] = await Promise.all([
+          grade({
+            data: {
+              questionId: question.id,
+              productSlot: "substitution",
+              inchiKey: substitutionInchiKey,
+            },
+          }),
+          grade({
+            data: {
+              questionId: question.id,
+              productSlot: "elimination",
+              inchiKey: eliminationInchiKey,
+            },
+          }),
+        ]);
+
+        setAttemptsByQuestion((attempts) => ({
+          ...attempts,
+          [question.id]: attemptNumber,
+        }));
+        setResult({
+          kind: "competition",
+          substitution,
+          elimination,
+          revealMechanism:
+            attemptNumber === 1 &&
+            (substitution.verdict !== "correct" || elimination.verdict !== "correct"),
+        });
+        return;
+      }
+
+      const inchiKey = await readInchiKey(ketcherRef.current, "The product drawing");
+      if (!inchiKey) return;
+      const graded = await grade({
+        data: { questionId: question.id, productSlot: "main", inchiKey },
+      });
       setAttemptsByQuestion((attempts) => ({
         ...attempts,
         [question.id]: attemptNumber,
       }));
       setResult({
-        ...graded,
+        kind: "single",
+        grade: graded,
         revealMechanism: attemptNumber === 1 && graded.verdict === "incorrect",
       });
     } catch {
@@ -158,11 +293,19 @@ function PracticePage() {
     }
   }
 
+  async function clearEditors() {
+    await Promise.all([
+      ketcherRef.current?.setMolecule(""),
+      substitutionKetcherRef.current?.setMolecule(""),
+      eliminationKetcherRef.current?.setMolecule(""),
+    ]);
+  }
+
   async function showQuestion(nextQuestionId: string) {
     setCurrentQuestionId(nextQuestionId);
     setResult(null);
     setError(null);
-    await ketcherRef.current?.setMolecule("");
+    await clearEditors();
   }
 
   async function goTo(nextQuestion: (typeof activeQuestions)[number]) {
@@ -191,7 +334,9 @@ function PracticePage() {
 
   async function selectPracticeMode(nextMode: PracticeMode) {
     const modeQuestions = PRACTICE_QUESTIONS.filter((item) =>
-      nextMode.mechanisms.includes(item.mechanism),
+      getQuestionMechanisms(item).some((mechanism) =>
+        nextMode.mechanisms.includes(mechanism),
+      ),
     );
     const firstQuestion = modeQuestions[0];
     if (!firstQuestion) return;
@@ -201,7 +346,7 @@ function PracticePage() {
     setSeenQuestionIds([firstQuestion.id]);
     setResult(null);
     setError(null);
-    await ketcherRef.current?.setMolecule("");
+    await clearEditors();
   }
 
   return (
@@ -326,7 +471,7 @@ function PracticePage() {
                 Question {index + 1} of {activeQuestions.length}
               </p>
               <h2 className="mt-1 text-lg font-semibold text-card-foreground">
-                Draw the major product
+                {isCompetition ? "Draw both major products" : "Draw the major product"}
               </h2>
               <dl className="mt-4 space-y-3 text-sm">
                 <div>
@@ -358,7 +503,11 @@ function PracticePage() {
                 disabled={checking}
                 className="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
-                {checking ? "Checking…" : "Check my structure"}
+                {checking
+                  ? "Checking…"
+                  : isCompetition
+                    ? "Check both structures"
+                    : "Check my structure"}
               </button>
               <button
                 onClick={nextRandomProblem}
@@ -374,47 +523,53 @@ function PracticePage() {
               </p>
             )}
 
-            {result && (
-              <div
-                className={
-                  "rounded-xl border p-4 text-sm " +
-                  (result.verdict === "correct"
-                    ? "border-primary bg-accent text-accent-foreground"
-                    : result.verdict === "partial"
-                      ? "border-chart-4 bg-card text-card-foreground"
-                      : "border-destructive/40 bg-card text-card-foreground")
-                }
-              >
-                <p className="font-semibold">{result.message}</p>
-                <p className="mt-2 text-muted-foreground">
-                  {hideMechanismNames(result.explanation)}
-                </p>
-                {result.revealMechanism && (
-                  <p className="mt-3 rounded-md bg-primary/10 px-3 py-2 font-semibold text-primary">
-                    Mechanism revealed: {question.mechanism}
-                  </p>
-                )}
-              </div>
-            )}
+            {result &&
+              (result.kind === "single" ? (
+                <>
+                  <GradeFeedback grade={result.grade} />
+                  {result.revealMechanism && (
+                    <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
+                      Mechanism revealed: {getMechanismRevealLabel(question)}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <GradeFeedback label="Substitution product" grade={result.substitution} />
+                  <GradeFeedback label="Elimination product" grade={result.elimination} />
+                  {result.revealMechanism && (
+                    <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
+                      Mechanisms revealed: {getMechanismRevealLabel(question)}
+                    </p>
+                  )}
+                </div>
+              ))}
           </section>
 
-          <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-            <div className="border-b border-border px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Draw the major product
+          {isCompetition ? (
+            <div className="grid gap-6">
+              <ProductEditor
+                title="Substitution product"
+                onInit={(ketcher) => {
+                  substitutionKetcherRef.current = ketcher;
+                }}
+              />
+              <ProductEditor
+                title="Elimination product"
+                onInit={(ketcher) => {
+                  eliminationKetcherRef.current = ketcher;
+                }}
+              />
             </div>
-            <div className="h-[560px]">
-              <ClientOnly fallback={<EditorSkeleton />}>
-                <Suspense fallback={<EditorSkeleton />}>
-                  <KetcherCanvas
-                    onInit={(k) => {
-                      ketcherRef.current = k;
-                      (window as unknown as { ketcher?: Ketcher }).ketcher = k;
-                    }}
-                  />
-                </Suspense>
-              </ClientOnly>
-            </div>
-          </section>
+          ) : (
+            <ProductEditor
+              title="Draw the major product"
+              onInit={(ketcher) => {
+                ketcherRef.current = ketcher;
+                (window as unknown as { ketcher?: Ketcher }).ketcher = ketcher;
+              }}
+            />
+          )}
         </div>
       </div>
     </main>
