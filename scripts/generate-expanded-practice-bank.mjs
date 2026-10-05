@@ -78,6 +78,57 @@ function takeTail(options = {}) {
 const questions = [];
 const answerKeys = [];
 
+const TOSYLATE_SMILES = "OS(=O)(=O)c1ccc(C)cc1";
+
+/**
+ * Each generated carbon skeleton is used only once, but the leaving group
+ * should not be a cue that every reaction is a bromide. Split alkyl leaving
+ * groups approximately evenly among bromide, iodide, and tosylate.
+ */
+function leavingGroupVariant(index) {
+  const variant = index % 3;
+  if (variant === 1) return { id: "bromide", label: "bromide", smiles: "Br" };
+  if (variant === 2) return { id: "iodide", label: "iodide", smiles: "I" };
+  return { id: "tosylate", label: "tosylate (OTs)", smiles: TOSYLATE_SMILES };
+}
+
+function primaryLeavingGroupVariant(index, tail) {
+  const leavingGroup = leavingGroupVariant(index);
+  if (leavingGroup.id === "tosylate") {
+    return {
+      ...leavingGroup,
+      substrateSmiles: `C${tail}${TOSYLATE_SMILES}`,
+      atTailEnd: true,
+    };
+  }
+
+  return {
+    ...leavingGroup,
+    substrateSmiles: `${leavingGroup.smiles}C${tail}`,
+    atTailEnd: false,
+  };
+}
+
+function primarySubstitutionProduct(variant, tail, nucleophile) {
+  const products = {
+    cyanide: variant.atTailEnd ? `C${tail}C#N` : `N#CC${tail}`,
+    azide: variant.atTailEnd ? `C${tail}[N-]=[N+]=N` : `[N-]=[N+]=NC${tail}`,
+  };
+  return products[nucleophile];
+}
+
+function primaryEliminationProduct(variant, tail) {
+  return variant.atTailEnd ? `C${tail}=C` : `C=${tail}`;
+}
+
+function secondarySubstrateSmiles(index, tail, pattern) {
+  const leavingGroup = leavingGroupVariant(index);
+  return {
+    leavingGroup,
+    substrateSmiles: pattern(leavingGroup.smiles),
+  };
+}
+
 function addQuestion({
   id,
   skeletonId,
@@ -158,9 +209,17 @@ fill(
     explanation:
       "Cyanide is a strong, weakly basic nucleophile. With a primary bromide in DMSO, substitution gives the nitrile product.",
   },
-  () => {
+  (index) => {
     const tail = takeTail();
-    return { substrateSmiles: `BrC${tail}`, productSmiles: `N#CC${tail}` };
+    const variant = primaryLeavingGroupVariant(index, tail);
+    return {
+      title: `Primary alkyl ${variant.label} with cyanide`,
+      substrate: `Primary alkyl ${variant.label} (see scheme)`,
+      substrateSmiles: variant.substrateSmiles,
+      prompt: `Draw the major organic product. Replace the ${variant.label} with the cyanide carbon; do not draw inorganic by-products.`,
+      explanation: `Cyanide is a strong, weakly basic nucleophile. With a primary ${variant.label} in DMSO, substitution gives the nitrile product.`,
+      productSmiles: primarySubstitutionProduct(variant, tail, "cyanide"),
+    };
   },
 );
 
@@ -179,11 +238,16 @@ fill(
     explanation:
       "Azide is a good nucleophile and weak base. A primary bromide in DMF reacts by substitution while retaining the carbon skeleton shown in the scheme.",
   },
-  () => {
+  (index) => {
     const tail = takeTail({ rootBranch: true });
+    const variant = primaryLeavingGroupVariant(index, tail);
     return {
-      substrateSmiles: `BrC${tail}`,
-      productSmiles: `[N-]=[N+]=NC${tail}`,
+      title: `Branched primary alkyl ${variant.label} with azide`,
+      substrate: `Branched primary alkyl ${variant.label} (see scheme)`,
+      substrateSmiles: variant.substrateSmiles,
+      prompt: `Draw the major organic product. Replace the ${variant.label} with azide; use the reaction scheme to keep the carbon skeleton intact.`,
+      explanation: `Azide is a good nucleophile and weak base. A primary ${variant.label} in DMF reacts by substitution while retaining the carbon skeleton shown in the scheme.`,
+      productSmiles: primarySubstitutionProduct(variant, tail, "azide"),
     };
   },
 );
@@ -204,10 +268,18 @@ fill(
     explanation:
       "Hydroxide attacks the secondary carbon from the back. The carbon skeleton is retained, but the reacting stereocentre must invert.",
   },
-  () => {
+  (index) => {
     const tail = takeTail();
+    const { leavingGroup, substrateSmiles } = secondarySubstrateSmiles(
+      index,
+      tail,
+      (leavingGroupSmiles) => `C[C@H](${leavingGroupSmiles})${tail}`,
+    );
     return {
-      substrateSmiles: `C[C@H](Br)${tail}`,
+      title: `Chiral secondary alkyl ${leavingGroup.label} with hydroxide`,
+      substrate: `Chiral secondary alkyl ${leavingGroup.label} (see scheme)`,
+      substrateSmiles,
+      explanation: `Hydroxide attacks the secondary carbon from the back as the ${leavingGroup.label} leaves. The carbon skeleton is retained, but the reacting stereocentre must invert.`,
       productSmiles: `C[C@@H](O)${tail}`,
     };
   },
@@ -227,10 +299,18 @@ fill(
     explanation:
       "The tertiary bromide ionises in the polar protic medium, then water captures the carbocation to give the alcohol.",
   },
-  () => {
+  (index) => {
     const tail = takeTail();
+    const leavingGroup = leavingGroupVariant(index);
+    const substrateSmiles =
+      leavingGroup.id === "tosylate"
+        ? `C(C)(C)(${tail})${leavingGroup.smiles}`
+        : `${leavingGroup.smiles}C(C)(C)${tail}`;
     return {
-      substrateSmiles: `BrC(C)(C)${tail}`,
+      title: `Tertiary alkyl ${leavingGroup.label} solvolysis`,
+      substrate: `Tertiary alkyl ${leavingGroup.label} (see scheme)`,
+      substrateSmiles,
+      explanation: `The tertiary ${leavingGroup.label} ionises in the polar protic medium, then water captures the carbocation to give the alcohol.`,
       productSmiles: `OC(C)(C)${tail}`,
     };
   },
@@ -251,10 +331,18 @@ fill(
     explanation:
       "Ionisation gives a stable tertiary carbocation. Methanol attacks that cation, giving the methyl ether after deprotonation.",
   },
-  () => {
+  (index) => {
     const tail = takeTail({ rootBranch: true });
+    const leavingGroup = leavingGroupVariant(index);
+    const substrateSmiles =
+      leavingGroup.id === "tosylate"
+        ? `C(C)(CC)(${tail})${leavingGroup.smiles}`
+        : `${leavingGroup.smiles}C(C)(CC)${tail}`;
     return {
-      substrateSmiles: `BrC(C)(CC)${tail}`,
+      title: `Highly substituted ${leavingGroup.label} in methanol`,
+      substrate: `Highly substituted alkyl ${leavingGroup.label} (see scheme)`,
+      substrateSmiles,
+      explanation: `Ionisation of the highly substituted ${leavingGroup.label} gives a stable tertiary carbocation. Methanol attacks that cation, giving the methyl ether after deprotonation.`,
       productSmiles: `COC(C)(CC)${tail}`,
     };
   },
@@ -275,10 +363,18 @@ fill(
     explanation:
       "Loss of bromide first gives a secondary carbocation. A hydride shift forms the more stable tertiary carbocation, which is then trapped by water.",
   },
-  () => {
+  (index) => {
     const tail = takeTail();
+    const { leavingGroup, substrateSmiles } = secondarySubstrateSmiles(
+      index,
+      tail,
+      (leavingGroupSmiles) => `CC(${leavingGroupSmiles})C(C)${tail}`,
+    );
     return {
-      substrateSmiles: `CC(Br)C(C)${tail}`,
+      title: `Secondary ${leavingGroup.label} requiring a hydride shift`,
+      substrate: `Branched secondary alkyl ${leavingGroup.label} (see scheme)`,
+      substrateSmiles,
+      explanation: `Loss of the ${leavingGroup.label} first gives a secondary carbocation. A hydride shift forms the more stable tertiary carbocation, which is then trapped by water.`,
       productSmiles: `CCC(O)(C)${tail}`,
     };
   },
@@ -370,11 +466,15 @@ fill(
     explanation:
       "A strong bulky base removes a beta hydrogen as bromide leaves. With only one beta carbon, the alkene position is fixed.",
   },
-  () => {
+  (index) => {
     const tail = takeTail();
+    const variant = primaryLeavingGroupVariant(index, tail);
     return {
-      substrateSmiles: `BrC${tail}`,
-      productSmiles: `C=${tail}`,
+      title: `Primary alkyl ${variant.label} with bulky base`,
+      substrate: `Primary alkyl ${variant.label} (see scheme)`,
+      substrateSmiles: variant.substrateSmiles,
+      explanation: `A strong bulky base removes a beta hydrogen as the ${variant.label} leaves. With only one beta carbon, the alkene position is fixed.`,
+      productSmiles: primaryEliminationProduct(variant, tail),
     };
   },
 );
@@ -394,10 +494,18 @@ fill(
     explanation:
       "Ethoxide is a small strong base. Concerted elimination gives the most substituted available alkene.",
   },
-  () => {
+  (index) => {
     const tail = takeTail({ rootBranch: true });
+    const leavingGroup = leavingGroupVariant(index);
+    const substrateSmiles =
+      leavingGroup.id === "tosylate"
+        ? `C(C)(CC)(${tail})${leavingGroup.smiles}`
+        : `${leavingGroup.smiles}C(C)(CC)${tail}`;
     return {
-      substrateSmiles: `BrC(C)(CC)${tail}`,
+      title: `Branched tertiary ${leavingGroup.label} with ethoxide`,
+      substrate: `Branched tertiary alkyl ${leavingGroup.label} (see scheme)`,
+      substrateSmiles,
+      explanation: `Ethoxide is a small strong base. Concerted elimination of the ${leavingGroup.label} gives the most substituted available alkene.`,
       productSmiles: `C(C)(CC)=${tail}`,
     };
   },
@@ -420,11 +528,22 @@ fill(
     explanation:
       "E2 requires an anti-periplanar beta hydrogen. The substituted beta carbon has no hydrogen, so elimination can occur only at the indicated methyl-side beta carbon.",
   },
-  () => {
+  (index) => {
     const tail = takeTail();
+    const { leavingGroup, substrateSmiles } = secondarySubstrateSmiles(
+      index,
+      tail,
+      (leavingGroupSmiles) => `C[C@H](${leavingGroupSmiles})C(C)(C)${tail}`,
+    );
     return {
-      substrateSmiles: `C[C@H](Br)C(C)(C)${tail}`,
+      title: `Conformationally constrained ${leavingGroup.label} E2 elimination`,
+      substrate: `Chiral secondary alkyl ${leavingGroup.label} (see scheme)`,
+      substrateSmiles,
       productSmiles: `C=CC(C)(C)${tail}`,
+      conformationalHint:
+        "Use the supplied reactive staggered conformer. The bulky beta carbon on one side has no hydrogen, so only the beta hydrogen anti to the leaving group can be removed.",
+      explanation:
+        "E2 requires an anti-periplanar beta hydrogen. The substituted beta carbon has no hydrogen, so elimination can occur only at the indicated methyl-side beta carbon.",
     };
   },
 );
