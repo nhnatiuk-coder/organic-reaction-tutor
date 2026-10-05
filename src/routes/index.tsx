@@ -5,9 +5,11 @@ import { Suspense, lazy, useRef, useState } from "react";
 import type { Ketcher } from "ketcher-core";
 
 import {
+  getQuestionDifficulty,
   getMechanismRevealLabel,
   getQuestionMechanisms,
   PRACTICE_QUESTIONS,
+  type DifficultyLevel,
   type ElementaryMechanism,
 } from "@/lib/questions";
 import { gradeAnswer, type GradeResult } from "@/lib/grading.functions";
@@ -43,8 +45,18 @@ const PRACTICE_MODES: readonly PracticeMode[] = [
     description: "All reaction types",
     mechanisms: ["SN1", "SN2", "E1", "E2"],
   },
-  { id: "sn1", label: "SN1", description: "SN1 reactions", mechanisms: ["SN1"] },
-  { id: "sn2", label: "SN2", description: "SN2 reactions", mechanisms: ["SN2"] },
+  {
+    id: "sn1",
+    label: "SN1",
+    description: "SN1 reactions",
+    mechanisms: ["SN1"],
+  },
+  {
+    id: "sn2",
+    label: "SN2",
+    description: "SN2 reactions",
+    mechanisms: ["SN2"],
+  },
   { id: "e1", label: "E1", description: "E1 reactions", mechanisms: ["E1"] },
   { id: "e2", label: "E2", description: "E2 reactions", mechanisms: ["E2"] },
   {
@@ -60,6 +72,45 @@ const PRACTICE_MODES: readonly PracticeMode[] = [
     mechanisms: ["E1", "E2"],
   },
 ];
+
+type DifficultyFilter = "all" | DifficultyLevel;
+type SessionLength = 5 | 10 | 25 | 50 | "all";
+
+const DIFFICULTY_OPTIONS: readonly {
+  id: DifficultyFilter;
+  label: string;
+  description: string;
+}[] = [
+  { id: "all", label: "All levels", description: "Any difficulty" },
+  {
+    id: "introductory",
+    label: "Introductory",
+    description: "Straightforward single-pathway reactions",
+  },
+  {
+    id: "intermediate",
+    label: "Intermediate",
+    description: "Regiochemistry, branching, or less-direct substrates",
+  },
+  {
+    id: "advanced",
+    label: "Advanced",
+    description:
+      "Stereochemistry, rearrangements, conformations, or two products",
+  },
+];
+
+const SESSION_LENGTHS: readonly SessionLength[] = [5, 10, 25, 50, "all"];
+
+function questionsForFilters(mode: PracticeMode, difficulty: DifficultyFilter) {
+  return PRACTICE_QUESTIONS.filter(
+    (question) =>
+      getQuestionMechanisms(question).some((mechanism) =>
+        mode.mechanisms.includes(mechanism),
+      ) &&
+      (difficulty === "all" || getQuestionDifficulty(question) === difficulty),
+  );
+}
 
 function hideMechanismNames(text: string) {
   return text.replace(/\b(SN1|SN2|E1|E2)\b/g, "the expected pathway");
@@ -151,8 +202,15 @@ function ProductEditor({
   );
 }
 
-export function PracticePage({ studentView = false }: { studentView?: boolean }) {
-  const [practiceModeId, setPracticeModeId] = useState<PracticeMode["id"]>("mixed");
+export function PracticePage({
+  studentView = false,
+}: {
+  studentView?: boolean;
+}) {
+  const [practiceModeId, setPracticeModeId] =
+    useState<PracticeMode["id"]>("mixed");
+  const [difficulty, setDifficulty] = useState<DifficultyFilter>("all");
+  const [sessionLength, setSessionLength] = useState<SessionLength>("all");
   const [currentQuestionId, setCurrentQuestionId] = useState(
     PRACTICE_QUESTIONS[0]?.id ?? "",
   );
@@ -168,12 +226,14 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
   const eliminationKetcherRef = useRef<Ketcher | null>(null);
 
   const grade = useServerFn(gradeAnswer);
-  const practiceMode = PRACTICE_MODES.find((mode) => mode.id === practiceModeId)!;
-  const activeQuestions = PRACTICE_QUESTIONS.filter((question) =>
-    getQuestionMechanisms(question).some((mechanism) =>
-      practiceMode.mechanisms.includes(mechanism),
-    ),
-  );
+  const practiceMode = PRACTICE_MODES.find(
+    (mode) => mode.id === practiceModeId,
+  )!;
+  const activeQuestions = questionsForFilters(practiceMode, difficulty);
+  const questionsInSession =
+    sessionLength === "all"
+      ? activeQuestions.length
+      : Math.min(sessionLength, activeQuestions.length);
 
   if (activeQuestions.length === 0) {
     return (
@@ -183,10 +243,11 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
             Instructor setup needed
           </p>
           <h1 className="mt-2 text-2xl font-semibold text-card-foreground">
-            No practice problems are active.
+            No practice problems match these selections.
           </h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Restore at least one question in the instructor question settings before students use this page.
+            Choose another reaction type or difficulty level to start a practice
+            session.
           </p>
         </section>
       </main>
@@ -194,13 +255,15 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
   }
 
   const question =
-    activeQuestions.find((item) => item.id === currentQuestionId) ?? activeQuestions[0]!;
+    activeQuestions.find((item) => item.id === currentQuestionId) ??
+    activeQuestions[0]!;
   const index = activeQuestions.indexOf(question);
   const isCompetition = question.answerMode === "competition";
   const isMechanismHintShown = hintQuestionIds.includes(question.id);
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
     activeQuestions.some((item) => item.id === id),
   ).length;
+  const sessionComplete = completedInCurrentSet >= questionsInSession;
 
   async function readInchiKey(
     ketcher: Ketcher | null,
@@ -217,7 +280,9 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
       return null;
     }
     if (smiles.includes(">")) {
-      setError(`${label} should contain only a product structure, not a full reaction arrow.`);
+      setError(
+        `${label} should contain only a product structure, not a full reaction arrow.`,
+      );
       return null;
     }
     return (await ketcher.getInChIKey()).trim();
@@ -266,7 +331,10 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
         return;
       }
 
-      const inchiKey = await readInchiKey(ketcherRef.current, "The product drawing");
+      const inchiKey = await readInchiKey(
+        ketcherRef.current,
+        "The product drawing",
+      );
       if (!inchiKey) return;
       const graded = await grade({
         data: { questionId: question.id, productSlot: "main", inchiKey },
@@ -276,7 +344,9 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
         grade: graded,
       });
     } catch {
-      setError("Could not read that structure. Check for open valences or unfinished bonds.");
+      setError(
+        "Could not read that structure. Check for open valences or unfinished bonds.",
+      );
     } finally {
       setChecking(false);
     }
@@ -313,37 +383,46 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
   }
 
   async function nextRandomProblem() {
+    if (sessionComplete) {
+      await startPracticeSession(activeQuestions);
+      return;
+    }
+
     const unvisited = activeQuestions.filter(
       (item) => !seenQuestionIds.includes(item.id),
     );
-    const choices =
-      unvisited.length > 0
-        ? unvisited
-        : activeQuestions.filter((item) => item.id !== question.id);
-    const fallbackChoices = choices.length > 0 ? choices : activeQuestions;
-    const next =
-      fallbackChoices[Math.floor(Math.random() * fallbackChoices.length)]!;
-    setSeenQuestionIds((seen) =>
-      unvisited.length > 0 ? [...seen, next.id] : [next.id],
-    );
+    const next = unvisited[Math.floor(Math.random() * unvisited.length)]!;
+    setSeenQuestionIds((seen) => [...seen, next.id]);
     await showQuestion(next.id);
   }
 
-  async function selectPracticeMode(nextMode: PracticeMode) {
-    const modeQuestions = PRACTICE_QUESTIONS.filter((item) =>
-      getQuestionMechanisms(item).some((mechanism) =>
-        nextMode.mechanisms.includes(mechanism),
-      ),
-    );
-    const firstQuestion = modeQuestions[0];
+  async function startPracticeSession(questions: typeof activeQuestions) {
+    const firstQuestion =
+      questions[Math.floor(Math.random() * questions.length)];
     if (!firstQuestion) return;
 
-    setPracticeModeId(nextMode.id);
     setCurrentQuestionId(firstQuestion.id);
     setSeenQuestionIds([firstQuestion.id]);
     setResult(null);
     setError(null);
     await clearEditors();
+  }
+
+  async function selectPracticeMode(nextMode: PracticeMode) {
+    setPracticeModeId(nextMode.id);
+    await startPracticeSession(questionsForFilters(nextMode, difficulty));
+  }
+
+  async function selectDifficulty(nextDifficulty: DifficultyFilter) {
+    setDifficulty(nextDifficulty);
+    await startPracticeSession(
+      questionsForFilters(practiceMode, nextDifficulty),
+    );
+  }
+
+  async function selectSessionLength(nextLength: SessionLength) {
+    setSessionLength(nextLength);
+    await startPracticeSession(activeQuestions);
   }
 
   return (
@@ -357,9 +436,9 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
             Reaction Drawing Practice
           </h1>
           <p className="max-w-2xl text-sm opacity-90">
-            Draw the major product for each substitution or elimination reaction. Your
-            drawing is graded on molecular structure, not on how it is arranged. Nothing is
-            saved — no account, no attempt history.
+            Draw the major product for each substitution or elimination
+            reaction. Your drawing is graded on molecular structure, not on how
+            it is arranged. Nothing is saved — no account, no attempt history.
           </p>
         </div>
       </header>
@@ -372,28 +451,32 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Endless practice
+                Practice session
               </p>
               <h2
                 id="endless-practice-heading"
                 className="mt-1 text-lg font-semibold text-card-foreground"
               >
-                Keep practicing with verified reaction problems
+                Build a focused set of verified reaction problems
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {studentView ? (
+                {practiceMode.description} ·{" "}
+                {studentView && sessionLength === "all" ? (
                   <>
-                    {practiceMode.description} · Keep working through fresh randomized
-                    problems at your own pace.
+                    {completedInCurrentSet}{" "}
+                    {completedInCurrentSet === 1 ? "problem" : "problems"}{" "}
+                    visited in this all-available session.
                   </>
                 ) : (
                   <>
-                    {practiceMode.description} · {completedInCurrentSet} of {activeQuestions.length} problems visited in this practice set.
-                    {completedInCurrentSet === activeQuestions.length
-                      ? " You have completed the set — the next problem starts a fresh cycle."
-                      : ""}
+                    {completedInCurrentSet} of {questionsInSession}{" "}
+                    {questionsInSession === 1 ? "problem" : "problems"} visited
+                    in this session.
                   </>
                 )}
+                {sessionComplete
+                  ? " This session is complete — start a new one whenever you are ready."
+                  : ""}
               </p>
             </div>
             <div>
@@ -401,7 +484,7 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
                 onClick={nextRandomProblem}
                 className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
-                New random problem
+                {sessionComplete ? "Start new session" : "New random problem"}
               </button>
             </div>
           </div>
@@ -409,7 +492,11 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
             <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Choose a practice set
             </p>
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Choose a practice set">
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Choose a practice set"
+            >
               {PRACTICE_MODES.map((mode) => (
                 <button
                   key={mode.id}
@@ -426,35 +513,89 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
                 </button>
               ))}
             </div>
-          </div>
-        </section>
-
-        {!studentView && (
-          <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
-            {activeQuestions.map((q, i) => {
-              return (
-              <li key={q.id}>
+            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Choose a difficulty level
+            </p>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Choose a difficulty level"
+            >
+              {DIFFICULTY_OPTIONS.map((option) => (
                 <button
-                  onClick={() => goTo(q)}
-                  aria-current={i === index ? "step" : undefined}
-                  aria-label={`Question ${i + 1}, ${
-                    q.format === "scheme" ? "reaction scheme" : "text prompt"
-                  }`}
+                  key={option.id}
+                  onClick={() => selectDifficulty(option.id)}
+                  aria-pressed={option.id === difficulty}
+                  title={option.description}
                   className={
-                    "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors " +
-                    (i === index
+                    "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors " +
+                    (option.id === difficulty
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
                   }
                 >
-                  Question {i + 1}
-                  {q.format === "scheme" && (
-                    <span aria-hidden="true" className="ml-1 opacity-70">
-                      ⌬
-                    </span>
-                  )}
+                  {option.label}
                 </button>
-              </li>
+              ))}
+            </div>
+            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Choose a session length
+            </p>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Choose a session length"
+            >
+              {SESSION_LENGTHS.map((length) => {
+                const available =
+                  length === "all" || length <= activeQuestions.length;
+                return (
+                  <button
+                    key={String(length)}
+                    onClick={() => selectSessionLength(length)}
+                    aria-pressed={length === sessionLength}
+                    disabled={!available}
+                    className={
+                      "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 " +
+                      (length === sessionLength
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
+                    }
+                  >
+                    {length === "all" ? "All available" : `${length} questions`}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {!studentView && sessionLength === "all" && (
+          <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
+            {activeQuestions.map((q, i) => {
+              return (
+                <li key={q.id}>
+                  <button
+                    onClick={() => goTo(q)}
+                    aria-current={i === index ? "step" : undefined}
+                    aria-label={`Question ${i + 1}, ${
+                      q.format === "scheme" ? "reaction scheme" : "text prompt"
+                    }`}
+                    className={
+                      "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors " +
+                      (i === index
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
+                    }
+                  >
+                    Question {i + 1}
+                    {q.format === "scheme" && (
+                      <span aria-hidden="true" className="ml-1 opacity-70">
+                        ⌬
+                      </span>
+                    )}
+                  </button>
+                </li>
               );
             })}
           </ol>
@@ -478,14 +619,20 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
               <p className="text-xs font-semibold uppercase tracking-widest text-primary">
                 {studentView
                   ? "Current practice problem"
-                  : `Question ${index + 1} of ${activeQuestions.length}`}
+                  : sessionLength === "all"
+                    ? `Question ${index + 1} of ${activeQuestions.length}`
+                    : `Practice problem ${completedInCurrentSet} of ${questionsInSession}`}
               </p>
               <h2 className="mt-1 text-lg font-semibold text-card-foreground">
-                {isCompetition ? "Draw both major products" : "Draw the major product"}
+                {isCompetition
+                  ? "Draw both major products"
+                  : "Draw the major product"}
               </h2>
               <dl className="mt-4 space-y-3 text-sm">
                 <div>
-                  <dt className="font-medium text-muted-foreground">Substrate</dt>
+                  <dt className="font-medium text-muted-foreground">
+                    Substrate
+                  </dt>
                   <dd className="text-card-foreground">{question.substrate}</dd>
                 </div>
                 <div>
@@ -493,8 +640,12 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
                   <dd className="text-card-foreground">{question.reagents}</dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-muted-foreground">Conditions</dt>
-                  <dd className="text-card-foreground">{question.conditions}</dd>
+                  <dt className="font-medium text-muted-foreground">
+                    Conditions
+                  </dt>
+                  <dd className="text-card-foreground">
+                    {question.conditions}
+                  </dd>
                 </div>
               </dl>
               <p className="mt-4 border-t border-border pt-4 text-sm text-card-foreground">
@@ -517,20 +668,22 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
                   ? "Checking…"
                   : isCompetition
                     ? "Check both structures"
-                  : "Check my structure"}
+                    : "Check my structure"}
               </button>
               <button
                 onClick={showMechanismHint}
                 disabled={isMechanismHintShown}
                 className="rounded-md border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-accent disabled:cursor-default disabled:opacity-60"
               >
-                {isMechanismHintShown ? "Hint shown" : "Show reaction-type hint"}
+                {isMechanismHintShown
+                  ? "Hint shown"
+                  : "Show reaction-type hint"}
               </button>
               <button
                 onClick={nextRandomProblem}
                 className="rounded-md border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-accent"
               >
-                Random next
+                {sessionComplete ? "Start new session" : "Random next"}
               </button>
             </div>
 
@@ -542,7 +695,8 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
 
             {isMechanismHintShown && (
               <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
-                Hint: The relevant {isCompetition ? "reaction types are" : "reaction type is"}{" "}
+                Hint: The relevant{" "}
+                {isCompetition ? "reaction types are" : "reaction type is"}{" "}
                 {getMechanismRevealLabel(question)}.
               </p>
             )}
@@ -554,8 +708,14 @@ export function PracticePage({ studentView = false }: { studentView?: boolean })
                 </>
               ) : (
                 <div className="space-y-3">
-                  <GradeFeedback label="Substitution product" grade={result.substitution} />
-                  <GradeFeedback label="Elimination product" grade={result.elimination} />
+                  <GradeFeedback
+                    label="Substitution product"
+                    grade={result.substitution}
+                  />
+                  <GradeFeedback
+                    label="Elimination product"
+                    grade={result.elimination}
+                  />
                 </div>
               ))}
           </section>

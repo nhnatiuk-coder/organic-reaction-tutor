@@ -2,10 +2,8 @@
 import { DISABLED_QUESTION_IDS } from "./question-settings";
 
 export type ElementaryMechanism = "SN1" | "SN2" | "E1" | "E2";
-export type QuestionMechanism =
-  | ElementaryMechanism
-  | "SN1/E1"
-  | "SN2/E2";
+export type QuestionMechanism = ElementaryMechanism | "SN1/E1" | "SN2/E2";
+export type DifficultyLevel = "introductory" | "intermediate" | "advanced";
 
 export type Question = {
   id: string;
@@ -42,6 +40,38 @@ export function getMechanismRevealLabel(question: Question) {
   if (question.mechanism === "SN1/E1") return "SN1 and E1";
   if (question.mechanism === "SN2/E2") return "SN2 and E2";
   return question.mechanism;
+}
+
+/**
+ * Difficulty is based on the reasoning the question requires, rather than on
+ * its mechanism name. This keeps each topic available at more than one level.
+ */
+export function getQuestionDifficulty(question: Question): DifficultyLevel {
+  const description = [question.title, question.prompt, question.substrate]
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    question.answerMode === "competition" ||
+    question.stereochemistryMatters ||
+    question.conformationalHint ||
+    /rearrang|hydride shift|neopentyl|diarylmethyl|gem-dialkyl|quaternary/.test(
+      description,
+    )
+  ) {
+    return "advanced";
+  }
+
+  if (
+    question.mechanism === "E2" ||
+    /bulky|zaitsev|hofmann|branched|benzylic|allylic|alkenyl|tosylate|cyclo/.test(
+      description,
+    )
+  ) {
+    return "intermediate";
+  }
+
+  return "introductory";
 }
 
 const CORE_QUESTIONS: Question[] = [
@@ -764,9 +794,11 @@ const EXPANDED_QUESTIONS: Question[] = [
     substrateSmiles: "BrC1C(C)(C)CCCC1",
     reagents: "potassium tert-butoxide",
     conditions: "tert-butanol, heat",
-    prompt: "Draw the single alkene allowed by the anti-periplanar β-hydrogen in the supplied conformer.",
+    prompt:
+      "Draw the single alkene allowed by the anti-periplanar β-hydrogen in the supplied conformer.",
     stereochemistryMatters: false,
-    conformationalHint: "Use the locked chair conformer: Br at C1 is axial, and C2 has no β-hydrogen. The only anti-periplanar β-hydrogen is axial at C6.",
+    conformationalHint:
+      "Use the locked chair conformer: Br at C1 is axial, and C2 has no β-hydrogen. The only anti-periplanar β-hydrogen is axial at C6.",
   },
   {
     id: "q56",
@@ -778,9 +810,11 @@ const EXPANDED_QUESTIONS: Question[] = [
     substrateSmiles: "BrC1C(C)(C)CCC1",
     reagents: "potassium tert-butoxide",
     conditions: "tert-butanol, heat",
-    prompt: "Draw the alkene formed by anti-periplanar elimination. Only one β-carbon bears an available hydrogen.",
+    prompt:
+      "Draw the alkene formed by anti-periplanar elimination. Only one β-carbon bears an available hydrogen.",
     stereochemistryMatters: false,
-    conformationalHint: "The conformer shown is locked for this exercise: the β-carbon bearing the two methyl groups has no hydrogen. Remove the β-hydrogen anti to C–Br.",
+    conformationalHint:
+      "The conformer shown is locked for this exercise: the β-carbon bearing the two methyl groups has no hydrogen. Remove the β-hydrogen anti to C–Br.",
   },
   {
     id: "q57",
@@ -792,9 +826,11 @@ const EXPANDED_QUESTIONS: Question[] = [
     substrateSmiles: "BrC1C(C)(C)CCCCCC1",
     reagents: "potassium tert-butoxide",
     conditions: "tert-butanol, heat",
-    prompt: "Draw the single alkene permitted by the anti-periplanar β-hydrogen in the supplied conformer.",
+    prompt:
+      "Draw the single alkene permitted by the anti-periplanar β-hydrogen in the supplied conformer.",
     stereochemistryMatters: false,
-    conformationalHint: "Use the locked conformer: the gem-dimethyl β-carbon has no hydrogen, leaving one anti-periplanar β-hydrogen available for elimination.",
+    conformationalHint:
+      "Use the locked conformer: the gem-dimethyl β-carbon has no hydrogen, leaving one anti-periplanar β-hydrogen available for elimination.",
   },
   {
     id: "q58",
@@ -806,9 +842,11 @@ const EXPANDED_QUESTIONS: Question[] = [
     substrateSmiles: "CC(C)(C)[C@H](Br)[C@H](C)c1ccccc1",
     reagents: "NaOCH₂CH₃",
     conditions: "ethanol, heat",
-    prompt: "Draw the alkene, including its E/Z stereochemistry. The reactive conformation permits only one product geometry.",
+    prompt:
+      "Draw the alkene, including its E/Z stereochemistry. The reactive conformation permits only one product geometry.",
     stereochemistryMatters: true,
-    conformationalHint: "Use the supplied reactive staggered conformation: Br and the only β-hydrogen are anti-periplanar. The tert-butyl group and phenyl group are on opposite sides of the forming double bond.",
+    conformationalHint:
+      "Use the supplied reactive staggered conformation: Br and the only β-hydrogen are anti-periplanar. The tert-butyl group and phenyl group are on opposite sides of the forming double bond.",
   },
   {
     id: "q59",
@@ -820,9 +858,11 @@ const EXPANDED_QUESTIONS: Question[] = [
     substrateSmiles: "CC(C)(C)[C@H](Br)[C@H](CC)c1ccccc1",
     reagents: "NaOCH₂CH₃",
     conditions: "ethanol, heat",
-    prompt: "Draw the alkene, including its E/Z stereochemistry. The reactive conformation permits only one product geometry.",
+    prompt:
+      "Draw the alkene, including its E/Z stereochemistry. The reactive conformation permits only one product geometry.",
     stereochemistryMatters: true,
-    conformationalHint: "Use the supplied reactive staggered conformation: Br and the only β-hydrogen are anti-periplanar. The tert-butyl group and phenyl group are on the same side of the forming double bond.",
+    conformationalHint:
+      "Use the supplied reactive staggered conformation: Br and the only β-hydrogen are anti-periplanar. The tert-butyl group and phenyl group are on the same side of the forming double bond.",
   },
   {
     id: "q60",
