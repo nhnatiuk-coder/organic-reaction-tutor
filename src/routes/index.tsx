@@ -19,14 +19,12 @@ const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
 type SinglePracticeResult = {
   kind: "single";
   grade: GradeResult;
-  revealMechanism: boolean;
 };
 
 type CompetitionPracticeResult = {
   kind: "competition";
   substitution: GradeResult;
   elimination: GradeResult;
-  revealMechanism: boolean;
 };
 
 type PracticeResult = SinglePracticeResult | CompetitionPracticeResult;
@@ -160,7 +158,7 @@ function PracticePage() {
   const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>([
     PRACTICE_QUESTIONS[0]?.id ?? "",
   ]);
-  const [attemptsByQuestion, setAttemptsByQuestion] = useState<Record<string, number>>({});
+  const [hintQuestionIds, setHintQuestionIds] = useState<string[]>([]);
   const ketcherRef = useRef<Ketcher | null>(null);
   const substitutionKetcherRef = useRef<Ketcher | null>(null);
   const eliminationKetcherRef = useRef<Ketcher | null>(null);
@@ -195,6 +193,7 @@ function PracticePage() {
     activeQuestions.find((item) => item.id === currentQuestionId) ?? activeQuestions[0]!;
   const index = activeQuestions.indexOf(question);
   const isCompetition = question.answerMode === "competition";
+  const isMechanismHintShown = hintQuestionIds.includes(question.id);
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
     activeQuestions.some((item) => item.id === id),
   ).length;
@@ -225,8 +224,6 @@ function PracticePage() {
     setError(null);
     setResult(null);
     try {
-      const attemptNumber = (attemptsByQuestion[question.id] ?? 0) + 1;
-
       if (isCompetition) {
         const substitutionInchiKey = await readInchiKey(
           substitutionKetcherRef.current,
@@ -257,17 +254,10 @@ function PracticePage() {
           }),
         ]);
 
-        setAttemptsByQuestion((attempts) => ({
-          ...attempts,
-          [question.id]: attemptNumber,
-        }));
         setResult({
           kind: "competition",
           substitution,
           elimination,
-          revealMechanism:
-            attemptNumber === 1 &&
-            (substitution.verdict !== "correct" || elimination.verdict !== "correct"),
         });
         return;
       }
@@ -277,14 +267,9 @@ function PracticePage() {
       const graded = await grade({
         data: { questionId: question.id, productSlot: "main", inchiKey },
       });
-      setAttemptsByQuestion((attempts) => ({
-        ...attempts,
-        [question.id]: attemptNumber,
-      }));
       setResult({
         kind: "single",
         grade: graded,
-        revealMechanism: attemptNumber === 1 && graded.verdict === "incorrect",
       });
     } catch {
       setError("Could not read that structure. Check for open valences or unfinished bonds.");
@@ -299,6 +284,14 @@ function PracticePage() {
       substitutionKetcherRef.current?.setMolecule(""),
       eliminationKetcherRef.current?.setMolecule(""),
     ]);
+  }
+
+  function showMechanismHint() {
+    setHintQuestionIds((hintedQuestionIds) =>
+      hintedQuestionIds.includes(question.id)
+        ? hintedQuestionIds
+        : [...hintedQuestionIds, question.id],
+    );
   }
 
   async function showQuestion(nextQuestionId: string) {
@@ -497,7 +490,7 @@ function PracticePage() {
               )}
             </article>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={check}
                 disabled={checking}
@@ -507,7 +500,14 @@ function PracticePage() {
                   ? "Checking…"
                   : isCompetition
                     ? "Check both structures"
-                    : "Check my structure"}
+                  : "Check my structure"}
+              </button>
+              <button
+                onClick={showMechanismHint}
+                disabled={isMechanismHintShown}
+                className="rounded-md border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-accent disabled:cursor-default disabled:opacity-60"
+              >
+                {isMechanismHintShown ? "Hint shown" : "Show reaction-type hint"}
               </button>
               <button
                 onClick={nextRandomProblem}
@@ -523,25 +523,22 @@ function PracticePage() {
               </p>
             )}
 
+            {isMechanismHintShown && (
+              <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
+                Hint: The relevant {isCompetition ? "reaction types are" : "reaction type is"}{" "}
+                {getMechanismRevealLabel(question)}.
+              </p>
+            )}
+
             {result &&
               (result.kind === "single" ? (
                 <>
                   <GradeFeedback grade={result.grade} />
-                  {result.revealMechanism && (
-                    <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
-                      Mechanism revealed: {getMechanismRevealLabel(question)}
-                    </p>
-                  )}
                 </>
               ) : (
                 <div className="space-y-3">
                   <GradeFeedback label="Substitution product" grade={result.substitution} />
                   <GradeFeedback label="Elimination product" grade={result.elimination} />
-                  {result.revealMechanism && (
-                    <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
-                      Mechanisms revealed: {getMechanismRevealLabel(question)}
-                    </p>
-                  )}
                 </div>
               ))}
           </section>
