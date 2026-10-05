@@ -85,7 +85,7 @@ function buildPdf(lines: string[]) {
   const objects: string[] = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     `<< /Type /Pages /Kids [${pageReferences}] /Count ${pages.length} >>`,
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>",
   ];
 
   pages.forEach((page, index) => {
@@ -126,7 +126,7 @@ function buildPdf(lines: string[]) {
   return new Blob([pdf], { type: "application/pdf" });
 }
 
-export function downloadPracticeReport(data: PracticeReportData) {
+export function createPracticeReportPdf(data: PracticeReportData) {
   const checked = data.outcomes.filter((outcome) => outcome.attempts > 0);
   const correct = checked.filter(
     (outcome) => outcome.latestAttempt === "correct",
@@ -180,7 +180,11 @@ export function downloadPracticeReport(data: PracticeReportData) {
   }
 
   const wrappedLines = lines.flatMap((line) => (line ? wrapLine(line) : [""]));
-  const blob = buildPdf(wrappedLines);
+  return buildPdf(wrappedLines);
+}
+
+export function downloadPracticeReport(data: PracticeReportData) {
+  const blob = createPracticeReportPdf(data);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   const date = data.finishedAt.toISOString().slice(0, 10);
