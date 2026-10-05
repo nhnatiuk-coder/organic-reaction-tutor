@@ -10,12 +10,9 @@ type Props = {
   showCompleteStereoDepiction?: boolean;
 };
 
-type Point = { x: number; y: number };
-
 type StereoVertex = {
   id: number;
   neighbours: number[];
-  position: Point;
   value: {
     element: string;
     isStereoCenter: boolean;
@@ -36,60 +33,17 @@ type StereoGraph = {
 type StereoCapableDrawer = {
   preprocessor?: {
     graph?: StereoGraph;
-    opts?: { bondLength?: number };
+    annotateStereochemistry?: () => void;
   };
 };
 
-const SVG_NS = "http://www.w3.org/2000/svg";
-
-function appendSvgElement<K extends keyof SVGElementTagNameMap>(
-  parent: SVGElement,
-  tagName: K,
-  attributes: Record<string, string | number>,
-) {
-  const element = document.createElementNS(SVG_NS, tagName);
-  Object.entries(attributes).forEach(([name, value]) =>
-    element.setAttribute(name, String(value)),
-  );
-  parent.appendChild(element);
-  return element;
-}
-
-function pointsMatch(first: Point, second: Point) {
-  return (
-    Math.abs(first.x - second.x) < 0.1 && Math.abs(first.y - second.y) < 0.1
-  );
-}
-
-function removePlainBond(svg: SVGSVGElement, first: Point, second: Point) {
-  svg.querySelectorAll("line").forEach((line) => {
-    const start = {
-      x: Number(line.getAttribute("x1")),
-      y: Number(line.getAttribute("y1")),
-    };
-    const end = {
-      x: Number(line.getAttribute("x2")),
-      y: Number(line.getAttribute("y2")),
-    };
-    if (
-      (pointsMatch(start, first) && pointsMatch(end, second)) ||
-      (pointsMatch(start, second) && pointsMatch(end, first))
-    ) {
-      line.remove();
-    }
-  });
-}
-
 /**
- * SmilesDrawer marks a stereocentre with one stereobond. Its parser creates
- * the bracketed H as a real vertex, so we turn that ordinary H bond into the
- * complementary stereobond. Each stereocentre therefore shows both a solid
- * wedge and a dashed wedge, rather than relying on the one-bond convention.
+ * SmilesDrawer normally marks a stereocentre with one stereobond. That is a
+ * valid convention, but can be hard to read in a student practice question.
+ * We change the graph before SmilesDrawer paints it so its own SVG renderer
+ * draws both a solid wedge and a dashed wedge at every marked centre.
  */
-function addComplementaryStereoBond(svg: SVGSVGElement, rawDrawer: unknown) {
-  const graph = (rawDrawer as StereoCapableDrawer).preprocessor?.graph;
-  if (!graph) return;
-
+function addComplementaryStereoBonds(graph: StereoGraph) {
   graph.vertices
     .filter((centre) => centre.value.isStereoCenter)
     .forEach((centre) => {
@@ -104,57 +58,40 @@ function addComplementaryStereoBond(svg: SVGSVGElement, rawDrawer: unknown) {
         .find(({ edge }) => edge.wedge === "up" || edge.wedge === "down");
       if (!stereobond) return;
 
-      const hydrogen = neighbours.find(
-        (vertex) => vertex.value.element === "H",
-      );
       const complementTarget =
-        stereobond.vertex.value.element === "H"
-          ? neighbours.find((vertex) => vertex.id !== stereobond.vertex.id)
-          : hydrogen;
+        neighbours.find(
+          (vertex) =>
+            vertex.value.element === "H" && vertex.id !== stereobond.vertex.id,
+        ) ??
+        neighbours.find((vertex) => {
+          if (vertex.id === stereobond.vertex.id) return false;
+          if (vertex.value.isStereoCenter) return false;
+          const edge = graph.getEdge(centre.id, vertex.id);
+          return edge.wedge !== "up" && edge.wedge !== "down";
+        }) ??
+        neighbours.find((vertex) => {
+          if (vertex.id === stereobond.vertex.id) return false;
+          const edge = graph.getEdge(centre.id, vertex.id);
+          return edge.wedge !== "up" && edge.wedge !== "down";
+        });
       if (!complementTarget) return;
 
-      const dx = complementTarget.position.x - centre.position.x;
-      const dy = complementTarget.position.y - centre.position.y;
-      const length = Math.hypot(dx, dy);
-      if (length === 0) return;
-
-      removePlainBond(svg, centre.position, complementTarget.position);
-      const normal = { x: -dy / length, y: dx / length };
-      const cueGroup = appendSvgElement(svg, "g", {
-        "data-stereo-cue": "complementary-bond",
-        fill: "#1f2937",
-        stroke: "#1f2937",
-      });
-
-      if (stereobond.edge.wedge === "up") {
-        for (let segment = 1; segment <= 6; segment += 1) {
-          const progress = segment / 7;
-          const point = {
-            x: centre.position.x + dx * progress,
-            y: centre.position.y + dy * progress,
-          };
-          const halfWidth = 0.7 + 4.4 * progress;
-          appendSvgElement(cueGroup, "line", {
-            x1: point.x + normal.x * halfWidth,
-            y1: point.y + normal.y * halfWidth,
-            x2: point.x - normal.x * halfWidth,
-            y2: point.y - normal.y * halfWidth,
-            "stroke-width": 1.25,
-          });
-        }
-      } else {
-        const narrow = 0.7;
-        const broad = 5.2;
-        appendSvgElement(cueGroup, "polygon", {
-          points: [
-            `${centre.position.x + normal.x * narrow},${centre.position.y + normal.y * narrow}`,
-            `${complementTarget.position.x + normal.x * broad},${complementTarget.position.y + normal.y * broad}`,
-            `${complementTarget.position.x - normal.x * broad},${complementTarget.position.y - normal.y * broad}`,
-            `${centre.position.x - normal.x * narrow},${centre.position.y - normal.y * narrow}`,
-          ].join(" "),
-        });
-      }
+      const complementaryBond = graph.getEdge(centre.id, complementTarget.id);
+      complementaryBond.wedge =
+        stereobond.edge.wedge === "up" ? "down" : "up";
+      complementTarget.value.isDrawn = true;
     });
+}
+
+function configureCompleteStereoDepiction(rawDrawer: unknown) {
+  const preprocessor = (rawDrawer as StereoCapableDrawer).preprocessor;
+  const annotate = preprocessor?.annotateStereochemistry;
+  if (!preprocessor || !annotate) return;
+
+  preprocessor.annotateStereochemistry = () => {
+    annotate.call(preprocessor);
+    if (preprocessor.graph) addComplementaryStereoBonds(preprocessor.graph);
+  };
 }
 
 /**
@@ -203,6 +140,9 @@ export default function SmilesStructure({
           padding: 12,
           terminalCarbons: false,
         });
+        if (showCompleteStereoDepiction) {
+          configureCompleteStereoDepiction(drawer);
+        }
 
         api.parse(
           smiles,
@@ -210,9 +150,6 @@ export default function SmilesStructure({
             if (cancelled || !ref.current) return;
             try {
               drawer.draw(tree, svgId, "light");
-              if (showCompleteStereoDepiction && ref.current) {
-                addComplementaryStereoBond(ref.current, drawer);
-              }
             } catch {
               setFailed(true);
             }
