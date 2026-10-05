@@ -1,5 +1,6 @@
 // Client-safe question data. NEVER put answer structures or keys in this file.
 import { DISABLED_QUESTION_IDS } from "./question-settings";
+import { GENERATED_QUESTIONS } from "./expanded-practice-bank.generated";
 
 export type ElementaryMechanism = "SN1" | "SN2" | "E1" | "E2";
 export type QuestionMechanism = ElementaryMechanism | "SN1/E1" | "SN2/E2";
@@ -10,6 +11,8 @@ export type Question = {
   /** Carbon skeleton identifier. Each active skeleton appears only once. */
   skeletonId: string;
   mechanism: QuestionMechanism;
+  /** Instructor-defined level used by the student practice filter. */
+  difficulty?: DifficultyLevel;
   /** Competition questions require one substitution and one elimination product. */
   answerMode?: "single" | "competition";
   /** "text" = written prompt only. "scheme" = rendered reaction scheme. */
@@ -47,6 +50,8 @@ export function getMechanismRevealLabel(question: Question) {
  * its mechanism name. This keeps each topic available at more than one level.
  */
 export function getQuestionDifficulty(question: Question): DifficultyLevel {
+  if (question.difficulty) return question.difficulty;
+
   const description = [question.title, question.prompt, question.substrate]
     .join(" ")
     .toLowerCase();
@@ -1278,7 +1283,11 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
 ];
 
-export const QUESTIONS: Question[] = [...CORE_QUESTIONS, ...EXPANDED_QUESTIONS];
+export const QUESTIONS: Question[] = [
+  ...CORE_QUESTIONS,
+  ...EXPANDED_QUESTIONS,
+  ...GENERATED_QUESTIONS,
+];
 
 /** Questions currently available to students.
  * The first active question for a carbon skeleton is used; later variants remain

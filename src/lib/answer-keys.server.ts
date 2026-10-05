@@ -2,6 +2,7 @@
 // Structures are stored as standard InChIKeys (skeleton block = connectivity,
 // full key = connectivity + stereochemistry).
 import { isQuestionActive } from "./questions";
+import { GENERATED_ANSWER_KEYS } from "./expanded-answer-keys.generated.server";
 
 export type AnswerTarget = {
   /** Full standard InChIKey of the correct major product. */
@@ -29,7 +30,6 @@ export type AnswerKey =
 
 const skeleton = (key: string) => key.split("-")[0]!;
 
-
 export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q1",
@@ -39,7 +39,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "Cyanide is a strong, weakly basic nucleophile and the substrate is primary, so backside attack (SN2) wins over elimination. The C–Br bond is replaced by C–C≡N.",
     distractors: {
-      MPPPKRYCTPRNTB: "That is the starting bromide — no reaction has been drawn.",
+      MPPPKRYCTPRNTB:
+        "That is the starting bromide — no reaction has been drawn.",
       VXNZUUAINFGPBY:
         "That is the E2 alkene. Cyanide is a good nucleophile but a weak base, and the substrate is primary, so substitution dominates.",
       LRHPLDYGYMQRHN:
@@ -54,7 +55,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "The tertiary carbocation forms first (SN1), then the ethanol solvent attacks and loses a proton, giving the ether.",
     distractors: {
-      JOUWCKCVTDSMHF: "That is the starting bromide — no reaction has been drawn.",
+      JOUWCKCVTDSMHF:
+        "That is the starting bromide — no reaction has been drawn.",
       DKGAVHZHDRPRBM:
         "That is tert-butanol, the product you would get with water as the solvent. Here ethanol is the nucleophile.",
       VQTUBCCKSQIDNK:
@@ -71,7 +73,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     distractors: {
       BKOOMYPCSUNDGP:
         "That is 2-methylbut-2-ene, the Zaitsev product. A bulky base such as tert-butoxide reverses that preference and gives the Hofmann alkene.",
-      RKSOPLXZQNSWAS: "That is the starting bromide — no reaction has been drawn.",
+      RKSOPLXZQNSWAS:
+        "That is the starting bromide — no reaction has been drawn.",
       DKGAVHZHDRPRBM:
         "That is a substitution product. A tertiary substrate with a bulky strong base eliminates rather than substitutes.",
     },
@@ -84,7 +87,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "Protonation and loss of water gives a secondary cation that forms the more substituted (Zaitsev) alkene: the trisubstituted 1-methylcyclohexene.",
     distractors: {
-      NDVWOBYBJYUSMF: "That is the starting alcohol — no reaction has been drawn.",
+      NDVWOBYBJYUSMF:
+        "That is the starting alcohol — no reaction has been drawn.",
       YULMNMJFAZWLLN:
         "That is methylenecyclohexane, the exocyclic (Hofmann) alkene. With acid and heat the more substituted endocyclic alkene is favoured.",
     },
@@ -97,7 +101,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "Hydroxide attacks the backside of the C–Br bond, so the configuration at the stereocentre inverts. The priority order is unchanged, so (S)-bromide gives (R)-alcohol.",
     distractors: {
-      UPSXAPQYNGXVBF: "That is the starting bromide — no reaction has been drawn.",
+      UPSXAPQYNGXVBF:
+        "That is the starting bromide — no reaction has been drawn.",
       IAQRGUVFOMOMEM:
         "That is but-2-ene. Hydroxide in a polar aprotic solvent with a secondary substrate gives mainly substitution.",
     },
@@ -110,7 +115,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "Methoxide is a strong nucleophile and the substrate is primary, so a clean SN2 (Williamson ether synthesis) replaces Br with OCH\u2083.",
     distractors: {
-      CYNYIHKIEHGYOZ: "That is the starting bromide \u2014 no reaction has been drawn.",
+      CYNYIHKIEHGYOZ:
+        "That is the starting bromide \u2014 no reaction has been drawn.",
       QQONPFPTGQHPMA:
         "That is propene, the E2 product. Methoxide is basic, but a primary substrate with an unhindered base gives substitution as the major pathway.",
       BDERNNFJNOPAEC:
@@ -125,7 +131,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "Aqueous acetone is a weakly nucleophilic solvent, so the tertiary bromide ionises first (SN1) and water captures the carbocation to give the tertiary alcohol.",
     distractors: {
-      VSGXTQWTJYAQHO: "That is the starting bromide \u2014 no reaction has been drawn.",
+      VSGXTQWTJYAQHO:
+        "That is the starting bromide \u2014 no reaction has been drawn.",
       CTMHWPIWNRWQEG:
         "That is 1-methylcyclohexene, the E1 by-product. With no added base and mild solvolysis conditions, substitution dominates.",
       YULMNMJFAZWLLN:
@@ -140,7 +147,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "Protonation and loss of water gives a tertiary carbocation. A weak base removes the \u03b2-hydrogen that leads to the more substituted (Zaitsev) alkene.",
     distractors: {
-      MSXVEPNJUHWQHW: "That is the starting alcohol \u2014 no reaction has been drawn.",
+      MSXVEPNJUHWQHW:
+        "That is the starting alcohol \u2014 no reaction has been drawn.",
       MHNNAWXXUZQSNM:
         "That is 2-methylbut-1-ene, the less substituted alkene. E1 under thermodynamic acid conditions favours the more substituted Zaitsev alkene.",
     },
@@ -153,7 +161,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "Ethoxide is a strong but small base, so it removes the \u03b2-hydrogen giving the more substituted Zaitsev alkene, pent-2-ene, mainly as the E isomer.",
     distractors: {
-      LGAJYTCRJPCZRJ: "That is the starting bromide \u2014 no reaction has been drawn.",
+      LGAJYTCRJPCZRJ:
+        "That is the starting bromide \u2014 no reaction has been drawn.",
       YWAKXRMUMFPDSH:
         "That is pent-1-ene, the Hofmann alkene. You only get that as the major product with a bulky base.",
       XFKPOLRDQWCGPV:
@@ -168,7 +177,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     explanation:
       "tert-Butoxide is too bulky to reach the internal \u03b2-hydrogen easily, so it removes a terminal methyl hydrogen and gives the less substituted Hofmann alkene.",
     distractors: {
-      NEBYCXAKZCQWAW: "That is the starting bromide \u2014 no reaction has been drawn.",
+      NEBYCXAKZCQWAW:
+        "That is the starting bromide \u2014 no reaction has been drawn.",
       RYPKRALMXUUNKS:
         "That is hex-2-ene, the Zaitsev alkene. A bulky base such as tert-butoxide reverses the usual preference.",
       DUIFXXUJVREKGP:
@@ -180,7 +190,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "LFQSCWFLJHTTHZ-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "ethanol",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -188,7 +199,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "YSIMAPNUZAVQER-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "octanenitrile",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -196,7 +208,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "RIAWWRJHTAZJSU-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-methoxyoctane",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -204,7 +217,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "ZVEZMVFBMOOHAT-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "nonane-1-thiol",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -212,7 +226,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "SZKKNEOUHLFYNA-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "undecanenitrile",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -220,7 +235,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "PFNHSEQQEPMLNI-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "2-methylpentan-1-ol",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -228,7 +244,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "UYVAUDQQSCEZEL-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-ethoxy-3-methylpentane",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -236,7 +253,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "ZRBLVTMNOAUKIX-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "3,3-dimethylhexanenitrile",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -244,7 +262,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "RSLLLJWHUVGJPC-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-methoxy-2,3-dimethylbutane",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -252,7 +271,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "FNVNYWLQBGDZSC-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "2-methylheptanenitrile",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -260,7 +280,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "YGZVAQICDGBHMD-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "3-methylhexan-1-ol",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -268,7 +289,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "ALKSCVWMOPPMSA-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "3,3-dimethylheptanenitrile",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -276,7 +298,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "BCUYBJKERRIVDV-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-methoxy-2,3-dimethylpentane",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -284,7 +307,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "PLOIXTARDKUIKQ-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "3,5-dimethylhexanenitrile",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -292,7 +316,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "UXUMVHGYHSDYOR-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-methoxy-3,3-dimethylpentane",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -300,7 +325,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "NFFDLENKVNHMPC-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "3,3,4-trimethylpentanenitrile",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -308,7 +334,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "GQKZBCPTCWJTAS-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "benzyl methyl ether",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -316,7 +343,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "SJNALLRHIVGIBI-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "but-3-enenitrile",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -324,7 +352,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "VDTUJQCSPFYIKZ-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "4-methoxybut-1-ene",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -332,7 +361,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "UNAQSRLBVVDYGP-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "hex-5-enenitrile",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -340,7 +370,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "UFULDTPDHIRNGS-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "hex-5-en-1-ol",
-    explanation: "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
+    explanation:
+      "A strong nucleophile reacts at the unhindered carbon, replacing the leaving group in one concerted substitution step.",
     distractors: {},
   },
   {
@@ -348,7 +379,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "WAPNOHKVXSQRPX-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-phenylethanol",
-    explanation: "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
+    explanation:
+      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
     distractors: {},
   },
   {
@@ -356,7 +388,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "BDCFWIDZNLCTMF-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "2-phenylpropan-2-ol",
-    explanation: "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
+    explanation:
+      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
     distractors: {},
   },
   {
@@ -364,7 +397,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "QILSFLSDHQAZET-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "diphenylmethanol",
-    explanation: "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
+    explanation:
+      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
     distractors: {},
   },
   {
@@ -372,7 +406,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "CAKWRXVKWGUISE-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-methylcyclopentan-1-ol",
-    explanation: "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
+    explanation:
+      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
     distractors: {},
   },
   {
@@ -380,7 +415,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "BUCJHJXFXUZJHL-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-ethylcyclohexan-1-ol",
-    explanation: "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
+    explanation:
+      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
     distractors: {},
   },
   {
@@ -388,7 +424,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "DTTDXHDYTWQDCS-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-phenylcyclohexan-1-ol",
-    explanation: "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
+    explanation:
+      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
     distractors: {},
   },
   {
@@ -396,7 +433,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "LPCWIFPJLFCXRS-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-ethylcyclopentan-1-ol",
-    explanation: "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
+    explanation:
+      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
     distractors: {},
   },
   {
@@ -404,7 +442,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "GJEILRJIINEWJO-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-propylcyclopentan-1-ol",
-    explanation: "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
+    explanation:
+      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
     distractors: {},
   },
   {
@@ -412,7 +451,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "PVHCTQIRJHNLMY-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-isopropylcyclopentan-1-ol",
-    explanation: "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
+    explanation:
+      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
     distractors: {},
   },
   {
@@ -420,7 +460,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "HGCIXCUEYOPUTN-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "cyclohexene",
-    explanation: "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
+    explanation:
+      "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
     distractors: {},
   },
   {
@@ -428,7 +469,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "ZXIJMRYMVAMXQP-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "cycloheptene",
-    explanation: "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
+    explanation:
+      "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
     distractors: {},
   },
   {
@@ -436,7 +478,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "CFBGXYDUODCMNS-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "cyclobutene",
-    explanation: "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
+    explanation:
+      "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
     distractors: {},
   },
   {
@@ -444,7 +487,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "WCPWJMLXSZIWOP-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-propylcyclohex-1-ene",
-    explanation: "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
+    explanation:
+      "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
     distractors: {},
   },
   {
@@ -452,7 +496,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "ZYMCVIZKLGUPBG-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-isopropylcyclohex-1-ene",
-    explanation: "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
+    explanation:
+      "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
     distractors: {},
   },
   {
@@ -460,7 +505,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "GQBKAYONUCKYKT-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-tert-butylcyclohex-1-ene",
-    explanation: "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
+    explanation:
+      "Under acidic, heated conditions, loss of water produces a carbocation and elimination gives the more stable alkene.",
     distractors: {},
   },
   {
@@ -468,7 +514,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "JOHIXGUTSXXADV-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "undec-2-ene",
-    explanation: "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
+    explanation:
+      "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
     distractors: {},
   },
   {
@@ -476,7 +523,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "CRSBERNSMYQZNG-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "dodec-1-ene",
-    explanation: "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
+    explanation:
+      "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
     distractors: {},
   },
   {
@@ -484,7 +532,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "QIRVGKYPAOQVNP-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "methylenecyclobutane",
-    explanation: "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
+    explanation:
+      "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
     distractors: {},
   },
   {
@@ -492,7 +541,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "FYHISAJRLZLAQP-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "1-ethylidenecyclobutane",
-    explanation: "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
+    explanation:
+      "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
     distractors: {},
   },
   {
@@ -500,7 +550,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "XJYOAWSHIQNEGC-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "methylenecycloheptane",
-    explanation: "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
+    explanation:
+      "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
     distractors: {},
   },
   {
@@ -508,7 +559,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "LPIQUOYDBNQMRZ-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "cyclopentene",
-    explanation: "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
+    explanation:
+      "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
     distractors: {},
   },
   {
@@ -516,7 +568,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "URYYVOIYTNXXBN-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "cyclooctene",
-    explanation: "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
+    explanation:
+      "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
     distractors: {},
   },
   {
@@ -524,7 +577,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "GQRWNDZUODCEAJ-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "methylenecyclooctane",
-    explanation: "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
+    explanation:
+      "A strong base removes a β-hydrogen as the leaving group departs in one concerted elimination step.",
     distractors: {},
   },
   {
@@ -532,7 +586,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "BWYHTITWPWGSHN-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "3,3-dimethylcyclohex-1-ene",
-    explanation: "Only the β-hydrogen anti-periplanar to the axial bromide can be removed. The gem-dimethyl β-carbon has no hydrogen, so only one alkene is possible.",
+    explanation:
+      "Only the β-hydrogen anti-periplanar to the axial bromide can be removed. The gem-dimethyl β-carbon has no hydrogen, so only one alkene is possible.",
     distractors: {},
   },
   {
@@ -540,7 +595,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "FONFXXNTLGAHGI-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "3,3-dimethylcyclopent-1-ene",
-    explanation: "The β-carbon bearing the two methyl groups has no hydrogen. The remaining anti-periplanar β-hydrogen gives the single allowed alkene.",
+    explanation:
+      "The β-carbon bearing the two methyl groups has no hydrogen. The remaining anti-periplanar β-hydrogen gives the single allowed alkene.",
     distractors: {},
   },
   {
@@ -548,7 +604,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "JDRWZCSQCGVIFT-UHFFFAOYSA-N",
     requireStereo: false,
     correctName: "3,3-dimethylcyclohept-1-ene",
-    explanation: "The gem-dimethyl β-carbon cannot donate a β-hydrogen. Elimination therefore occurs only at the β-carbon with the anti-periplanar hydrogen.",
+    explanation:
+      "The gem-dimethyl β-carbon cannot donate a β-hydrogen. Elimination therefore occurs only at the β-carbon with the anti-periplanar hydrogen.",
     distractors: {},
   },
   {
@@ -556,7 +613,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "SOSOLNHZGZXTFK-ZHACJKMWSA-N",
     requireStereo: true,
     correctName: "(E)-1-tert-butyl-2-methyl-2-phenylethene",
-    explanation: "Only one β-hydrogen is available, and the stated anti-periplanar arrangement fixes the substituents on opposite sides of the new double bond. The product is therefore the E alkene.",
+    explanation:
+      "Only one β-hydrogen is available, and the stated anti-periplanar arrangement fixes the substituents on opposite sides of the new double bond. The product is therefore the E alkene.",
     distractors: {},
   },
   {
@@ -564,7 +622,8 @@ export const ANSWER_KEYS: AnswerKey[] = [
     correct: "HZSSEAVJEGAJAU-QXMHVHEDSA-N",
     requireStereo: true,
     correctName: "(Z)-1-tert-butyl-2-ethyl-2-phenylethene",
-    explanation: "Only one β-hydrogen is available, and the stated anti-periplanar arrangement fixes the tert-butyl and phenyl groups on the same side of the new double bond. The product is therefore the Z alkene.",
+    explanation:
+      "Only one β-hydrogen is available, and the stated anti-periplanar arrangement fixes the tert-butyl and phenyl groups on the same side of the new double bond. The product is therefore the Z alkene.",
     distractors: {},
   },
   {
@@ -906,6 +965,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
       "Azide attacks the stereocentre from the back as bromide leaves. The product must have the inverted configuration at the reacting carbon.",
     distractors: {},
   },
+  ...GENERATED_ANSWER_KEYS,
 ];
 
 export function gradeStructure(
