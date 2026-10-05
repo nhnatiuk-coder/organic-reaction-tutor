@@ -113,8 +113,12 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: PracticePage,
+  component: InstructorPracticePage,
 });
+
+function InstructorPracticePage() {
+  return <PracticePage />;
+}
 
 function EditorSkeleton() {
   return (
@@ -147,7 +151,7 @@ function ProductEditor({
   );
 }
 
-function PracticePage() {
+export function PracticePage({ studentView = false }: { studentView?: boolean }) {
   const [practiceModeId, setPracticeModeId] = useState<PracticeMode["id"]>("mixed");
   const [currentQuestionId, setCurrentQuestionId] = useState(
     PRACTICE_QUESTIONS[0]?.id ?? "",
@@ -377,10 +381,19 @@ function PracticePage() {
                 Keep practicing with verified reaction problems
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {practiceMode.description} · {completedInCurrentSet} of {activeQuestions.length} problems visited in this practice set.
-                {completedInCurrentSet === activeQuestions.length
-                  ? " You have completed the set — the next problem starts a fresh cycle."
-                  : ""}
+                {studentView ? (
+                  <>
+                    {practiceMode.description} · Keep working through fresh randomized
+                    problems at your own pace.
+                  </>
+                ) : (
+                  <>
+                    {practiceMode.description} · {completedInCurrentSet} of {activeQuestions.length} problems visited in this practice set.
+                    {completedInCurrentSet === activeQuestions.length
+                      ? " You have completed the set — the next problem starts a fresh cycle."
+                      : ""}
+                  </>
+                )}
               </p>
             </div>
             <div>
@@ -416,34 +429,36 @@ function PracticePage() {
           </div>
         </section>
 
-        <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
-          {activeQuestions.map((q, i) => {
-            return (
-            <li key={q.id}>
-              <button
-                onClick={() => goTo(q)}
-                aria-current={i === index ? "step" : undefined}
-                aria-label={`Question ${i + 1}, ${
-                  q.format === "scheme" ? "reaction scheme" : "text prompt"
-                }`}
-                className={
-                  "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors " +
-                  (i === index
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
-                }
-              >
-                Question {i + 1}
-                {q.format === "scheme" && (
-                  <span aria-hidden="true" className="ml-1 opacity-70">
-                    ⌬
-                  </span>
-                )}
-              </button>
-            </li>
-            );
-          })}
-        </ol>
+        {!studentView && (
+          <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
+            {activeQuestions.map((q, i) => {
+              return (
+              <li key={q.id}>
+                <button
+                  onClick={() => goTo(q)}
+                  aria-current={i === index ? "step" : undefined}
+                  aria-label={`Question ${i + 1}, ${
+                    q.format === "scheme" ? "reaction scheme" : "text prompt"
+                  }`}
+                  className={
+                    "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors " +
+                    (i === index
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
+                  }
+                >
+                  Question {i + 1}
+                  {q.format === "scheme" && (
+                    <span aria-hidden="true" className="ml-1 opacity-70">
+                      ⌬
+                    </span>
+                  )}
+                </button>
+              </li>
+              );
+            })}
+          </ol>
+        )}
 
         {question.format === "scheme" && question.substrateSmiles && (
           <div className="mb-6">
@@ -461,7 +476,9 @@ function PracticePage() {
           <section className="space-y-4">
             <article className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Question {index + 1} of {activeQuestions.length}
+                {studentView
+                  ? "Current practice problem"
+                  : `Question ${index + 1} of ${activeQuestions.length}`}
               </p>
               <h2 className="mt-1 text-lg font-semibold text-card-foreground">
                 {isCompetition ? "Draw both major products" : "Draw the major product"}
