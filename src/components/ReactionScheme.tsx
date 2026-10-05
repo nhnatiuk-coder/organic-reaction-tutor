@@ -48,6 +48,13 @@ export default function ReactionScheme({
   const largeStructure = atomCount >= 14;
   const structureWidth = largeStructure ? 440 : 300;
   const structureHeight = largeStructure ? 280 : 190;
+  // A question can show a chiral starting material even when the product's
+  // configuration is not graded (for example, a constrained E2 problem).
+  // The depiction still has to be unambiguous, so do not tie its wedge/dash
+  // drawing to the grading flag alone.
+  const hasDisplayedStereocentre = substrateSmiles.includes("@");
+  const showCompleteStereoDepiction =
+    stereochemistryMatters || hasDisplayedStereocentre;
 
   return (
     <figure
@@ -79,7 +86,7 @@ export default function ReactionScheme({
                 label={substrateName}
                 width={structureWidth}
                 height={structureHeight}
-                showCompleteStereoDepiction={stereochemistryMatters}
+                showCompleteStereoDepiction={showCompleteStereoDepiction}
               />
             </Suspense>
           </ClientOnly>
@@ -132,7 +139,7 @@ export default function ReactionScheme({
           {conformationalHint}
         </p>
       )}
-      {stereochemistryMatters && (
+      {showCompleteStereoDepiction && (
         <p className="mt-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-card-foreground">
           <span className="font-semibold">Stereochemistry shown: </span>
           the solid wedge projects toward you and the dashed wedge projects
