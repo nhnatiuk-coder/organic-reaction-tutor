@@ -861,6 +861,51 @@ export const ANSWER_KEYS: AnswerKey[] = [
       distractors: {},
     },
   },
+  {
+    id: "q84",
+    correct: "OBGYQMRSTONMCE-BRFYHDHCSA-N",
+    requireStereo: true,
+    correctName: "2-iodo-5-methylheptane with inversion",
+    explanation:
+      "Iodide attacks the stereocentre from the back as bromide leaves. The product must have the inverted configuration at the reacting carbon.",
+    distractors: {},
+  },
+  {
+    id: "q85",
+    correct: "MLUFSBKOXWDYEF-QVDQXJPCSA-N",
+    requireStereo: true,
+    correctName: "3-azido-6-methylnonane with inversion",
+    explanation:
+      "Azide attacks the stereocentre from the back as bromide leaves. The product must have the inverted configuration at the reacting carbon.",
+    distractors: {},
+  },
+  {
+    id: "q86",
+    correct: "VSDRTHPRMPEAQI-JTQLQIEISA-N",
+    requireStereo: true,
+    correctName: "2-benzylbutanenitrile with inversion",
+    explanation:
+      "Cyanide attacks the stereocentre from the back as bromide leaves. The product must have the inverted configuration at the reacting carbon.",
+    distractors: {},
+  },
+  {
+    id: "q87",
+    correct: "YFEPGJZYSICJGG-AWKYBWMHSA-N",
+    requireStereo: true,
+    correctName: "4-ethyl-3-(phenylsulfanyl)heptane with inversion",
+    explanation:
+      "Thiophenoxide attacks the stereocentre from the back as bromide leaves. The product must have the inverted configuration at the reacting carbon.",
+    distractors: {},
+  },
+  {
+    id: "q88",
+    correct: "JGELZELRSIJYRX-RRKGBCIJSA-N",
+    requireStereo: true,
+    correctName: "4-azido-5-ethylnonane with inversion",
+    explanation:
+      "Azide attacks the stereocentre from the back as bromide leaves. The product must have the inverted configuration at the reacting carbon.",
+    distractors: {},
+  },
 ];
 
 export function gradeStructure(

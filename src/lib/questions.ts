@@ -37,7 +37,7 @@ export function getQuestionMechanisms(
   return [question.mechanism];
 }
 
-/** Shown only after a student's first incorrect submission. */
+/** Shown only when a student requests the optional reaction-type hint. */
 export function getMechanismRevealLabel(question: Question) {
   if (question.mechanism === "SN1/E1") return "SN1 and E1";
   if (question.mechanism === "SN2/E2") return "SN2 and E2";
@@ -1165,6 +1165,76 @@ const EXPANDED_QUESTIONS: Question[] = [
     prompt:
       "Draw both major organic products: the product from substitution and the major alkene from elimination.",
     stereochemistryMatters: false,
+  },
+  {
+    id: "q84",
+    skeletonId: "5-methylheptane",
+    mechanism: "SN2",
+    format: "scheme",
+    title: "Chiral secondary bromide with iodide",
+    substrate: "2-bromo-5-methylheptane",
+    substrateSmiles: "C[C@H](Br)CCC(C)CC",
+    reagents: "NaI",
+    conditions: "acetone, 50 °C",
+    prompt:
+      "Draw the major organic product, including stereochemistry. Use wedge/dash bonds — the configuration is graded as well as connectivity.",
+    stereochemistryMatters: true,
+  },
+  {
+    id: "q85",
+    skeletonId: "6-methylnonane",
+    mechanism: "SN2",
+    format: "scheme",
+    title: "Chiral secondary bromide with azide",
+    substrate: "3-bromo-6-methylnonane",
+    substrateSmiles: "CC[C@H](Br)CCC(C)CCC",
+    reagents: "NaN₃",
+    conditions: "DMF, 25 °C",
+    prompt:
+      "Draw the major organic product, including stereochemistry. Use wedge/dash bonds — the configuration is graded as well as connectivity.",
+    stereochemistryMatters: true,
+  },
+  {
+    id: "q86",
+    skeletonId: "butylbenzene",
+    mechanism: "SN2",
+    format: "scheme",
+    title: "Chiral benzylic bromide with cyanide",
+    substrate: "2-bromo-1-phenylbutane",
+    substrateSmiles: "c1ccccc1C[C@H](Br)CC",
+    reagents: "NaCN",
+    conditions: "DMSO, 25 °C",
+    prompt:
+      "Draw the major organic product, including stereochemistry. Use wedge/dash bonds — the configuration is graded as well as connectivity.",
+    stereochemistryMatters: true,
+  },
+  {
+    id: "q87",
+    skeletonId: "4-ethylheptane",
+    mechanism: "SN2",
+    format: "scheme",
+    title: "Chiral secondary bromide with thiophenoxide",
+    substrate: "3-bromo-4-ethylheptane",
+    substrateSmiles: "CC[C@H](Br)C(CC)CCC",
+    reagents: "NaSC₆H₅",
+    conditions: "DMF, 25 °C",
+    prompt:
+      "Draw the major organic product, including stereochemistry. Use wedge/dash bonds — the configuration is graded as well as connectivity.",
+    stereochemistryMatters: true,
+  },
+  {
+    id: "q88",
+    skeletonId: "5-ethylnonane",
+    mechanism: "SN2",
+    format: "scheme",
+    title: "Chiral secondary bromide with azide",
+    substrate: "4-bromo-5-ethylnonane",
+    substrateSmiles: "CCC[C@H](Br)C(CC)CCCC",
+    reagents: "NaN₃",
+    conditions: "DMF, 25 °C",
+    prompt:
+      "Draw the major organic product, including stereochemistry. Use wedge/dash bonds — the configuration is graded as well as connectivity.",
+    stereochemistryMatters: true,
   },
 ];
 
