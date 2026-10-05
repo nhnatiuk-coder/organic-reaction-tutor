@@ -83,13 +83,40 @@ const TOSYLATE_SMILES = "OS(=O)(=O)c1ccc(C)cc1";
 /**
  * Each generated carbon skeleton is used only once, but the leaving group
  * should not be a cue that every reaction is a bromide. Split alkyl leaving
- * groups approximately evenly among bromide, iodide, and tosylate.
+ * groups approximately evenly among bromide, iodide, tosylate, and chloride.
  */
-function leavingGroupVariant(index) {
-  const variant = index % 3;
+function leavingGroupVariant(index, { allowChloride = true } = {}) {
+  if (!allowChloride) {
+    const variant = index % 3;
+    if (variant === 1) {
+      return { id: "bromide", label: "bromide", smiles: "Br" };
+    }
+    if (variant === 2) {
+      return { id: "iodide", label: "iodide", smiles: "I" };
+    }
+    return {
+      id: "tosylate",
+      label: "tosylate (OTs)",
+      smiles: TOSYLATE_SMILES,
+    };
+  }
+
+  const variant = index % 4;
   if (variant === 1) return { id: "bromide", label: "bromide", smiles: "Br" };
   if (variant === 2) return { id: "iodide", label: "iodide", smiles: "I" };
-  return { id: "tosylate", label: "tosylate (OTs)", smiles: TOSYLATE_SMILES };
+  if (variant === 3) {
+    return {
+      id: "tosylate",
+      label: "tosylate (OTs)",
+      smiles: TOSYLATE_SMILES,
+    };
+  }
+  return { id: "chloride", label: "chloride", smiles: "Cl" };
+}
+
+function conditionsForLeavingGroup(leavingGroup, standardConditions) {
+  if (leavingGroup.id !== "chloride") return standardConditions;
+  return standardConditions.replace("25 °C", "50 °C").replace("heat", "reflux");
 }
 
 function primaryLeavingGroupVariant(index, tail) {
@@ -121,8 +148,8 @@ function primaryEliminationProduct(variant, tail) {
   return variant.atTailEnd ? `C${tail}=C` : `C=${tail}`;
 }
 
-function secondarySubstrateSmiles(index, tail, pattern) {
-  const leavingGroup = leavingGroupVariant(index);
+function secondarySubstrateSmiles(index, tail, pattern, options) {
+  const leavingGroup = leavingGroupVariant(index, options);
   return {
     leavingGroup,
     substrateSmiles: pattern(leavingGroup.smiles),
@@ -216,6 +243,7 @@ fill(
       title: `Primary alkyl ${variant.label} with cyanide`,
       substrate: `Primary alkyl ${variant.label} (see scheme)`,
       substrateSmiles: variant.substrateSmiles,
+      conditions: conditionsForLeavingGroup(variant, "DMSO, 25 °C"),
       prompt: `Draw the major organic product. Replace the ${variant.label} with the cyanide carbon; do not draw inorganic by-products.`,
       explanation: `Cyanide is a strong, weakly basic nucleophile. With a primary ${variant.label} in DMSO, substitution gives the nitrile product.`,
       productSmiles: primarySubstitutionProduct(variant, tail, "cyanide"),
@@ -245,6 +273,7 @@ fill(
       title: `Branched primary alkyl ${variant.label} with azide`,
       substrate: `Branched primary alkyl ${variant.label} (see scheme)`,
       substrateSmiles: variant.substrateSmiles,
+      conditions: conditionsForLeavingGroup(variant, "DMF, 25 °C"),
       prompt: `Draw the major organic product. Replace the ${variant.label} with azide; use the reaction scheme to keep the carbon skeleton intact.`,
       explanation: `Azide is a good nucleophile and weak base. A primary ${variant.label} in DMF reacts by substitution while retaining the carbon skeleton shown in the scheme.`,
       productSmiles: primarySubstitutionProduct(variant, tail, "azide"),
@@ -274,6 +303,7 @@ fill(
       index,
       tail,
       (leavingGroupSmiles) => `C[C@H](${leavingGroupSmiles})${tail}`,
+      { allowChloride: false },
     );
     return {
       title: `Chiral secondary alkyl ${leavingGroup.label} with hydroxide`,
@@ -310,6 +340,10 @@ fill(
       title: `Tertiary alkyl ${leavingGroup.label} solvolysis`,
       substrate: `Tertiary alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
+      conditions: conditionsForLeavingGroup(
+        leavingGroup,
+        "aqueous acetone, 25 °C",
+      ),
       explanation: `The tertiary ${leavingGroup.label} ionises in the polar protic medium, then water captures the carbocation to give the alcohol.`,
       productSmiles: `OC(C)(C)${tail}`,
     };
@@ -342,6 +376,10 @@ fill(
       title: `Highly substituted ${leavingGroup.label} in methanol`,
       substrate: `Highly substituted alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
+      conditions: conditionsForLeavingGroup(
+        leavingGroup,
+        "25 °C, no added base",
+      ),
       explanation: `Ionisation of the highly substituted ${leavingGroup.label} gives a stable tertiary carbocation. Methanol attacks that cation, giving the methyl ether after deprotonation.`,
       productSmiles: `COC(C)(CC)${tail}`,
     };
@@ -374,6 +412,10 @@ fill(
       title: `Secondary ${leavingGroup.label} requiring a hydride shift`,
       substrate: `Branched secondary alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
+      conditions: conditionsForLeavingGroup(
+        leavingGroup,
+        "aqueous acetone, AgNO₃, 25 °C",
+      ),
       explanation: `Loss of the ${leavingGroup.label} first gives a secondary carbocation. A hydride shift forms the more stable tertiary carbocation, which is then trapped by water.`,
       productSmiles: `CCC(O)(C)${tail}`,
     };
@@ -473,6 +515,7 @@ fill(
       title: `Primary alkyl ${variant.label} with bulky base`,
       substrate: `Primary alkyl ${variant.label} (see scheme)`,
       substrateSmiles: variant.substrateSmiles,
+      conditions: conditionsForLeavingGroup(variant, "tert-butanol, heat"),
       explanation: `A strong bulky base removes a beta hydrogen as the ${variant.label} leaves. With only one beta carbon, the alkene position is fixed.`,
       productSmiles: primaryEliminationProduct(variant, tail),
     };
@@ -505,6 +548,7 @@ fill(
       title: `Branched tertiary ${leavingGroup.label} with ethoxide`,
       substrate: `Branched tertiary alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
+      conditions: conditionsForLeavingGroup(leavingGroup, "CH₃CH₂OH, heat"),
       explanation: `Ethoxide is a small strong base. Concerted elimination of the ${leavingGroup.label} gives the most substituted available alkene.`,
       productSmiles: `C(C)(CC)=${tail}`,
     };
@@ -539,6 +583,7 @@ fill(
       title: `Conformationally constrained ${leavingGroup.label} E2 elimination`,
       substrate: `Chiral secondary alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
+      conditions: conditionsForLeavingGroup(leavingGroup, "tert-butanol, heat"),
       productSmiles: `C=CC(C)(C)${tail}`,
       conformationalHint:
         "Use the supplied reactive staggered conformer. The bulky beta carbon on one side has no hydrogen, so only the beta hydrogen anti to the leaving group can be removed.",
