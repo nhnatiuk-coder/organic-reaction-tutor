@@ -22,11 +22,14 @@ type StudentPracticeSearch = {
 
 export const Route = createFileRoute("/practice")({
   validateSearch: (search: Record<string, unknown>): StudentPracticeSearch => ({
-    start: typeof search.start === "string" ? search.start : undefined,
+    start: search.start === "1" || search.start === 1 ? "1" : undefined,
     mode: typeof search.mode === "string" ? search.mode : undefined,
     difficulty:
       typeof search.difficulty === "string" ? search.difficulty : undefined,
-    length: typeof search.length === "string" ? search.length : undefined,
+    length:
+      typeof search.length === "string" || typeof search.length === "number"
+        ? String(search.length)
+        : undefined,
   }),
   head: () => ({
     meta: [
