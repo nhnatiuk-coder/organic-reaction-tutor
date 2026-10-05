@@ -87,6 +87,9 @@ export default function ReactionScheme({
                 width={structureWidth}
                 height={structureHeight}
                 showCompleteStereoDepiction={showCompleteStereoDepiction}
+                preferHydrogenDashed={
+                  hasDisplayedStereocentre && !stereochemistryMatters
+                }
               />
             </Suspense>
           </ClientOnly>

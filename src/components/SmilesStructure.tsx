@@ -8,11 +8,18 @@ type Props = {
   height?: number;
   /** Add the complementary 3D bond for the hydrogen at a stereocentre. */
   showCompleteStereoDepiction?: boolean;
+  /**
+   * Use the teaching convention H on a dashed bond and the smallest carbon
+   * substituent on a solid wedge. Used when configuration is shown but not
+   * itself graded, such as the constrained E2 schemes.
+   */
+  preferHydrogenDashed?: boolean;
 };
 
 type StereoVertex = {
   id: number;
   neighbours: number[];
+  position: { x: number; y: number };
   value: {
     element: string;
     isStereoCenter: boolean;
@@ -43,7 +50,28 @@ type StereoCapableDrawer = {
  * We change the graph before SmilesDrawer paints it so its own SVG renderer
  * draws both a solid wedge and a dashed wedge at every marked centre.
  */
-function addComplementaryStereoBonds(graph: StereoGraph) {
+function preferredCarbonSubstituent(
+  centre: StereoVertex,
+  neighbours: StereoVertex[],
+) {
+  return [...neighbours]
+    .filter(
+      (vertex) =>
+        vertex.value.element === "C" &&
+        !vertex.value.isStereoCenter &&
+        vertex.id !== centre.id,
+    )
+    .sort((first, second) => {
+      const firstDegree = first.neighbours.length;
+      const secondDegree = second.neighbours.length;
+      return firstDegree - secondDegree || first.id - second.id;
+    })[0];
+}
+
+function addComplementaryStereoBonds(
+  graph: StereoGraph,
+  preferHydrogenDashed: boolean,
+) {
   graph.vertices
     .filter((centre) => centre.value.isStereoCenter)
     .forEach((centre) => {
@@ -58,11 +86,32 @@ function addComplementaryStereoBonds(graph: StereoGraph) {
         .find(({ edge }) => edge.wedge === "up" || edge.wedge === "down");
       if (!stereobond) return;
 
+      const hydrogen = neighbours.find(
+        (vertex) => vertex.value.element === "H",
+      );
+      const carbonSubstituent = preferredCarbonSubstituent(
+        centre,
+        neighbours,
+      );
+
+      if (preferHydrogenDashed && hydrogen && carbonSubstituent) {
+        // These questions use chirality to show a reactive conformation but
+        // do not grade R/S configuration. Keep the leaving group in the plane
+        // and draw the conventional, easy-to-read H-dash / C-wedge pair.
+        neighbours.forEach((vertex) => {
+          graph.getEdge(centre.id, vertex.id).wedge = "";
+        });
+        graph.getEdge(centre.id, hydrogen.id).wedge = "down";
+        graph.getEdge(centre.id, carbonSubstituent.id).wedge = "up";
+        hydrogen.value.isDrawn = true;
+        carbonSubstituent.value.isDrawn = true;
+        return;
+      }
+
+      const hydrogenTarget =
+        hydrogen?.id !== stereobond.vertex.id ? hydrogen : undefined;
       const complementTarget =
-        neighbours.find(
-          (vertex) =>
-            vertex.value.element === "H" && vertex.id !== stereobond.vertex.id,
-        ) ??
+        hydrogenTarget ??
         neighbours.find((vertex) => {
           if (vertex.id === stereobond.vertex.id) return false;
           if (vertex.value.isStereoCenter) return false;
@@ -83,14 +132,19 @@ function addComplementaryStereoBonds(graph: StereoGraph) {
     });
 }
 
-function configureCompleteStereoDepiction(rawDrawer: unknown) {
+function configureCompleteStereoDepiction(
+  rawDrawer: unknown,
+  preferHydrogenDashed: boolean,
+) {
   const preprocessor = (rawDrawer as StereoCapableDrawer).preprocessor;
   const annotate = preprocessor?.annotateStereochemistry;
   if (!preprocessor || !annotate) return;
 
   preprocessor.annotateStereochemistry = () => {
     annotate.call(preprocessor);
-    if (preprocessor.graph) addComplementaryStereoBonds(preprocessor.graph);
+    if (preprocessor.graph) {
+      addComplementaryStereoBonds(preprocessor.graph, preferHydrogenDashed);
+    }
   };
 }
 
@@ -104,6 +158,7 @@ export default function SmilesStructure({
   width = 220,
   height = 150,
   showCompleteStereoDepiction = false,
+  preferHydrogenDashed = false,
 }: Props) {
   const ref = useRef<SVGSVGElement | null>(null);
   const rawId = useId();
@@ -141,7 +196,7 @@ export default function SmilesStructure({
           terminalCarbons: false,
         });
         if (showCompleteStereoDepiction) {
-          configureCompleteStereoDepiction(drawer);
+          configureCompleteStereoDepiction(drawer, preferHydrogenDashed);
         }
 
         api.parse(
@@ -164,7 +219,14 @@ export default function SmilesStructure({
     return () => {
       cancelled = true;
     };
-  }, [smiles, width, height, showCompleteStereoDepiction, svgId]);
+  }, [
+    smiles,
+    width,
+    height,
+    showCompleteStereoDepiction,
+    preferHydrogenDashed,
+    svgId,
+  ]);
 
   if (failed) {
     return (
