@@ -73,7 +73,7 @@ const PRACTICE_MODES: readonly PracticeMode[] = [
   },
 ];
 
-type DifficultyFilter = "all" | DifficultyLevel;
+type DifficultyFilter = "progressive" | DifficultyLevel;
 type SessionLength = 5 | 10 | 25 | 50 | "all";
 
 const DIFFICULTY_OPTIONS: readonly {
@@ -81,7 +81,11 @@ const DIFFICULTY_OPTIONS: readonly {
   label: string;
   description: string;
 }[] = [
-  { id: "all", label: "All levels", description: "Any difficulty" },
+  {
+    id: "progressive",
+    label: "Progressive",
+    description: "Introductory questions first, then intermediate and advanced",
+  },
   {
     id: "introductory",
     label: "Introductory",
@@ -108,9 +112,81 @@ function questionsForFilters(mode: PracticeMode, difficulty: DifficultyFilter) {
       getQuestionMechanisms(question).some((mechanism) =>
         mode.mechanisms.includes(mechanism),
       ) &&
-      (difficulty === "all" || getQuestionDifficulty(question) === difficulty),
+      (difficulty === "progressive" ||
+        getQuestionDifficulty(question) === difficulty),
   );
 }
+
+function shuffle<T>(items: readonly T[]) {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [
+      shuffled[swapIndex]!,
+      shuffled[index]!,
+    ];
+  }
+  return shuffled;
+}
+
+function sessionQuestionsFor(
+  questions: readonly (typeof PRACTICE_QUESTIONS)[number][],
+  difficulty: DifficultyFilter,
+  sessionLength: SessionLength,
+  randomize = true,
+) {
+  const total =
+    sessionLength === "all"
+      ? questions.length
+      : Math.min(sessionLength, questions.length);
+
+  if (difficulty !== "progressive") {
+    const ordered = randomize ? shuffle(questions) : [...questions];
+    return ordered.slice(0, total);
+  }
+
+  const levels: readonly DifficultyLevel[] = [
+    "introductory",
+    "intermediate",
+    "advanced",
+  ];
+  const groups = levels
+    .map((level) => {
+      const grouped = questions.filter(
+        (question) => getQuestionDifficulty(question) === level,
+      );
+      return randomize ? shuffle(grouped) : grouped;
+    })
+    .filter((group) => group.length > 0);
+
+  if (sessionLength === "all") return groups.flat();
+
+  const targetPerGroup = Math.floor(total / groups.length);
+  let remaining = total % groups.length;
+  const selected = groups.flatMap((group) => {
+    const target = targetPerGroup + (remaining > 0 ? 1 : 0);
+    remaining -= 1;
+    return group.slice(0, target);
+  });
+
+  // Reallocate only if a future bank has fewer questions at one level.
+  if (selected.length < total) {
+    const selectedIds = new Set(selected.map((question) => question.id));
+    for (const question of groups.flat()) {
+      if (selected.length >= total) break;
+      if (!selectedIds.has(question.id)) selected.push(question);
+    }
+  }
+
+  return selected;
+}
+
+const INITIAL_SESSION_QUESTIONS = sessionQuestionsFor(
+  questionsForFilters(PRACTICE_MODES[0]!, "progressive"),
+  "progressive",
+  "all",
+  false,
+);
 
 function hideMechanismNames(text: string) {
   return text.replace(/\b(SN1|SN2|E1|E2)\b/g, "the expected pathway");
@@ -209,17 +285,23 @@ export function PracticePage({
 }) {
   const [practiceModeId, setPracticeModeId] =
     useState<PracticeMode["id"]>("mixed");
-  const [difficulty, setDifficulty] = useState<DifficultyFilter>("all");
+  const [difficulty, setDifficulty] =
+    useState<DifficultyFilter>("progressive");
   const [sessionLength, setSessionLength] = useState<SessionLength>("all");
+  const [sessionQuestionIds, setSessionQuestionIds] = useState(
+    INITIAL_SESSION_QUESTIONS.map((question) => question.id),
+  );
   const [currentQuestionId, setCurrentQuestionId] = useState(
-    PRACTICE_QUESTIONS[0]?.id ?? "",
+    INITIAL_SESSION_QUESTIONS[0]?.id ?? "",
   );
   const [result, setResult] = useState<PracticeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
-  const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>([
-    PRACTICE_QUESTIONS[0]?.id ?? "",
-  ]);
+  const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>(
+    INITIAL_SESSION_QUESTIONS[0]?.id
+      ? [INITIAL_SESSION_QUESTIONS[0].id]
+      : [],
+  );
   const [hintQuestionIds, setHintQuestionIds] = useState<string[]>([]);
   const ketcherRef = useRef<Ketcher | null>(null);
   const substitutionKetcherRef = useRef<Ketcher | null>(null);
@@ -230,10 +312,6 @@ export function PracticePage({
     (mode) => mode.id === practiceModeId,
   )!;
   const activeQuestions = questionsForFilters(practiceMode, difficulty);
-  const questionsInSession =
-    sessionLength === "all"
-      ? activeQuestions.length
-      : Math.min(sessionLength, activeQuestions.length);
 
   if (activeQuestions.length === 0) {
     return (
@@ -254,14 +332,21 @@ export function PracticePage({
     );
   }
 
+  const sessionQuestions = sessionQuestionIds
+    .map((id) => activeQuestions.find((item) => item.id === id))
+    .filter((question): question is (typeof activeQuestions)[number] =>
+      Boolean(question),
+    );
+  const questionsInSession = sessionQuestions.length;
   const question =
-    activeQuestions.find((item) => item.id === currentQuestionId) ??
+    sessionQuestions.find((item) => item.id === currentQuestionId) ??
+    sessionQuestions[0] ??
     activeQuestions[0]!;
-  const index = activeQuestions.indexOf(question);
+  const index = sessionQuestions.indexOf(question);
   const isCompetition = question.answerMode === "competition";
   const isMechanismHintShown = hintQuestionIds.includes(question.id);
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
-    activeQuestions.some((item) => item.id === id),
+    sessionQuestions.some((item) => item.id === id),
   ).length;
   const sessionComplete = completedInCurrentSet >= questionsInSession;
 
@@ -388,19 +473,34 @@ export function PracticePage({
       return;
     }
 
-    const unvisited = activeQuestions.filter(
+    const unvisited = sessionQuestions.filter(
       (item) => !seenQuestionIds.includes(item.id),
     );
-    const next = unvisited[Math.floor(Math.random() * unvisited.length)]!;
+    const next =
+      difficulty === "progressive"
+        ? unvisited[0]
+        : unvisited[Math.floor(Math.random() * unvisited.length)];
+    if (!next) return;
     setSeenQuestionIds((seen) => [...seen, next.id]);
     await showQuestion(next.id);
   }
 
-  async function startPracticeSession(questions: typeof activeQuestions) {
-    const firstQuestion =
-      questions[Math.floor(Math.random() * questions.length)];
+  async function startPracticeSession(
+    questions: typeof activeQuestions,
+    nextDifficulty = difficulty,
+    nextSessionLength = sessionLength,
+  ) {
+    const nextSessionQuestions = sessionQuestionsFor(
+      questions,
+      nextDifficulty,
+      nextSessionLength,
+    );
+    const firstQuestion = nextSessionQuestions[0];
     if (!firstQuestion) return;
 
+    setSessionQuestionIds(
+      nextSessionQuestions.map((question) => question.id),
+    );
     setCurrentQuestionId(firstQuestion.id);
     setSeenQuestionIds([firstQuestion.id]);
     setResult(null);
@@ -410,19 +510,25 @@ export function PracticePage({
 
   async function selectPracticeMode(nextMode: PracticeMode) {
     setPracticeModeId(nextMode.id);
-    await startPracticeSession(questionsForFilters(nextMode, difficulty));
+    await startPracticeSession(
+      questionsForFilters(nextMode, difficulty),
+      difficulty,
+      sessionLength,
+    );
   }
 
   async function selectDifficulty(nextDifficulty: DifficultyFilter) {
     setDifficulty(nextDifficulty);
     await startPracticeSession(
       questionsForFilters(practiceMode, nextDifficulty),
+      nextDifficulty,
+      sessionLength,
     );
   }
 
   async function selectSessionLength(nextLength: SessionLength) {
     setSessionLength(nextLength);
-    await startPracticeSession(activeQuestions);
+    await startPracticeSession(activeQuestions, difficulty, nextLength);
   }
 
   return (
@@ -478,13 +584,22 @@ export function PracticePage({
                   ? " This session is complete — start a new one whenever you are ready."
                   : ""}
               </p>
+              {difficulty === "progressive" && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Progressive order: introductory → intermediate → advanced.
+                </p>
+              )}
             </div>
             <div>
               <button
                 onClick={nextRandomProblem}
                 className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
-                {sessionComplete ? "Start new session" : "New random problem"}
+                {sessionComplete
+                  ? "Start new session"
+                  : difficulty === "progressive"
+                    ? "Next problem"
+                    : "New random problem"}
               </button>
             </div>
           </div>
@@ -572,7 +687,7 @@ export function PracticePage({
 
         {!studentView && sessionLength === "all" && (
           <ol className="mb-6 flex flex-wrap gap-2" aria-label="Question list">
-            {activeQuestions.map((q, i) => {
+            {sessionQuestions.map((q, i) => {
               return (
                 <li key={q.id}>
                   <button
