@@ -16,55 +16,76 @@ const indigo = await Indigo();
 const options = new indigo.MapStringString();
 const inchiKey = (smiles) => indigo.convert(smiles, "inchi-key", options);
 
-function random(seed) {
-  let value = seed >>> 0;
-  return () => {
-    value += 0x6d2b79f5;
-    let result = value;
-    result = Math.imul(result ^ (result >>> 15), result | 1);
-    result ^= result + Math.imul(result ^ (result >>> 7), result | 61);
-    return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
-  };
+/**
+ * Build a compact, rooted alkyl tree. The depth is deliberately limited to
+ * three C–C bonds from the attachment point, so no generated open carbon
+ * chain can grow beyond eight carbons once it is placed in a reaction.
+ */
+function countCarbons(smiles) {
+  return (smiles.match(/C/g) ?? []).length;
 }
 
-function alkylTail(seed, { rootBranch = false } = {}) {
-  const next = random(seed);
-  // Keep the scheme legible: backbones remain linear or lightly branched.
-  // A wider range of short-to-medium chains still yields a large unique bank
-  // without turning introductory items into dense, hard-to-read structures.
-  const length = 4 + Math.floor(next() * 7);
-  let tail = "";
-  let branchCount = 0;
+function compactAlkylTails() {
+  const all = [{ smiles: "C", rootBranch: false }];
+  const seen = new Set(["C"]);
 
-  for (let index = 0; index < length; index += 1) {
-    let branch = "";
-    if (index === 0 && rootBranch) {
-      branch = "(C)";
-      branchCount += 1;
-    } else if (index > 0 && index < length - 1) {
-      const roll = next();
-      if (branchCount < 3 && roll < 0.26) {
-        branch = "(C)";
-        branchCount += 1;
-      } else if (branchCount < 3 && roll < 0.38) {
-        branch = "(CC)";
-        branchCount += 1;
+  for (let depth = 1; depth <= 3; depth += 1) {
+    const subtrees = [...all];
+    const add = (children) => {
+      const ordered = [...children].sort((first, second) =>
+        first.smiles.localeCompare(second.smiles),
+      );
+      const [mainChain, ...branches] = ordered;
+      const smiles = `C${branches.map((branch) => `(${branch.smiles})`).join("")}${mainChain?.smiles ?? ""}`;
+      if (seen.has(smiles) || countCarbons(smiles) > 18) return;
+      seen.add(smiles);
+      all.push({ smiles, rootBranch: children.length >= 2 });
+    };
+
+    for (let first = 0; first < subtrees.length; first += 1) {
+      add([subtrees[first]]);
+      for (let second = first; second < subtrees.length; second += 1) {
+        add([subtrees[first], subtrees[second]]);
+        for (let third = second; third < subtrees.length; third += 1) {
+          add([subtrees[first], subtrees[second], subtrees[third]]);
+        }
       }
     }
-    tail += `C${branch}`;
   }
 
-  return tail;
+  return all;
 }
+
+function compactCycloalkylTails() {
+  return [
+    "C1CC1",
+    "C1(C)CC1",
+    "C1CC(C)1",
+    "C1CCC1",
+    "C1(C)CCC1",
+    "C1CC(C)C1",
+    "C1C(C)CC1",
+    "C1CC(C)(C)C1",
+  ].map((smiles) => ({ smiles, rootBranch: true }));
+}
+
+// The sequence is deterministic, keeps every tail distinct, and includes
+// small cycloalkyl skeletons alongside compact branched acyclic skeletons.
+const TAIL_CANDIDATES = [
+  ...compactCycloalkylTails(),
+  ...compactAlkylTails(),
+];
 
 const usedTailKeys = new Set();
 const usedSubstrateKeys = new Set();
-let seed = 1001;
+let tailCursor = 0;
 
 function takeTail(options = {}) {
-  for (let attempts = 0; attempts < 200000; attempts += 1) {
-    const tail = alkylTail(seed, options);
-    seed += 1;
+  for (let attempts = 0; attempts < TAIL_CANDIDATES.length; attempts += 1) {
+    const candidate =
+      TAIL_CANDIDATES[tailCursor++ % TAIL_CANDIDATES.length];
+    if (options.rootBranch && !candidate.rootBranch) continue;
+    const tail = candidate.smiles;
     const key = inchiKey(`C${tail}`).split("-")[0];
     if (!usedTailKeys.has(key)) {
       usedTailKeys.add(key);
@@ -156,6 +177,80 @@ function secondarySubstrateSmiles(index, tail, pattern, options) {
   };
 }
 
+const MAX_CARBON_CHAIN_LENGTH = 8;
+
+function longestAliphaticCarbonChain(smiles) {
+  const molfile = indigo.convert(smiles, "molfile", options);
+  const lines = molfile.split(/\r?\n/);
+  const countsIndex = lines.findIndex((line) => /V2000\s*$/.test(line));
+  if (countsIndex < 0) {
+    throw new Error(`Could not inspect carbon skeleton for ${smiles}`);
+  }
+
+  const [atomCount, bondCount] = lines[countsIndex]
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(Number);
+  const atoms = lines
+    .slice(countsIndex + 1, countsIndex + 1 + atomCount)
+    .map((line) => line.trim().split(/\s+/)[3]);
+  const bonds = lines
+    .slice(countsIndex + 1 + atomCount, countsIndex + 1 + atomCount + bondCount)
+    .map((line) => line.trim().split(/\s+/).slice(0, 3).map(Number));
+
+  // Aromatic carbons belong to phenyl/tosylate groups, not the alkyl carbon
+  // skeleton students are being asked to follow. Exclude them from the chain
+  // limit while still applying the rule to every aliphatic carbon.
+  const aromaticAtoms = new Set();
+  for (const [first, second, bondType] of bonds) {
+    if (bondType === 4) {
+      aromaticAtoms.add(first - 1);
+      aromaticAtoms.add(second - 1);
+    }
+  }
+
+  const carbonAtoms = new Set(
+    atoms
+      .map((element, index) => ({ element, index }))
+      .filter(({ element, index }) => element === "C" && !aromaticAtoms.has(index))
+      .map(({ index }) => index),
+  );
+  const adjacency = new Map(
+    [...carbonAtoms].map((index) => [index, []]),
+  );
+  for (const [first, second] of bonds) {
+    const left = first - 1;
+    const right = second - 1;
+    if (carbonAtoms.has(left) && carbonAtoms.has(right)) {
+      adjacency.get(left).push(right);
+      adjacency.get(right).push(left);
+    }
+  }
+
+  let longest = 0;
+  const visit = (atom, visited) => {
+    longest = Math.max(longest, visited.size);
+    for (const neighbour of adjacency.get(atom)) {
+      if (visited.has(neighbour)) continue;
+      visited.add(neighbour);
+      visit(neighbour, visited);
+      visited.delete(neighbour);
+    }
+  };
+  for (const atom of carbonAtoms) visit(atom, new Set([atom]));
+  return longest;
+}
+
+function assertCarbonChainLimit(smiles, label) {
+  const longest = longestAliphaticCarbonChain(smiles);
+  if (longest > MAX_CARBON_CHAIN_LENGTH) {
+    throw new Error(
+      `${label} has a ${longest}-carbon chain; the maximum is ${MAX_CARBON_CHAIN_LENGTH}.`,
+    );
+  }
+}
+
 function addQuestion({
   id,
   skeletonId,
@@ -173,6 +268,9 @@ function addQuestion({
   correctName,
   explanation,
 }) {
+  assertCarbonChainLimit(substrateSmiles, `${id} substrate`);
+  assertCarbonChainLimit(productSmiles, `${id} product`);
+
   const substrateKey = inchiKey(substrateSmiles).split("-")[0];
   if (usedSubstrateKeys.has(substrateKey)) {
     throw new Error(`Duplicate generated starting structure for ${id}`);
