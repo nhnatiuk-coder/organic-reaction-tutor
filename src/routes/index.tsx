@@ -13,6 +13,11 @@ import {
   type ElementaryMechanism,
 } from "@/lib/questions";
 import { gradeAnswer, type GradeResult } from "@/lib/grading.functions";
+import {
+  downloadPracticeReport,
+  type PracticeReportOutcome,
+  type PracticeReportVerdict,
+} from "@/lib/practice-report";
 
 import ReactionScheme from "@/components/ReactionScheme";
 
@@ -30,6 +35,12 @@ type CompetitionPracticeResult = {
 };
 
 type PracticeResult = SinglePracticeResult | CompetitionPracticeResult;
+
+type QuestionReportResult = {
+  attempts: number;
+  firstAttempt: PracticeReportVerdict;
+  latestAttempt: PracticeReportVerdict;
+};
 
 export type PracticeModeId =
   "mixed" | "sn1" | "sn2" | "e1" | "e2" | "substitution" | "elimination";
@@ -349,6 +360,10 @@ export function PracticePage({
     initialSessionQuestions[0]?.id ? [initialSessionQuestions[0].id] : [],
   );
   const [hintQuestionIds, setHintQuestionIds] = useState<string[]>([]);
+  const [reportByQuestionId, setReportByQuestionId] = useState<
+    Record<string, QuestionReportResult>
+  >({});
+  const [sessionStartedAt, setSessionStartedAt] = useState(() => new Date());
   const ketcherRef = useRef<Ketcher | null>(null);
   const substitutionKetcherRef = useRef<Ketcher | null>(null);
   const eliminationKetcherRef = useRef<Ketcher | null>(null);
@@ -395,6 +410,81 @@ export function PracticePage({
     sessionQuestions.some((item) => item.id === id),
   ).length;
   const sessionComplete = completedInCurrentSet >= questionsInSession;
+  const reportOutcomes: PracticeReportOutcome[] = sessionQuestions.map(
+    (sessionQuestion, questionNumber) => {
+      const report = reportByQuestionId[sessionQuestion.id];
+      return report
+        ? { questionNumber: questionNumber + 1, ...report }
+        : {
+            questionNumber: questionNumber + 1,
+            attempts: 0,
+            firstAttempt: "incorrect",
+            latestAttempt: "incorrect",
+          };
+    },
+  );
+  const checkedCount = reportOutcomes.filter(
+    (outcome) => outcome.attempts > 0,
+  ).length;
+  const correctCount = reportOutcomes.filter(
+    (outcome) => outcome.attempts > 0 && outcome.latestAttempt === "correct",
+  ).length;
+  const partialCount = reportOutcomes.filter(
+    (outcome) => outcome.attempts > 0 && outcome.latestAttempt === "partial",
+  ).length;
+  const incorrectCount = reportOutcomes.filter(
+    (outcome) => outcome.attempts > 0 && outcome.latestAttempt === "incorrect",
+  ).length;
+
+  function recordReportResult(verdict: PracticeReportVerdict) {
+    setReportByQuestionId((report) => {
+      const previous = report[question.id];
+      return {
+        ...report,
+        [question.id]: {
+          attempts: (previous?.attempts ?? 0) + 1,
+          firstAttempt: previous?.firstAttempt ?? verdict,
+          latestAttempt: verdict,
+        },
+      };
+    });
+  }
+
+  function competitionVerdict(
+    substitution: GradeResult,
+    elimination: GradeResult,
+  ): PracticeReportVerdict {
+    if (
+      substitution.verdict === "correct" &&
+      elimination.verdict === "correct"
+    ) {
+      return "correct";
+    }
+    if (
+      substitution.verdict === "incorrect" &&
+      elimination.verdict === "incorrect"
+    ) {
+      return "incorrect";
+    }
+    return "partial";
+  }
+
+  function downloadReport() {
+    downloadPracticeReport({
+      practiceSet: practiceMode.label,
+      difficulty:
+        DIFFICULTY_OPTIONS.find((option) => option.id === difficulty)?.label ??
+        difficulty,
+      sessionLength:
+        sessionLength === "all"
+          ? "All available problems"
+          : `${questionsInSession} problems`,
+      startedAt: sessionStartedAt,
+      finishedAt: new Date(),
+      totalProblems: questionsInSession,
+      outcomes: reportOutcomes,
+    });
+  }
 
   async function readInchiKey(
     ketcher: Ketcher | null,
@@ -459,6 +549,7 @@ export function PracticePage({
           substitution,
           elimination,
         });
+        recordReportResult(competitionVerdict(substitution, elimination));
         return;
       }
 
@@ -474,6 +565,7 @@ export function PracticePage({
         kind: "single",
         grade: graded,
       });
+      recordReportResult(graded.verdict);
     } catch {
       setError(
         "Could not read that structure. Check for open valences or unfinished bonds.",
@@ -547,6 +639,8 @@ export function PracticePage({
     setSessionQuestionIds(nextSessionQuestions.map((question) => question.id));
     setCurrentQuestionId(firstQuestion.id);
     setSeenQuestionIds([firstQuestion.id]);
+    setReportByQuestionId({});
+    setSessionStartedAt(new Date());
     setResult(null);
     setError(null);
     await clearEditors();
@@ -655,6 +749,40 @@ export function PracticePage({
               </button>
             </div>
           </div>
+          {sessionComplete && (
+            <section
+              aria-labelledby="session-report-heading"
+              className="mt-5 rounded-lg border border-primary/30 bg-accent p-4"
+            >
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Session complete
+              </p>
+              <h3
+                id="session-report-heading"
+                className="mt-1 text-base font-semibold text-accent-foreground"
+              >
+                Your practice report is ready
+              </h3>
+              <p className="mt-1 text-sm text-accent-foreground">
+                {correctCount} correct, {partialCount} partially correct, and{" "}
+                {incorrectCount} needing revision across {checkedCount} checked{" "}
+                {checkedCount === 1 ? "problem" : "problems"}.{" "}
+                {questionsInSession - checkedCount > 0
+                  ? `${questionsInSession - checkedCount} ${questionsInSession - checkedCount === 1 ? "problem was" : "problems were"} not checked.`
+                  : "Every problem was checked."}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                The PDF is created only in this browser. It does not include a
+                student name and is not saved by the site.
+              </p>
+              <button
+                onClick={downloadReport}
+                className="mt-4 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Download PDF report
+              </button>
+            </section>
+          )}
           {showSessionControls && (
             <div className="mt-4 border-t border-border pt-4">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
