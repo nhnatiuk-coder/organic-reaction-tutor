@@ -31,14 +31,17 @@ type CompetitionPracticeResult = {
 
 type PracticeResult = SinglePracticeResult | CompetitionPracticeResult;
 
+export type PracticeModeId =
+  "mixed" | "sn1" | "sn2" | "e1" | "e2" | "substitution" | "elimination";
+
 type PracticeMode = {
-  id: "mixed" | "sn1" | "sn2" | "e1" | "e2" | "substitution" | "elimination";
+  id: PracticeModeId;
   label: string;
   description: string;
   mechanisms: readonly ElementaryMechanism[];
 };
 
-const PRACTICE_MODES: readonly PracticeMode[] = [
+export const PRACTICE_MODES: readonly PracticeMode[] = [
   {
     id: "mixed",
     label: "Mixed",
@@ -73,10 +76,10 @@ const PRACTICE_MODES: readonly PracticeMode[] = [
   },
 ];
 
-type DifficultyFilter = "progressive" | DifficultyLevel;
-type SessionLength = 5 | 10 | 25 | 50 | "all";
+export type DifficultyFilter = "progressive" | DifficultyLevel;
+export type SessionLength = 5 | 10 | 25 | 50 | "all";
 
-const DIFFICULTY_OPTIONS: readonly {
+export const DIFFICULTY_OPTIONS: readonly {
   id: DifficultyFilter;
   label: string;
   description: string;
@@ -104,7 +107,39 @@ const DIFFICULTY_OPTIONS: readonly {
   },
 ];
 
-const SESSION_LENGTHS: readonly SessionLength[] = [5, 10, 25, 50, "all"];
+export const SESSION_LENGTHS: readonly SessionLength[] = [5, 10, 25, 50, "all"];
+
+export type PracticeSettings = {
+  modeId: PracticeModeId;
+  difficulty: DifficultyFilter;
+  sessionLength: SessionLength;
+};
+
+export const DEFAULT_STUDENT_SETTINGS: PracticeSettings = {
+  modeId: "mixed",
+  difficulty: "progressive",
+  sessionLength: 10,
+};
+
+export function normalisePracticeSettings(
+  settings?: Partial<PracticeSettings>,
+): PracticeSettings {
+  const modeId = PRACTICE_MODES.some((mode) => mode.id === settings?.modeId)
+    ? settings!.modeId!
+    : DEFAULT_STUDENT_SETTINGS.modeId;
+  const difficulty = DIFFICULTY_OPTIONS.some(
+    (option) => option.id === settings?.difficulty,
+  )
+    ? settings!.difficulty!
+    : DEFAULT_STUDENT_SETTINGS.difficulty;
+  const sessionLength = SESSION_LENGTHS.includes(
+    settings?.sessionLength as SessionLength,
+  )
+    ? (settings!.sessionLength as SessionLength)
+    : DEFAULT_STUDENT_SETTINGS.sessionLength;
+
+  return { modeId, difficulty, sessionLength };
+}
 
 function questionsForFilters(mode: PracticeMode, difficulty: DifficultyFilter) {
   return PRACTICE_QUESTIONS.filter(
@@ -181,13 +216,6 @@ function sessionQuestionsFor(
   return selected;
 }
 
-const INITIAL_SESSION_QUESTIONS = sessionQuestionsFor(
-  questionsForFilters(PRACTICE_MODES[0]!, "progressive"),
-  "progressive",
-  "all",
-  false,
-);
-
 function hideMechanismNames(text: string) {
   return text.replace(/\b(SN1|SN2|E1|E2)\b/g, "the expected pathway");
 }
@@ -244,7 +272,7 @@ export const Route = createFileRoute("/")({
 });
 
 function InstructorPracticePage() {
-  return <PracticePage />;
+  return <PracticePage initialSettings={{ sessionLength: "all" }} />;
 }
 
 function EditorSkeleton() {
@@ -280,27 +308,45 @@ function ProductEditor({
 
 export function PracticePage({
   studentView = false,
+  initialSettings,
+  showSessionControls = true,
+  setupHref,
 }: {
   studentView?: boolean;
+  initialSettings?: Partial<PracticeSettings>;
+  showSessionControls?: boolean;
+  setupHref?: string;
 }) {
-  const [practiceModeId, setPracticeModeId] =
-    useState<PracticeMode["id"]>("mixed");
-  const [difficulty, setDifficulty] =
-    useState<DifficultyFilter>("progressive");
-  const [sessionLength, setSessionLength] = useState<SessionLength>("all");
+  const settings = normalisePracticeSettings(initialSettings);
+  const initialPracticeMode = PRACTICE_MODES.find(
+    (mode) => mode.id === settings.modeId,
+  )!;
+  const initialSessionQuestions = sessionQuestionsFor(
+    questionsForFilters(initialPracticeMode, settings.difficulty),
+    settings.difficulty,
+    settings.sessionLength,
+    false,
+  );
+  const [practiceModeId, setPracticeModeId] = useState<PracticeModeId>(
+    settings.modeId,
+  );
+  const [difficulty, setDifficulty] = useState<DifficultyFilter>(
+    settings.difficulty,
+  );
+  const [sessionLength, setSessionLength] = useState<SessionLength>(
+    settings.sessionLength,
+  );
   const [sessionQuestionIds, setSessionQuestionIds] = useState(
-    INITIAL_SESSION_QUESTIONS.map((question) => question.id),
+    initialSessionQuestions.map((question) => question.id),
   );
   const [currentQuestionId, setCurrentQuestionId] = useState(
-    INITIAL_SESSION_QUESTIONS[0]?.id ?? "",
+    initialSessionQuestions[0]?.id ?? "",
   );
   const [result, setResult] = useState<PracticeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>(
-    INITIAL_SESSION_QUESTIONS[0]?.id
-      ? [INITIAL_SESSION_QUESTIONS[0].id]
-      : [],
+    initialSessionQuestions[0]?.id ? [initialSessionQuestions[0].id] : [],
   );
   const [hintQuestionIds, setHintQuestionIds] = useState<string[]>([]);
   const ketcherRef = useRef<Ketcher | null>(null);
@@ -498,9 +544,7 @@ export function PracticePage({
     const firstQuestion = nextSessionQuestions[0];
     if (!firstQuestion) return;
 
-    setSessionQuestionIds(
-      nextSessionQuestions.map((question) => question.id),
-    );
+    setSessionQuestionIds(nextSessionQuestions.map((question) => question.id));
     setCurrentQuestionId(firstQuestion.id);
     setSeenQuestionIds([firstQuestion.id]);
     setResult(null);
@@ -590,7 +634,15 @@ export function PracticePage({
                 </p>
               )}
             </div>
-            <div>
+            <div className="flex flex-wrap gap-2">
+              {setupHref && (
+                <a
+                  href={setupHref}
+                  className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-semibold text-card-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  Change setup
+                </a>
+              )}
               <button
                 onClick={nextRandomProblem}
                 className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
@@ -603,86 +655,90 @@ export function PracticePage({
               </button>
             </div>
           </div>
-          <div className="mt-4 border-t border-border pt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Choose a practice set
-            </p>
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
-              aria-label="Choose a practice set"
-            >
-              {PRACTICE_MODES.map((mode) => (
-                <button
-                  key={mode.id}
-                  onClick={() => selectPracticeMode(mode)}
-                  aria-pressed={mode.id === practiceMode.id}
-                  className={
-                    "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors " +
-                    (mode.id === practiceMode.id
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
-                  }
-                >
-                  {mode.label}
-                </button>
-              ))}
-            </div>
-            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Choose a difficulty level
-            </p>
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
-              aria-label="Choose a difficulty level"
-            >
-              {DIFFICULTY_OPTIONS.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => selectDifficulty(option.id)}
-                  aria-pressed={option.id === difficulty}
-                  title={option.description}
-                  className={
-                    "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors " +
-                    (option.id === difficulty
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
-                  }
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Choose a session length
-            </p>
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
-              aria-label="Choose a session length"
-            >
-              {SESSION_LENGTHS.map((length) => {
-                const available =
-                  length === "all" || length <= activeQuestions.length;
-                return (
+          {showSessionControls && (
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Choose a practice set
+              </p>
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label="Choose a practice set"
+              >
+                {PRACTICE_MODES.map((mode) => (
                   <button
-                    key={String(length)}
-                    onClick={() => selectSessionLength(length)}
-                    aria-pressed={length === sessionLength}
-                    disabled={!available}
+                    key={mode.id}
+                    onClick={() => selectPracticeMode(mode)}
+                    aria-pressed={mode.id === practiceMode.id}
                     className={
-                      "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 " +
-                      (length === sessionLength
+                      "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors " +
+                      (mode.id === practiceMode.id
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
                     }
                   >
-                    {length === "all" ? "All available" : `${length} questions`}
+                    {mode.label}
                   </button>
-                );
-              })}
+                ))}
+              </div>
+              <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Choose a difficulty level
+              </p>
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label="Choose a difficulty level"
+              >
+                {DIFFICULTY_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => selectDifficulty(option.id)}
+                    aria-pressed={option.id === difficulty}
+                    title={option.description}
+                    className={
+                      "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors " +
+                      (option.id === difficulty
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
+                    }
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Choose a session length
+              </p>
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label="Choose a session length"
+              >
+                {SESSION_LENGTHS.map((length) => {
+                  const available =
+                    length === "all" || length <= activeQuestions.length;
+                  return (
+                    <button
+                      key={String(length)}
+                      onClick={() => selectSessionLength(length)}
+                      aria-pressed={length === sessionLength}
+                      disabled={!available}
+                      className={
+                        "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 " +
+                        (length === sessionLength
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
+                      }
+                    >
+                      {length === "all"
+                        ? "All available"
+                        : `${length} questions`}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
         {!studentView && sessionLength === "all" && (
