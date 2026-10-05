@@ -17,84 +17,111 @@ const options = new indigo.MapStringString();
 const inchiKey = (smiles) => indigo.convert(smiles, "inchi-key", options);
 
 /**
- * Build a compact, rooted alkyl tree. The depth is deliberately limited to
- * three C–C bonds from the attachment point, so no generated open carbon
- * chain can grow beyond eight carbons once it is placed in a reaction.
+ * A deliberately small, readable palette of alkyl and cycloalkyl fragments.
+ * No fragment contains a long zig-zag chain or a dense cluster of branches.
+ * A few single methyl branches and small rings keep the exercise bank varied
+ * without making students decode an artificial-looking carbon tree first.
+ *
+ * The palette contains more than 50 distinct fragments, so a complete
+ * mechanism/difficulty set has no repeated fragment. Fragments may recur in
+ * a different reaction context elsewhere in the 600-question bank; that is a
+ * purposeful trade-off for clear, chemically familiar structures.
  */
-function countCarbons(smiles) {
-  return (smiles.match(/C/g) ?? []).length;
-}
+const RAW_TAIL_CANDIDATES = [
+  // Straight chains and one simple methyl branch.
+  "C",
+  "CC",
+  "CCC",
+  "CCCC",
+  "CCCCC",
+  "C(C)C",
+  "C(C)CC",
+  "C(C)CCC",
+  "CC(C)C",
+  "CC(C)CC",
+  "CC(C)CCC",
+  "CCC(C)C",
+  "CCC(C)CC",
+  "CCCC(C)C",
+  "C(C)(C)C",
+  "CC(C)(C)C",
+  "C(CC)CC",
+  "C(CC)CCC",
+  "CC(CC)CC",
+  "CCC(CC)C",
+  "CCCC(CC)C",
+  "CCCCC(C)C",
+  "CCC(C)CCC",
+  "CC(C)CCCC",
+  "C(C)CCCC",
+  "C(CC)CCCC",
+  "C(C)(C)CC",
+  "C(C)(C)CCC",
+  "C(C)(CC)CC",
+  "CC(C)(C)CC",
+  "CC(C)(CC)C",
 
-function compactAlkylTails() {
-  const all = [{ smiles: "C", rootBranch: false }];
-  const seen = new Set(["C"]);
+  // Cyclopropyl fragments with short, unbranched spacers.
+  "C1CC1",
+  "CC1CC1",
+  "CCC1CC1",
+  "C1CC(C)1",
+  "CC1C(C)C1",
+  "C1CC(CC)1",
+  "CC1CC(C)1",
+  "C1(C)CC1",
+  "CC1(C)CC1",
+  "C1(CC)CC1",
+  "C1C(CC)C1",
+  "C1(C)C(C)C1",
+  "C1C(C)(C)C1",
+  "C1(CC)C(C)C1",
 
-  for (let depth = 1; depth <= 3; depth += 1) {
-    const subtrees = [...all];
-    const add = (children) => {
-      const ordered = [...children].sort((first, second) =>
-        first.smiles.localeCompare(second.smiles),
-      );
-      const [mainChain, ...branches] = ordered;
-      const smiles = `C${branches.map((branch) => `(${branch.smiles})`).join("")}${mainChain?.smiles ?? ""}`;
-      if (seen.has(smiles) || countCarbons(smiles) > 18) return;
-      seen.add(smiles);
-      all.push({ smiles, rootBranch: children.length >= 2 });
-    };
+  // Cyclobutyl fragments with short, unbranched spacers.
+  "C1CCC1",
+  "CC1CCC1",
+  "CCC1CCC1",
+  "C1CCC(C)1",
+  "CC1C(C)CC1",
+  "CC1CC(C)C1",
+  "C1CCC(CC)1",
+  "CC1CCC(C)1",
+  "C1(C)CCC1",
+  "C1(C)CC(C)1",
+  "C1CC(C)(C)1",
+  "C1(C)C(C)C1",
+  "C1C(C)CC1",
+  "C1CC(C)(C)C1",
+  "C1(CC)CCC1",
+  "C1C(CC)CC1",
+  "C1CC(CC)C1",
+  "C1(C)C(C)CC1",
+  "C1(C)CC(C)C1",
+  "C1C(C)C(C)C1",
+  "C1C(C)(C)CC1",
+  "C1CC(C)(C)C1",
+  "C1C(C)C(CC)C1",
+  "C1C(CC)C(C)C1",
 
-    for (let first = 0; first < subtrees.length; first += 1) {
-      add([subtrees[first]]);
-      for (let second = first; second < subtrees.length; second += 1) {
-        add([subtrees[first], subtrees[second]]);
-        for (let third = second; third < subtrees.length; third += 1) {
-          add([subtrees[first], subtrees[second], subtrees[third]]);
-        }
-      }
-    }
-  }
+  // Cyclopentyl fragments. Rings keep the drawing compact without extending
+  // the longest carbon path beyond the eight-carbon guard below.
+  "C1CCCC1",
+  "CC1CCCC1",
+  "C1(C)CCCC1",
 
-  return all;
-}
-
-function compactCycloalkylTails() {
-  return [
-    "C1CC1",
-    "C1(C)CC1",
-    "C1CC(C)1",
-    "C1CCC1",
-    "C1(C)CCC1",
-    "C1CC(C)C1",
-    "C1C(C)CC1",
-    "C1CC(C)(C)C1",
-  ].map((smiles) => ({ smiles, rootBranch: true }));
-}
-
-// The sequence is deterministic, keeps every tail distinct, and includes
-// small cycloalkyl skeletons alongside compact branched acyclic skeletons.
-const TAIL_CANDIDATES = [
-  ...compactCycloalkylTails(),
-  ...compactAlkylTails(),
+  // Larger rings are still simple to read. The guard below limits each ring
+  // to eight carbons and separately limits any open carbon chain to eight.
+  "C1CCCCC1",
+  "CC1CCCCC1",
+  "CCC1CCCCC1",
+  "C1(C)CCCCC1",
+  "C1CCCCCC1",
+  "CC1CCCCCC1",
+  "C1(C)CCCCCC1",
+  "C1CCCCCCC1",
+  "CC1CCCCCCC1",
+  "C1(C)CCCCCCC1",
 ];
-
-const usedTailKeys = new Set();
-const usedSubstrateKeys = new Set();
-let tailCursor = 0;
-
-function takeTail(options = {}) {
-  for (let attempts = 0; attempts < TAIL_CANDIDATES.length; attempts += 1) {
-    const candidate =
-      TAIL_CANDIDATES[tailCursor++ % TAIL_CANDIDATES.length];
-    if (options.rootBranch && !candidate.rootBranch) continue;
-    const tail = candidate.smiles;
-    const key = inchiKey(`C${tail}`).split("-")[0];
-    if (!usedTailKeys.has(key)) {
-      usedTailKeys.add(key);
-      return tail;
-    }
-  }
-
-  throw new Error("Could not generate enough distinct carbon skeletons");
-}
 
 const questions = [];
 const answerKeys = [];
@@ -216,22 +243,87 @@ function longestAliphaticCarbonChain(smiles) {
       .filter(({ element, index }) => element === "C" && !aromaticAtoms.has(index))
       .map(({ index }) => index),
   );
-  const adjacency = new Map(
+  const allCarbonAdjacency = new Map(
     [...carbonAtoms].map((index) => [index, []]),
   );
+  const carbonBonds = [];
   for (const [first, second] of bonds) {
     const left = first - 1;
     const right = second - 1;
     if (carbonAtoms.has(left) && carbonAtoms.has(right)) {
-      adjacency.get(left).push(right);
-      adjacency.get(right).push(left);
+      allCarbonAdjacency.get(left).push(right);
+      allCarbonAdjacency.get(right).push(left);
+      carbonBonds.push([left, right]);
     }
+  }
+
+  // A ring is permitted when the ring itself has eight carbons or fewer.
+  // Ring bonds are intentionally excluded from the open-chain calculation:
+  // a cyclohexane with a short substituent is not a nine-carbon *chain*.
+  const hasAlternativePath = (start, target, excludedLeft, excludedRight) => {
+    const queue = [start];
+    const visited = new Set([start]);
+    while (queue.length > 0) {
+      const atom = queue.shift();
+      for (const neighbour of allCarbonAdjacency.get(atom)) {
+        if (
+          (atom === excludedLeft && neighbour === excludedRight) ||
+          (atom === excludedRight && neighbour === excludedLeft)
+        ) {
+          continue;
+        }
+        if (neighbour === target) return true;
+        if (!visited.has(neighbour)) {
+          visited.add(neighbour);
+          queue.push(neighbour);
+        }
+      }
+    }
+    return false;
+  };
+
+  const openChainAdjacency = new Map(
+    [...carbonAtoms].map((index) => [index, []]),
+  );
+  const ringAdjacency = new Map(
+    [...carbonAtoms].map((index) => [index, []]),
+  );
+  for (const [left, right] of carbonBonds) {
+    if (hasAlternativePath(left, right, left, right)) {
+      ringAdjacency.get(left).push(right);
+      ringAdjacency.get(right).push(left);
+    } else {
+      openChainAdjacency.get(left).push(right);
+      openChainAdjacency.get(right).push(left);
+    }
+  }
+
+  let largestRing = 0;
+  const visitedRingAtoms = new Set();
+  for (const atom of carbonAtoms) {
+    if (visitedRingAtoms.has(atom) || ringAdjacency.get(atom).length === 0) {
+      continue;
+    }
+    const queue = [atom];
+    visitedRingAtoms.add(atom);
+    let ringAtoms = 0;
+    while (queue.length > 0) {
+      const current = queue.shift();
+      ringAtoms += 1;
+      for (const neighbour of ringAdjacency.get(current)) {
+        if (!visitedRingAtoms.has(neighbour)) {
+          visitedRingAtoms.add(neighbour);
+          queue.push(neighbour);
+        }
+      }
+    }
+    largestRing = Math.max(largestRing, ringAtoms);
   }
 
   let longest = 0;
   const visit = (atom, visited) => {
     longest = Math.max(longest, visited.size);
-    for (const neighbour of adjacency.get(atom)) {
+    for (const neighbour of openChainAdjacency.get(atom)) {
       if (visited.has(neighbour)) continue;
       visited.add(neighbour);
       visit(neighbour, visited);
@@ -239,16 +331,69 @@ function longestAliphaticCarbonChain(smiles) {
     }
   };
   for (const atom of carbonAtoms) visit(atom, new Set([atom]));
-  return longest;
+  return { longestChain: longest, largestRing };
+}
+
+function fitsCarbonLimit(smiles) {
+  const { longestChain, largestRing } = longestAliphaticCarbonChain(smiles);
+  return (
+    longestChain <= MAX_CARBON_CHAIN_LENGTH &&
+    largestRing <= MAX_CARBON_CHAIN_LENGTH
+  );
 }
 
 function assertCarbonChainLimit(smiles, label) {
-  const longest = longestAliphaticCarbonChain(smiles);
-  if (longest > MAX_CARBON_CHAIN_LENGTH) {
+  const { longestChain, largestRing } = longestAliphaticCarbonChain(smiles);
+  if (longestChain > MAX_CARBON_CHAIN_LENGTH) {
     throw new Error(
-      `${label} has a ${longest}-carbon chain; the maximum is ${MAX_CARBON_CHAIN_LENGTH}.`,
+      `${label} has a ${longestChain}-carbon chain; the maximum is ${MAX_CARBON_CHAIN_LENGTH}.`,
     );
   }
+  if (largestRing > MAX_CARBON_CHAIN_LENGTH) {
+    throw new Error(
+      `${label} has a ${largestRing}-carbon ring; the maximum is ${MAX_CARBON_CHAIN_LENGTH}.`,
+    );
+  }
+}
+
+// Every fragment must work even in the largest generated carbon framework.
+// This makes the palette self-policing: adding a readable-looking fragment
+// cannot quietly reintroduce an over-eight-carbon chain in one reaction type.
+const TAIL_TEST_CONTEXTS = [
+  (tail) => `N#CC${tail}`,
+  (tail) => `C(C)(CC)${tail}`,
+  (tail) => `CC(Br)C(C)${tail}`,
+  (tail) => `C[C@H](Br)C(C)(C)${tail}`,
+];
+const knownTailKeys = new Set();
+const TAIL_CANDIDATES = RAW_TAIL_CANDIDATES.filter((tail) => {
+  // The tail is where the previous generator became visually crowded. Limit
+  // it to at most two shallow branches; the latter are used sparingly for
+  // familiar motifs such as a compact dimethylcycloalkyl group.
+  if ((tail.match(/\(/g) ?? []).length > 2) return false;
+  const key = inchiKey(`C${tail}`).split("-")[0];
+  if (knownTailKeys.has(key)) return false;
+  if (
+    TAIL_TEST_CONTEXTS.some(
+      (makeStructure) => !fitsCarbonLimit(makeStructure(tail)),
+    )
+  ) {
+    return false;
+  }
+  knownTailKeys.add(key);
+  return true;
+});
+
+if (TAIL_CANDIDATES.length < 50) {
+  throw new Error(
+    `Expected at least 50 readable carbon fragments; received ${TAIL_CANDIDATES.length}.`,
+  );
+}
+
+let tailCursor = 0;
+
+function takeTail() {
+  return TAIL_CANDIDATES[tailCursor++ % TAIL_CANDIDATES.length];
 }
 
 function addQuestion({
@@ -271,11 +416,10 @@ function addQuestion({
   assertCarbonChainLimit(substrateSmiles, `${id} substrate`);
   assertCarbonChainLimit(productSmiles, `${id} product`);
 
-  const substrateKey = inchiKey(substrateSmiles).split("-")[0];
-  if (usedSubstrateKeys.has(substrateKey)) {
-    throw new Error(`Duplicate generated starting structure for ${id}`);
-  }
-  usedSubstrateKeys.add(substrateKey);
+  // A 50-question mechanism/difficulty set receives 50 different fragments.
+  // The same familiar scaffold may intentionally reappear under different
+  // reagents elsewhere in the bank so students can compare reaction outcomes
+  // without the generator resorting to dense, highly branched structures.
 
   const correct = inchiKey(productSmiles);
   if (!/^[A-Z]{14}-[A-Z]{10}-[A-Z]$/.test(correct)) {
@@ -365,7 +509,7 @@ fill(
       "Azide is a good nucleophile and weak base. A primary bromide in DMF reacts by substitution while retaining the carbon skeleton shown in the scheme.",
   },
   (index) => {
-    const tail = takeTail({ rootBranch: true });
+    const tail = takeTail();
     const variant = primaryLeavingGroupVariant(index, tail);
     return {
       title: `Branched primary alkyl ${variant.label} with azide`,
@@ -464,7 +608,7 @@ fill(
       "Ionisation gives a stable tertiary carbocation. Methanol attacks that cation, giving the methyl ether after deprotonation.",
   },
   (index) => {
-    const tail = takeTail({ rootBranch: true });
+    const tail = takeTail();
     const leavingGroup = leavingGroupVariant(index);
     const substrateSmiles =
       leavingGroup.id === "tosylate"
@@ -559,7 +703,7 @@ fill(
       "After ionisation, loss of a beta hydrogen gives the most substituted alkene available from the tertiary carbocation.",
   },
   () => {
-    const tail = takeTail({ rootBranch: true });
+    const tail = takeTail();
     return {
       substrateSmiles: `OC(C)(CC)${tail}`,
       productSmiles: `C(C)(CC)=${tail}`,
@@ -583,7 +727,7 @@ fill(
       "Water leaves to give a secondary carbocation. A hydride shift gives a more stable tertiary carbocation before deprotonation forms the major alkene.",
   },
   () => {
-    const tail = takeTail({ rootBranch: true });
+    const tail = takeTail();
     return {
       substrateSmiles: `CC(O)C(C)${tail}`,
       productSmiles: `CCC(C)=${tail}`,
@@ -636,7 +780,7 @@ fill(
       "Ethoxide is a small strong base. Concerted elimination gives the most substituted available alkene.",
   },
   (index) => {
-    const tail = takeTail({ rootBranch: true });
+    const tail = takeTail();
     const leavingGroup = leavingGroupVariant(index);
     const substrateSmiles =
       leavingGroup.id === "tosylate"
@@ -721,5 +865,5 @@ writeFileSync(
 
 options.delete();
 console.log(
-  `Generated ${questions.length} questions with ${usedTailKeys.size} distinct carbon tails.`,
+  `Generated ${questions.length} questions from ${TAIL_CANDIDATES.length} readable carbon fragments.`,
 );
