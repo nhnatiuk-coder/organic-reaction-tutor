@@ -15,6 +15,8 @@ type Props = {
   conformationalHint?: string;
   /** Show a fully explicit wedge-and-dash depiction for stereochemistry questions. */
   stereochemistryMatters?: boolean;
+  /** Match the product request on the problem card and drawing panel. */
+  drawingInstruction?: string;
 };
 
 function StructureFallback({
@@ -43,6 +45,7 @@ export default function ReactionScheme({
   below,
   conformationalHint,
   stereochemistryMatters = false,
+  drawingInstruction = "Draw the major product in the editor",
 }: Props) {
   const atomCount = (
     getSchemeDisplaySmiles(substrateSmiles).match(
@@ -63,7 +66,7 @@ export default function ReactionScheme({
   return (
     <figure
       className="rounded-xl border border-border bg-card p-4 shadow-sm"
-      aria-label={`Reaction scheme: ${substrateName} reacts with ${above} under ${below} to give an unknown major product.`}
+      aria-label={`Reaction scheme: ${substrateName} reacts with ${above} under ${below}. ${drawingInstruction}.`}
     >
       <div className="flex flex-wrap items-center justify-center gap-4 lg:flex-nowrap">
         <div className="shrink-0 rounded-md bg-background p-1">
@@ -136,7 +139,7 @@ export default function ReactionScheme({
             ?
           </span>
           <span className="mt-1 text-xs font-medium text-muted-foreground">
-            Draw the major product in the editor
+            {drawingInstruction}
           </span>
         </div>
       </div>

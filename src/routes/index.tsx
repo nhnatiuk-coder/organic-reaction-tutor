@@ -340,6 +340,11 @@ export function PracticePage({
   const index = sessionQuestions.indexOf(question);
   const questionReference = getQuestionReference(question);
   const isCompetition = question.answerMode === "competition";
+  const drawingInstruction = isCompetition
+    ? "Draw both major products"
+    : question.mechanism === "SN1"
+      ? "Draw the substitution product"
+      : "Draw the major product";
   const isMechanismHintShown = hintQuestionIds.includes(question.id);
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
     sessionQuestions.some((item) => item.id === id),
@@ -849,6 +854,7 @@ export function PracticePage({
               below={question.conditions}
               conformationalHint={question.conformationalHint}
               stereochemistryMatters={question.stereochemistryMatters}
+              drawingInstruction={`${drawingInstruction} in the ${isCompetition ? "editors" : "editor"}`}
             />
           </div>
         )}
@@ -867,9 +873,7 @@ export function PracticePage({
                 Problem reference: {questionReference}
               </p>
               <h2 className="mt-1 text-lg font-semibold text-card-foreground">
-                {isCompetition
-                  ? "Draw both major products"
-                  : "Draw the major product"}
+                {drawingInstruction}
               </h2>
               <dl className="mt-4 space-y-3 text-sm">
                 <div>
@@ -980,7 +984,7 @@ export function PracticePage({
             </div>
           ) : (
             <ProductEditor
-              title="Draw the major product"
+              title={drawingInstruction}
               onInit={(ketcher) => {
                 ketcherRef.current = ketcher;
                 if (ketcher) {
