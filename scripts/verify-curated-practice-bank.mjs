@@ -11,6 +11,7 @@ const temporaryModules = mkdtempSync(resolve(tmpdir(), "reaction-bank-check-"));
 const files = [
   "curated-practice-bank",
   "question-settings",
+  "sn1-nucleophiles",
   "questions",
   "expanded-practice-bank.generated",
   "answer-keys.server",
@@ -46,6 +47,8 @@ try {
     getQuestionReference,
   } = await load("questions");
   const { DISABLED_QUESTION_IDS } = await load("question-settings");
+  const { SN1_NUCLEOPHILE_ASSIGNMENTS, SN1_NUCLEOPHILES } =
+    await load("sn1-nucleophiles");
   const { ANSWER_KEYS, gradeStructure } = await load("answer-keys.server");
   const { questionsForFilters, sessionQuestionsFor } =
     await load("practice-selection");
@@ -224,6 +227,42 @@ try {
   }
   assert.deepEqual(sessionQuestionsFor([], "progressive", 10), []);
 
+  // Solvent choices and the corresponding answer keys must change together.
+  // All six choices appear five times, including shared SN1/E1 problems.
+  const sn1Ids = Object.values(CURATED_PRACTICE_BANK.SN1).flat();
+  assert.deepEqual(
+    Object.keys(SN1_NUCLEOPHILE_ASSIGNMENTS).sort(),
+    [...sn1Ids].sort(),
+    "Solvent assignments must cover exactly the curated SN1 bank",
+  );
+  const solventCounts = Object.fromEntries(
+    Object.keys(SN1_NUCLEOPHILES).map((name) => [name, 0]),
+  );
+  for (const id of sn1Ids) {
+    const solventId = SN1_NUCLEOPHILE_ASSIGNMENTS[id];
+    const solvent = SN1_NUCLEOPHILES[solventId];
+    const question = byId.get(id);
+    solventCounts[solventId] += 1;
+    assert.equal(
+      question.reagents,
+      solvent.reagents,
+      `${id}: wrong nucleophile`,
+    );
+    assert.ok(question.conditions.includes("Δ"), `${id}: heat notation lost`);
+    assert.doesNotMatch(
+      question.conditions,
+      /°\s*C/,
+      `${id}: numeric temperature`,
+    );
+    if (solventId !== "water") {
+      assert.ok(question.conditions.includes(`${solvent.label} (solvent)`));
+      assert.doesNotMatch(question.conditions, /aqueous|water/i);
+      assert.doesNotMatch(question.prompt, /water attacks|Methanol is/);
+      assert.doesNotMatch(question.title, /hydrolysis/i);
+    }
+  }
+  for (const count of Object.values(solventCounts)) assert.equal(count, 5);
+
   // Regression checks for the two retained drawings whose old keys contained
   // the wrong number of carbons. Chemistry software derives these fingerprints
   // directly from independently written product structures.
@@ -243,6 +282,96 @@ try {
         `${id}: correctly drawn ${slot} product was rejected`,
       );
     }
+
+    // Independently written products, rather than the generator's templates:
+    // water gives an alcohol; each alcohol solvent contributes its alkyl group
+    // through oxygen. In rearrangements the oxygen bonds to the new cation site.
+    // Test a wrong-solvent product for every question to catch label-only edits.
+    const sn1Products = [
+      ["g-sn1-intro-07", "CC(O)(C)C", "CC(OC)(C)C"],
+      ["g-sn1-intro-08", "CC(OC)(C)CC", "CC(O)(C)CC"],
+      ["g-sn1-intro-09", "CC(OCC)(C)CCC", "CC(O)(C)CCC"],
+      ["g-sn1-intro-10", "CC(OCCC)(C)CCCC", "CC(O)(C)CCCC"],
+      ["g-sn1-intro-11", "CC(OC(C)C)(C)CCCCC", "CC(O)(C)CCCCC"],
+      ["q32", "CCCCOC(C)c1ccccc1", "CC(O)c1ccccc1"],
+      ["q33", "CC(O)(C)c1ccccc1", "CC(OC)(C)c1ccccc1"],
+      ["q35", "COC1(C)CCCC1", "CC1(O)CCCC1"],
+      ["q36", "CCOC1(CC)CCCCC1", "CCC1(O)CCCCC1"],
+      ["q37", "CCCOC1(c2ccccc2)CCCCC1", "OC1(c2ccccc2)CCCCC1"],
+      ["q38", "CC(C)OC1(CC)CCCC1", "CCC1(O)CCCC1"],
+      ["q39", "CCCCOC1(CCC)CCCC1", "CCCC1(O)CCCC1"],
+      ["g-sn1-inter-09", "CCC(O)(C)C", "CCC(OC)(C)C"],
+      ["g-sn1-inter-10", "CCC(OC)(C)CC", "CCC(O)(C)CC"],
+      ["g-sn1-inter-11", "CCC(OCC)(C)CCC", "CCC(O)(C)CCC"],
+      ["q34", "CCCOC(c1ccccc1)c1ccccc1", "OC(c1ccccc1)c1ccccc1"],
+      ["q72", "CCCCCC(C)(C)OC(C)C", "CC(O)(C)CCCCC"],
+      ["q73", "CCCC(C)C(C)(C)OCCCC", "CC(O)(C)C(C)CCC"],
+      ["q74", "CCC(O)(C)CCCC", "CCC(OC)(C)CCCC"],
+      ["q78", "CCCCCCC(C)(C)OC", "CC(O)(C)CCCCCC"],
+      ["q79", "CCOC1(C(C)(C)C)CCCCCC1", "CC(C)(C)C1(O)CCCCCC1"],
+      ["q80", "CCCOC(C)(CC)c1ccccc1", "CC(O)(c1ccccc1)CC"],
+      ["g-sn1-adv-11", "CCC(OC(C)C)(C)C", "CCC(O)(C)C"],
+      ["g-sn1-adv-12", "CCC(OCCCC)(C)CC", "CCC(O)(C)CC"],
+      ["g-sn1-adv-13", "CCC(O)(C)CCC", "CCC(OC)(C)CCC"],
+      ["g-sn1-adv-14", "CCC(OC)(C)CCCC", "CCC(O)(C)CCCC"],
+      ["g-sn1-adv-15", "CCC(OCC)(C)CCCCC", "CCC(O)(C)CCCCC"],
+      ["g-sn1-adv-19", "CCC(OCCC)(C)CC(C)CC", "CCC(O)(C)CC(C)CC"],
+      ["g-sn1-adv-20", "CCC(OC(C)C)(C)CC(C)CCC", "CCC(O)(C)CC(C)CCC"],
+      ["g-sn1-adv-21", "CCC(OCCCC)(C)CCCC(C)C", "CCC(O)(C)CCCC(C)C"],
+    ];
+    assert.deepEqual(
+      sn1Products.map(([id]) => id).sort(),
+      [...sn1Ids].sort(),
+      "Every curated SN1 structure must have an independent product check",
+    );
+    for (const [id, product, wrongSolventProduct] of sn1Products) {
+      const slot =
+        byId.get(id).answerMode === "competition" ? "substitution" : "main";
+      assert.equal(
+        gradeStructure(id, indigo.convert(product, "inchi-key", options), slot)
+          ?.verdict,
+        "correct",
+        `${id}: correctly drawn solvent-derived product was rejected`,
+      );
+      assert.equal(
+        gradeStructure(
+          id,
+          indigo.convert(wrongSolventProduct, "inchi-key", options),
+          slot,
+        )?.verdict,
+        "incorrect",
+        `${id}: product from the wrong nucleophile was accepted`,
+      );
+    }
+    for (const [id, unrearranged] of [
+      ["q72", "CC(C)C(OC(C)C)CCCC"],
+      ["q73", "CC(C)(C)C(OCCCC)CCC"],
+    ]) {
+      const result = gradeStructure(
+        id,
+        indigo.convert(unrearranged, "inchi-key", options),
+      );
+      assert.equal(result?.verdict, "incorrect");
+      assert.match(
+        result?.feedback ?? result?.message ?? "",
+        /unrearranged ether/i,
+      );
+    }
+    // Changing the trapping solvent must preserve the competition alkene keys.
+    for (const [id, alkene] of [
+      ["q78", "CC(C)=CCCCCC"],
+      ["q79", "CC(C)(C)C1=CCCCCC1"],
+      ["q80", "CC(c1ccccc1)=CC"],
+    ]) {
+      assert.equal(
+        gradeStructure(
+          id,
+          indigo.convert(alkene, "inchi-key", options),
+          "elimination",
+        )?.verdict,
+        "correct",
+      );
+    }
   } finally {
     options.delete();
   }
@@ -251,6 +380,7 @@ try {
     `Curated bank verified: ${PRACTICE_QUESTIONS.length} active distinct questions.`,
   );
   console.log(JSON.stringify(counts));
+  console.log(`SN1 nucleophiles verified: ${JSON.stringify(solventCounts)}`);
 } finally {
   rmSync(temporaryModules, { recursive: true, force: true });
 }

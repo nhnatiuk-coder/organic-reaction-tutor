@@ -376,12 +376,15 @@ export const ANSWER_KEYS: AnswerKey[] = [
   },
   {
     id: "q32",
-    correct: "WAPNOHKVXSQRPX-UHFFFAOYSA-N",
+    correct: "AQGPVCBVZAHVBN-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "1-phenylethanol",
+    correctName: "1-butoxy-1-phenylethane",
     explanation:
-      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
-    distractors: {},
+      "The benzylic carbocation is stabilised by the aromatic ring. Butan-1-ol captures it through oxygen; deprotonation gives the butyl ether.",
+    distractors: {
+      WAPNOHKVXSQRPX:
+        "That is the alcohol produced by water. Here butan-1-ol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+    },
   },
   {
     id: "q33",
@@ -394,57 +397,75 @@ export const ANSWER_KEYS: AnswerKey[] = [
   },
   {
     id: "q34",
-    correct: "QILSFLSDHQAZET-UHFFFAOYSA-N",
+    correct: "RYBNGIBEGIRICU-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "diphenylmethanol",
+    correctName: "benzhydryl propyl ether",
     explanation:
-      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
-    distractors: {},
+      "Ionisation gives a carbocation stabilised by both phenyl rings. Propan-1-ol captures that intermediate through oxygen; deprotonation gives the propyl ether.",
+    distractors: {
+      QILSFLSDHQAZET:
+        "That is the alcohol produced by water. Here propan-1-ol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+    },
   },
   {
     id: "q35",
-    correct: "CAKWRXVKWGUISE-UHFFFAOYSA-N",
+    correct: "HJIPILMKRASVNP-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "1-methylcyclopentan-1-ol",
+    correctName: "1-methoxy-1-methylcyclopentane",
     explanation:
-      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
-    distractors: {},
+      "The tertiary ring carbocation is captured by methanol. Loss of a proton from the oxonium intermediate gives the methyl ether.",
+    distractors: {
+      CAKWRXVKWGUISE:
+        "That is the alcohol produced by water. Here methanol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+    },
   },
   {
     id: "q36",
-    correct: "BUCJHJXFXUZJHL-UHFFFAOYSA-N",
+    correct: "YRMJRPYEZILWBX-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "1-ethylcyclohexan-1-ol",
+    correctName: "1-ethoxy-1-ethylcyclohexane",
     explanation:
-      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
-    distractors: {},
+      "Ionisation forms a tertiary ring carbocation. Ethanol attacks through oxygen and loses a proton, giving the ethyl ether.",
+    distractors: {
+      BUCJHJXFXUZJHL:
+        "That is the alcohol produced by water. Here ethanol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+    },
   },
   {
     id: "q37",
-    correct: "DTTDXHDYTWQDCS-UHFFFAOYSA-N",
+    correct: "KILPZIWPHGDLHP-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "1-phenylcyclohexan-1-ol",
+    correctName: "1-phenyl-1-propoxycyclohexane",
     explanation:
-      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
-    distractors: {},
+      "The tertiary benzylic ring carbocation is captured by propan-1-ol. Deprotonation gives the propyl ether.",
+    distractors: {
+      DTTDXHDYTWQDCS:
+        "That is the alcohol produced by water. Here propan-1-ol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+    },
   },
   {
     id: "q38",
-    correct: "LPCWIFPJLFCXRS-UHFFFAOYSA-N",
+    correct: "YJZZRXJJZPDBIP-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "1-ethylcyclopentan-1-ol",
+    correctName: "1-ethyl-1-isopropoxycyclopentane",
     explanation:
-      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
-    distractors: {},
+      "Ionisation forms a tertiary ring carbocation. Isopropanol captures it through oxygen; deprotonation gives the isopropyl ether.",
+    distractors: {
+      LPCWIFPJLFCXRS:
+        "That is the alcohol produced by water. Here isopropanol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+    },
   },
   {
     id: "q39",
-    correct: "GJEILRJIINEWJO-UHFFFAOYSA-N",
+    correct: "HDZKQIFGSFAYGK-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "1-propylcyclopentan-1-ol",
+    correctName: "1-butoxy-1-propylcyclopentane",
     explanation:
-      "The substrate can ionize to a stabilised carbocation, then water captures that intermediate to give the major substitution product.",
-    distractors: {},
+      "Ionisation forms a tertiary ring carbocation. Butan-1-ol captures it through oxygen; deprotonation gives the butyl ether.",
+    distractors: {
+      GJEILRJIINEWJO:
+        "That is the alcohol produced by water. Here butan-1-ol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+    },
   },
   {
     id: "q40",
@@ -736,26 +757,30 @@ export const ANSWER_KEYS: AnswerKey[] = [
   },
   {
     id: "q72",
-    correct: "ACBMYYVZWKYLIP-UHFFFAOYSA-N",
+    correct: "CUZOKTJMVUSVMD-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "2-methylheptan-2-ol",
+    correctName: "2-isopropoxy-2-methylheptane",
     explanation:
-      "Bromide leaves first, giving a secondary carbocation at C3. A 1,2-hydride shift from C2 moves the positive charge to the more stable tertiary C2 carbocation; water then attacks that rearranged cation.",
+      "Bromide leaves first, giving a secondary carbocation at C3. A 1,2-hydride shift from C2 moves the positive charge to the more stable tertiary C2 carbocation. Isopropanol then attacks through oxygen, and deprotonation gives the rearranged isopropyl ether.",
     distractors: {
-      QGVFLDUEHSIZIG:
-        "That is the unrearranged alcohol. Water has been placed at the original C3 carbocation, but a 1,2-hydride shift gives a more stable tertiary cation before water attacks.",
+      ACBMYYVZWKYLIP:
+        "That is the alcohol produced by water. Here isopropanol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+      VOEJPHLIZWXRLL:
+        "That is the unrearranged ether. A 1,2-hydride shift forms a more stable tertiary carbocation at C2 before isopropanol captures it.",
     },
   },
   {
     id: "q73",
-    correct: "BFKOEFFCVFMWPF-UHFFFAOYSA-N",
+    correct: "QXHNAFGNCLEWDN-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "2,3-dimethylhexan-2-ol",
+    correctName: "2-butoxy-2,3-dimethylhexane",
     explanation:
-      "Ionisation first gives a secondary carbocation at C3. Because the adjacent C2 has no hydride to shift, a 1,2-methyl shift occurs instead, placing the positive charge at tertiary C2 before water attacks.",
+      "Ionisation first gives a secondary carbocation at C3. Because the adjacent C2 has no hydride to shift, a 1,2-methyl shift places the positive charge at tertiary C2. Butan-1-ol then attacks through oxygen, and deprotonation gives the rearranged butyl ether.",
     distractors: {
-      PFHLGQKVKALLMD:
-        "That is the unrearranged alcohol. Before water attacks, a methyl group migrates from the adjacent quaternary carbon to make a more stable tertiary carbocation.",
+      BFKOEFFCVFMWPF:
+        "That is the alcohol produced by water. Here butan-1-ol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+      IJKSRCPVRGGLAX:
+        "That is the unrearranged ether. A methyl group migrates from the adjacent quaternary carbon before butan-1-ol captures the more stable tertiary carbocation.",
     },
   },
   {
@@ -809,12 +834,15 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q78",
     substitution: {
-      correct: "KBCNUEXDHWDIFX-UHFFFAOYSA-N",
+      correct: "HYGKLKBMIGKOEL-UHFFFAOYSA-N",
       requireStereo: false,
-      correctName: "2-methyloctan-2-ol",
+      correctName: "2-methoxy-2-methyloctane",
       explanation:
-        "The tertiary bromide ionises readily, and water captures the carbocation to give the substitution product.",
-      distractors: {},
+        "The tertiary bromide ionises, and methanol captures the carbocation through oxygen. Deprotonation gives the methyl ether substitution product.",
+      distractors: {
+        KBCNUEXDHWDIFX:
+          "That is the alcohol produced by water. Here methanol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+      },
     },
     elimination: {
       correct: "YBOZNTGUYASNRA-UHFFFAOYSA-N",
@@ -828,12 +856,15 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q79",
     substitution: {
-      correct: "FOMZWAPKCOUTAU-UHFFFAOYSA-N",
+      correct: "XEFFCTVIEYGYQS-UHFFFAOYSA-N",
       requireStereo: false,
-      correctName: "1-tert-butylcycloheptan-1-ol",
+      correctName: "1-tert-butyl-1-ethoxycycloheptane",
       explanation:
-        "Ionisation gives a tertiary ring carbocation, which is trapped by water to form the substitution product.",
-      distractors: {},
+        "Ionisation gives a tertiary ring carbocation. Ethanol captures it through oxygen and loses a proton to give the ethyl ether substitution product.",
+      distractors: {
+        FOMZWAPKCOUTAU:
+          "That is the alcohol produced by water. Here ethanol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+      },
     },
     elimination: {
       correct: "UWBJPUXTTHBACI-UHFFFAOYSA-N",
@@ -847,12 +878,15 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q80",
     substitution: {
-      correct: "XGLHYBVJPSZXIF-UHFFFAOYSA-N",
+      correct: "LFAFRBOMRGLILO-UHFFFAOYSA-N",
       requireStereo: false,
-      correctName: "2-phenylbutan-2-ol",
+      correctName: "2-phenyl-2-propoxybutane",
       explanation:
-        "The tertiary benzylic carbocation is stabilised by the aromatic ring, and water capture gives the substitution product.",
-      distractors: {},
+        "The tertiary benzylic carbocation is stabilised by the aromatic ring. Propan-1-ol capture and deprotonation give the propyl ether substitution product.",
+      distractors: {
+        XGLHYBVJPSZXIF:
+          "That is the alcohol produced by water. Here propan-1-ol is the nucleophile, so the substitution product is an ether with its alkyl group attached through oxygen.",
+      },
     },
     elimination: {
       correct: "UGUYQBMBIJFNRM-UHFFFAOYSA-N",

@@ -1,8 +1,24 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import Indigo from "indigo-ketcher";
+import ts from "typescript";
 
 const root = resolve(import.meta.dirname, "..");
+// The browser and build use the same public solvent assignments. Transpile
+// this standalone data module so the generator does not need a TS runtime.
+const nucleophileModule = ts.transpileModule(
+  readFileSync(resolve(root, "src/lib/sn1-nucleophiles.ts"), "utf8"),
+  {
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2022,
+      module: ts.ModuleKind.ES2022,
+    },
+  },
+).outputText;
+const { getSn1Nucleophile, SN1_NUCLEOPHILES, sn1SolvolysisConditions } =
+  await import(
+    `data:text/javascript;base64,${Buffer.from(nucleophileModule).toString("base64")}`
+  );
 const outputQuestions = resolve(
   root,
   "src/lib/expanded-practice-bank.generated.ts",
@@ -240,7 +256,9 @@ function longestAliphaticCarbonChain(smiles) {
   const carbonAtoms = new Set(
     atoms
       .map((element, index) => ({ element, index }))
-      .filter(({ element, index }) => element === "C" && !aromaticAtoms.has(index))
+      .filter(
+        ({ element, index }) => element === "C" && !aromaticAtoms.has(index),
+      )
       .map(({ index }) => index),
   );
   const allCarbonAdjacency = new Map(
@@ -285,9 +303,7 @@ function longestAliphaticCarbonChain(smiles) {
   const openChainAdjacency = new Map(
     [...carbonAtoms].map((index) => [index, []]),
   );
-  const ringAdjacency = new Map(
-    [...carbonAtoms].map((index) => [index, []]),
-  );
+  const ringAdjacency = new Map([...carbonAtoms].map((index) => [index, []]));
   for (const [left, right] of carbonBonds) {
     if (hasAlternativePath(left, right, left, right)) {
       ringAdjacency.get(left).push(right);
@@ -574,20 +590,24 @@ fill(
   (index) => {
     const tail = takeTail();
     const leavingGroup = leavingGroupVariant(index);
+    const nucleophile =
+      getSn1Nucleophile(`g-sn1-intro-${String(index).padStart(2, "0")}`) ??
+      SN1_NUCLEOPHILES.water;
     const substrateSmiles =
       leavingGroup.id === "tosylate"
         ? `C(C)(C)(${tail})${leavingGroup.smiles}`
         : `${leavingGroup.smiles}C(C)(C)${tail}`;
     return {
-      title: `Tertiary alkyl ${leavingGroup.label} solvolysis`,
+      title: `Tertiary alkyl ${leavingGroup.label} solvolysis in ${nucleophile.label}`,
       substrate: `Tertiary alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
-      conditions: conditionsForLeavingGroup(
-        leavingGroup,
-        "aqueous acetone, 25 °C",
-      ),
-      explanation: `The tertiary ${leavingGroup.label} ionises in the polar protic medium, then water captures the carbocation to give the alcohol.`,
-      productSmiles: `OC(C)(C)${tail}`,
+      reagents: nucleophile.reagents,
+      conditions: sn1SolvolysisConditions(nucleophile, "aqueous acetone"),
+      prompt:
+        "Draw the organic substitution product of this solvolysis. The displayed solvent is the nucleophile.",
+      correctName: `the tertiary ${nucleophile.productType}`,
+      explanation: `The tertiary ${leavingGroup.label} ionises in the polar protic medium. ${nucleophile.label} captures the carbocation, and deprotonation gives the ${nucleophile.productType}.`,
+      productSmiles: `C(C)(C)(${nucleophile.oxygenFragment})${tail}`,
     };
   },
 );
@@ -610,20 +630,24 @@ fill(
   (index) => {
     const tail = takeTail();
     const leavingGroup = leavingGroupVariant(index);
+    const nucleophile =
+      getSn1Nucleophile(`g-sn1-inter-${String(index).padStart(2, "0")}`) ??
+      SN1_NUCLEOPHILES.methanol;
     const substrateSmiles =
       leavingGroup.id === "tosylate"
         ? `C(C)(CC)(${tail})${leavingGroup.smiles}`
         : `${leavingGroup.smiles}C(C)(CC)${tail}`;
     return {
-      title: `Highly substituted ${leavingGroup.label} in methanol`,
+      title: `Highly substituted ${leavingGroup.label} in ${nucleophile.label}`,
       substrate: `Highly substituted alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
-      conditions: conditionsForLeavingGroup(
-        leavingGroup,
-        "25 °C, no added base",
-      ),
-      explanation: `Ionisation of the highly substituted ${leavingGroup.label} gives a stable tertiary carbocation. Methanol attacks that cation, giving the methyl ether after deprotonation.`,
-      productSmiles: `COC(C)(CC)${tail}`,
+      reagents: nucleophile.reagents,
+      conditions: sn1SolvolysisConditions(nucleophile, "no added base"),
+      prompt:
+        "Draw the organic substitution product. The displayed solvent is the nucleophile.",
+      correctName: `the tertiary ${nucleophile.productType}`,
+      explanation: `Ionisation of the highly substituted ${leavingGroup.label} gives a stable tertiary carbocation. ${nucleophile.label} attacks that cation, giving the ${nucleophile.productType} after deprotonation.`,
+      productSmiles: `C(C)(CC)(${nucleophile.oxygenFragment})${tail}`,
     };
   },
 );
@@ -645,6 +669,9 @@ fill(
   },
   (index) => {
     const tail = takeTail();
+    const nucleophile =
+      getSn1Nucleophile(`g-sn1-adv-${String(index).padStart(2, "0")}`) ??
+      SN1_NUCLEOPHILES.water;
     const { leavingGroup, substrateSmiles } = secondarySubstrateSmiles(
       index,
       tail,
@@ -654,12 +681,13 @@ fill(
       title: `Secondary ${leavingGroup.label} requiring a hydride shift`,
       substrate: `Branched secondary alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
-      conditions: conditionsForLeavingGroup(
-        leavingGroup,
-        "aqueous acetone, AgNO₃, 25 °C",
-      ),
-      explanation: `Loss of the ${leavingGroup.label} first gives a secondary carbocation. A hydride shift forms the more stable tertiary carbocation, which is then trapped by water.`,
-      productSmiles: `CCC(O)(C)${tail}`,
+      reagents: nucleophile.reagents,
+      conditions: sn1SolvolysisConditions(nucleophile, "AgNO₃"),
+      prompt:
+        "Draw the organic substitution product. Consider the more stable carbocation that can form before the displayed solvent attacks.",
+      correctName: `the rearranged tertiary ${nucleophile.productType}`,
+      explanation: `Loss of the ${leavingGroup.label} first gives a secondary carbocation. A hydride shift forms the more stable tertiary carbocation, which is then trapped by ${nucleophile.label}. Deprotonation gives the rearranged ${nucleophile.productType}.`,
+      productSmiles: `CCC(${nucleophile.oxygenFragment})(C)${tail}`,
     };
   },
 );

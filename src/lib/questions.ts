@@ -2,6 +2,7 @@
 import { DISABLED_QUESTION_IDS } from "./question-settings";
 import { GENERATED_QUESTIONS } from "./expanded-practice-bank.generated";
 import { CURATED_QUESTION_LEVELS } from "./curated-practice-bank";
+import { getSn1Nucleophile, sn1SolvolysisConditions } from "./sn1-nucleophiles";
 
 export type ElementaryMechanism = "SN1" | "SN2" | "E1" | "E2";
 export type QuestionMechanism = ElementaryMechanism | "SN1/E1" | "SN2/E2";
@@ -1292,6 +1293,30 @@ export const QUESTIONS: Question[] = [
   ...EXPANDED_QUESTIONS,
   ...GENERATED_QUESTIONS,
 ].map((question) => {
+  const nucleophile = getSn1Nucleophile(question.id);
+  if (nucleophile) {
+    question = {
+      ...question,
+      title: question.title
+        .replace(/\bhydrolysis\b/gi, "solvolysis")
+        .replace(/\bin (?:water|methanol)\b/gi, `in ${nucleophile.label}`),
+      reagents: nucleophile.reagents,
+      conditions: sn1SolvolysisConditions(nucleophile, question.conditions),
+      prompt:
+        question.answerMode === "competition"
+          ? question.prompt
+          : question.prompt
+              .replace(
+                /major organic (?:substitution )?product/g,
+                "organic substitution product",
+              )
+              .replace(/water attacks/g, "the solvent attacks")
+              .replace(
+                /Methanol is the nucleophile and solvent\./g,
+                "The displayed solvent is the nucleophile.",
+              ),
+    };
+  }
   // Use the instructor's heat notation consistently in both the scheme and
   // conditions card, including generated and shared SN1/E1 questions.
   if (!getQuestionMechanisms(question).includes("SN1")) return question;
