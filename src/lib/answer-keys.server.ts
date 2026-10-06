@@ -709,9 +709,9 @@ export const ANSWER_KEYS: AnswerKey[] = [
   },
   {
     id: "q69",
-    correct: "FAUQRRGKJKMEIW-UHFFFAOYSA-N",
+    correct: "INDZKZONOLGFIL-UHFFFAOYSA-N",
     requireStereo: false,
-    correctName: "2-cyclopropylacetonitrile",
+    correctName: "3-cyclopropylpropanenitrile",
     explanation:
       "Tosylate is a good leaving group. Cyanide displaces it through carbon, producing the nitrile and adding the nitrile carbon to the chain.",
     distractors: {},
@@ -904,17 +904,17 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q83",
     substitution: {
-      correct: "ZQHVDWDUIDKJDA-UHFFFAOYSA-N",
+      correct: "COFBSJOCWUSRFY-UHFFFAOYSA-N",
       requireStereo: false,
-      correctName: "2-ethoxy-3-phenylpentane",
+      correctName: "2-ethoxy-3-phenylbutane",
       explanation:
         "Ethoxide can substitute for bromide at the secondary carbon, giving the ether product.",
       distractors: {},
     },
     elimination: {
-      correct: "WSZVSPSKVZOVQE-UHFFFAOYSA-N",
+      correct: "UGUYQBMBIJFNRM-UHFFFAOYSA-N",
       requireStereo: false,
-      correctName: "3-phenylpent-2-ene",
+      correctName: "2-phenylbut-2-ene",
       explanation:
         "Ethoxide can also remove a beta hydrogen. The major alkene is the more substituted product that is conjugated with the phenyl ring.",
       distractors: {},

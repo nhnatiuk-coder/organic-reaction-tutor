@@ -5,12 +5,9 @@ import { Suspense, lazy, useRef, useState } from "react";
 import type { Ketcher } from "ketcher-core";
 
 import {
-  getQuestionDifficulty,
   getMechanismRevealLabel,
-  getQuestionMechanisms,
   getQuestionReference,
   PRACTICE_QUESTIONS,
-  type DifficultyLevel,
   type ElementaryMechanism,
 } from "@/lib/questions";
 import { gradeAnswer, type GradeResult } from "@/lib/grading.functions";
@@ -21,6 +18,13 @@ import {
 } from "@/lib/practice-report";
 
 import ReactionScheme from "@/components/ReactionScheme";
+import {
+  questionsForFilters,
+  sessionQuestionsFor,
+  type DifficultyFilter,
+  type SessionLength,
+} from "@/lib/practice-selection";
+export type { DifficultyFilter, SessionLength } from "@/lib/practice-selection";
 
 const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
 
@@ -88,9 +92,6 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
   },
 ];
 
-export type DifficultyFilter = "progressive" | DifficultyLevel;
-export type SessionLength = 5 | 10 | 25 | 50 | "all";
-
 export const DIFFICULTY_OPTIONS: readonly {
   id: DifficultyFilter;
   label: string;
@@ -119,7 +120,14 @@ export const DIFFICULTY_OPTIONS: readonly {
   },
 ];
 
-export const SESSION_LENGTHS: readonly SessionLength[] = [5, 10, 25, 50, "all"];
+export const SESSION_LENGTHS: readonly SessionLength[] = [
+  5,
+  10,
+  25,
+  30,
+  50,
+  "all",
+];
 
 export type PracticeSettings = {
   modeId: PracticeModeId;
@@ -151,81 +159,6 @@ export function normalisePracticeSettings(
     : DEFAULT_STUDENT_SETTINGS.sessionLength;
 
   return { modeId, difficulty, sessionLength };
-}
-
-function questionsForFilters(mode: PracticeMode, difficulty: DifficultyFilter) {
-  return PRACTICE_QUESTIONS.filter(
-    (question) =>
-      getQuestionMechanisms(question).some((mechanism) =>
-        mode.mechanisms.includes(mechanism),
-      ) &&
-      (difficulty === "progressive" ||
-        getQuestionDifficulty(question) === difficulty),
-  );
-}
-
-function shuffle<T>(items: readonly T[]) {
-  const shuffled = [...items];
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [
-      shuffled[swapIndex]!,
-      shuffled[index]!,
-    ];
-  }
-  return shuffled;
-}
-
-function sessionQuestionsFor(
-  questions: readonly (typeof PRACTICE_QUESTIONS)[number][],
-  difficulty: DifficultyFilter,
-  sessionLength: SessionLength,
-  randomize = true,
-) {
-  const total =
-    sessionLength === "all"
-      ? questions.length
-      : Math.min(sessionLength, questions.length);
-
-  if (difficulty !== "progressive") {
-    const ordered = randomize ? shuffle(questions) : [...questions];
-    return ordered.slice(0, total);
-  }
-
-  const levels: readonly DifficultyLevel[] = [
-    "introductory",
-    "intermediate",
-    "advanced",
-  ];
-  const groups = levels
-    .map((level) => {
-      const grouped = questions.filter(
-        (question) => getQuestionDifficulty(question) === level,
-      );
-      return randomize ? shuffle(grouped) : grouped;
-    })
-    .filter((group) => group.length > 0);
-
-  if (sessionLength === "all") return groups.flat();
-
-  const targetPerGroup = Math.floor(total / groups.length);
-  let remaining = total % groups.length;
-  const selected = groups.flatMap((group) => {
-    const target = targetPerGroup + (remaining > 0 ? 1 : 0);
-    remaining -= 1;
-    return group.slice(0, target);
-  });
-
-  // Reallocate only if a future bank has fewer questions at one level.
-  if (selected.length < total) {
-    const selectedIds = new Set(selected.map((question) => question.id));
-    for (const question of groups.flat()) {
-      if (selected.length >= total) break;
-      if (!selectedIds.has(question.id)) selected.push(question);
-    }
-  }
-
-  return selected;
 }
 
 function hideMechanismNames(text: string) {

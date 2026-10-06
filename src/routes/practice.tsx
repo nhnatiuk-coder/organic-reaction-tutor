@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { questionsForFilters } from "@/lib/practice-selection";
 
 import {
   DEFAULT_STUDENT_SETTINGS,
@@ -79,11 +80,16 @@ function StudentSetupPage() {
     DEFAULT_STUDENT_SETTINGS.sessionLength,
   );
   const selectedMode = PRACTICE_MODES.find((mode) => mode.id === modeId)!;
+  const availableCount = questionsForFilters(selectedMode, difficulty).length;
+  const effectiveLength =
+    sessionLength === "all" || sessionLength <= availableCount
+      ? sessionLength
+      : "all";
   const startHref = `/practice?${new URLSearchParams({
     start: "1",
     mode: modeId,
     difficulty,
-    length: String(sessionLength),
+    length: String(effectiveLength),
   }).toString()}`;
 
   return (
@@ -210,10 +216,11 @@ function StudentSetupPage() {
                   key={String(length)}
                   type="button"
                   onClick={() => setSessionLength(length)}
-                  aria-pressed={length === sessionLength}
+                  aria-pressed={length === effectiveLength}
+                  disabled={length !== "all" && length > availableCount}
                   className={
-                    "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors " +
-                    (length === sessionLength
+                    "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 " +
+                    (length === effectiveLength
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary")
                   }
@@ -222,6 +229,12 @@ function StudentSetupPage() {
                 </button>
               ))}
             </div>
+            <p
+              className="mt-2 text-xs text-muted-foreground"
+              aria-live="polite"
+            >
+              {availableCount} problems available for these choices.
+            </p>
           </fieldset>
 
           <a

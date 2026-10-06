@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/generate-expanded-practice-bank.mjs && vite dev",
-    "build": "node scripts/generate-expanded-practice-bank.mjs && vite build",
+    "build": "node scripts/generate-expanded-practice-bank.mjs && node scripts/verify-curated-practice-bank.mjs && vite build",
     "build:dev": "node scripts/generate-expanded-practice-bank.mjs && vite build --mode development",
     "preview": "vite preview",
+    "verify:bank": "node scripts/generate-expanded-practice-bank.mjs && node scripts/verify-curated-practice-bank.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "deploy": "npm run build && npx wrangler deploy",

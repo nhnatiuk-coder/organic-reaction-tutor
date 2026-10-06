@@ -1,6 +1,7 @@
 // Client-safe question data. NEVER put answer structures or keys in this file.
 import { DISABLED_QUESTION_IDS } from "./question-settings";
 import { GENERATED_QUESTIONS } from "./expanded-practice-bank.generated";
+import { CURATED_QUESTION_LEVELS } from "./curated-practice-bank";
 
 export type ElementaryMechanism = "SN1" | "SN2" | "E1" | "E2";
 export type QuestionMechanism = ElementaryMechanism | "SN1/E1" | "SN2/E2";
@@ -50,6 +51,8 @@ export function getMechanismRevealLabel(question: Question) {
  * its mechanism name. This keeps each topic available at more than one level.
  */
 export function getQuestionDifficulty(question: Question): DifficultyLevel {
+  const curatedLevel = CURATED_QUESTION_LEVELS.get(question.id);
+  if (curatedLevel) return curatedLevel;
   if (question.difficulty) return question.difficulty;
 
   const description = [question.title, question.prompt, question.substrate]
@@ -1304,17 +1307,15 @@ const QUESTION_REFERENCES = new Map(
 export const getQuestionReference = (question: Pick<Question, "id">) =>
   QUESTION_REFERENCES.get(question.id) ?? `RXN-${question.id.toUpperCase()}`;
 
-/** Questions currently available to students.
- * The first active question for a carbon skeleton is used; later variants remain
- * in the authoring bank but are not shown to students.
+/** The curated bank shared by the instructor preview and student practice.
+ * Explicit curation retains inversion and competition questions even when a
+ * different reaction uses the same familiar skeleton. Archive switches still
+ * take precedence and archived/unselected questions cannot be graded.
  */
 export const PRACTICE_QUESTIONS = QUESTIONS.filter(
-  (question) => !DISABLED_QUESTION_IDS.has(question.id),
-).filter(
-  (question, index, activeQuestions) =>
-    activeQuestions.findIndex(
-      (candidate) => candidate.skeletonId === question.skeletonId,
-    ) === index,
+  (question) =>
+    CURATED_QUESTION_LEVELS.has(question.id) &&
+    !DISABLED_QUESTION_IDS.has(question.id),
 );
 
 export const getQuestion = (id: string) => QUESTIONS.find((q) => q.id === id);
