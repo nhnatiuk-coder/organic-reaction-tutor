@@ -43,6 +43,43 @@ function shuffle<T>(items: readonly T[]) {
   return shuffled;
 }
 
+function isStereospecificE2(question: Question) {
+  return (
+    getQuestionMechanisms(question).includes("E2") &&
+    Boolean(question.conformationalHint) &&
+    (question.stereochemistryMatters || question.alkeneGeometryMatters)
+  );
+}
+
+function ensureStereospecificE2(
+  selected: Question[],
+  available: readonly Question[],
+  difficulty: DifficultyFilter,
+) {
+  if (
+    selected.length < 10 ||
+    (difficulty !== "progressive" && difficulty !== "advanced") ||
+    selected.some(isStereospecificE2)
+  ) {
+    return selected;
+  }
+
+  // The available bank has already been filtered by reaction type, difficulty,
+  // and archive settings. Never add a question outside those selections.
+  const required = available.find(isStereospecificE2);
+  if (!required) return selected;
+
+  // Replace within the same level so a Progressive set keeps its difficulty
+  // allocation and easy-to-hard order. The E/Z problems are advanced.
+  const replacementIndex = selected
+    .map(getQuestionDifficulty)
+    .lastIndexOf(getQuestionDifficulty(required));
+  if (replacementIndex < 0) return selected;
+  const covered = [...selected];
+  covered[replacementIndex] = required;
+  return covered;
+}
+
 export function sessionQuestionsFor(
   questions: readonly Question[],
   difficulty: DifficultyFilter,
@@ -56,7 +93,7 @@ export function sessionQuestionsFor(
 
   if (difficulty !== "progressive") {
     const ordered = randomize ? shuffle(questions) : [...questions];
-    return ordered.slice(0, total);
+    return ensureStereospecificE2(ordered.slice(0, total), ordered, difficulty);
   }
 
   const levels: readonly DifficultyLevel[] = [
@@ -92,5 +129,10 @@ export function sessionQuestionsFor(
     if (selectedIds.size >= total) break;
     selectedIds.add(question.id);
   }
-  return groups.flat().filter((question) => selectedIds.has(question.id));
+  const ordered = groups.flat();
+  return ensureStereospecificE2(
+    ordered.filter((question) => selectedIds.has(question.id)),
+    ordered,
+    difficulty,
+  );
 }

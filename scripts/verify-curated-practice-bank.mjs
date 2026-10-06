@@ -195,6 +195,19 @@ try {
     ["E1", "E2"],
     ["SN1", "SN2", "E1", "E2"],
   ];
+  const specificGeometryE2Ids = new Set(["q58", "q59"]);
+  function assertE2GeometryCoverage(session, available, difficulty) {
+    if (
+      session.length >= 10 &&
+      ["progressive", "advanced"].includes(difficulty) &&
+      available.some((question) => specificGeometryE2Ids.has(question.id))
+    ) {
+      assert.ok(
+        session.some((question) => specificGeometryE2Ids.has(question.id)),
+        `${difficulty} set of ${session.length} omitted the E/Z-specific E2 problems`,
+      );
+    }
+  }
   for (const mechanisms of modes) {
     for (const difficulty of ["progressive", ...Object.keys(quotas)]) {
       const available = questionsForFilters({ mechanisms }, difficulty);
@@ -217,6 +230,7 @@ try {
             session.length,
             "Repeated problem in session",
           );
+          assertE2GeometryCoverage(session, available, difficulty);
           if (difficulty === "progressive") {
             const ranks = session.map((question) =>
               Object.keys(quotas).indexOf(getQuestionDifficulty(question)),
@@ -232,6 +246,77 @@ try {
     }
   }
   assert.deepEqual(sessionQuestionsFor([], "progressive", 10), []);
+
+  // Exercise many reproducible shuffles, including mixed banks where the two
+  // E/Z-specific problems would otherwise be easy to miss in a short session.
+  const originalRandom = Math.random;
+  try {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      let state = seed;
+      Math.random = () => {
+        state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+        return state / 2 ** 32;
+      };
+      for (const mechanisms of modes) {
+        for (const difficulty of ["progressive", "advanced"]) {
+          const available = questionsForFilters({ mechanisms }, difficulty);
+          for (const length of [10, 25, 30, 50, "all"]) {
+            const session = sessionQuestionsFor(available, difficulty, length);
+            assertE2GeometryCoverage(session, available, difficulty);
+            assert.equal(
+              session.length,
+              length === "all"
+                ? available.length
+                : Math.min(length, available.length),
+            );
+            assert.equal(
+              new Set(session.map((question) => question.id)).size,
+              session.length,
+            );
+            assert.ok(
+              session.every((question) => available.includes(question)),
+              "Coverage added a problem outside the filtered bank",
+            );
+            if (difficulty === "progressive") {
+              const ranks = session.map((question) =>
+                Object.keys(quotas).indexOf(getQuestionDifficulty(question)),
+              );
+              assert.deepEqual(
+                ranks,
+                [...ranks].sort((a, b) => a - b),
+              );
+            }
+          }
+        }
+      }
+    }
+  } finally {
+    Math.random = originalRandom;
+  }
+
+  // Confirm the boundary and the replacement path without relying on luck.
+  const advancedE2 = questionsForFilters({ mechanisms: ["E2"] }, "advanced");
+  const ordinaryFirst = [
+    ...advancedE2.filter((question) => !specificGeometryE2Ids.has(question.id)),
+    ...advancedE2.filter((question) => specificGeometryE2Ids.has(question.id)),
+  ];
+  assert.deepEqual(
+    sessionQuestionsFor(ordinaryFirst, "advanced", 5, false),
+    ordinaryFirst.slice(0, 5),
+  );
+  const coveredTen = sessionQuestionsFor(ordinaryFirst, "advanced", 10, false);
+  assertE2GeometryCoverage(coveredTen, ordinaryFirst, "advanced");
+  assert.deepEqual(coveredTen.slice(0, 9), ordinaryFirst.slice(0, 9));
+  const noEligibleE2 = ordinaryFirst.filter(
+    (question) => !specificGeometryE2Ids.has(question.id),
+  );
+  assert.deepEqual(
+    sessionQuestionsFor(noEligibleE2, "advanced", 10, false),
+    noEligibleE2.slice(0, 10),
+  );
+  console.log(
+    "E2 geometry coverage verified: qualifying Progressive/Advanced sets, 40 seeded shuffles, filters, order, and 5-question boundary.",
+  );
 
   // Solvent choices and the corresponding answer keys must change together.
   // All six choices appear five times, including shared SN1/E1 problems.
