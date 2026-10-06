@@ -903,6 +903,13 @@ export function PracticePage({
                   Stereochemistry is graded on this question.
                 </p>
               )}
+              {question.alkeneGeometryMatters && (
+                <p className="mt-3 rounded-md bg-accent px-3 py-2 text-xs font-medium text-accent-foreground">
+                  {isCompetition
+                    ? "The elimination product’s alkene E/Z geometry is graded."
+                    : "Alkene E/Z geometry is graded on this question."}
+                </p>
+              )}
             </article>
 
             <div className="flex flex-wrap gap-2">

@@ -25,6 +25,8 @@ export type Question = {
   conditions: string;
   prompt: string;
   stereochemistryMatters: boolean;
+  /** Grade E/Z geometry of the alkene, independently of tetrahedral stereochemistry. */
+  alkeneGeometryMatters?: boolean;
   /** Optional instructor-supplied conformational constraint for stereospecific E2 practice. */
   conformationalHint?: string;
   /** SMILES of the starting material — only used to draw scheme questions. */
@@ -1111,6 +1113,7 @@ const EXPANDED_QUESTIONS: Question[] = [
     prompt:
       "Draw the major alkene product. Consider whether the carbocation can rearrange after water leaves.",
     stereochemistryMatters: false,
+    alkeneGeometryMatters: true,
   },
   {
     id: "q77",
@@ -1170,6 +1173,7 @@ const EXPANDED_QUESTIONS: Question[] = [
     prompt:
       "Draw both major organic products: the product from substitution and the major alkene from elimination.",
     stereochemistryMatters: false,
+    alkeneGeometryMatters: true,
   },
   {
     id: "q81",

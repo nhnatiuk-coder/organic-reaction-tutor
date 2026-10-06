@@ -12,6 +12,7 @@ const files = [
   "curated-practice-bank",
   "question-settings",
   "sn1-nucleophiles",
+  "alkene-geometry",
   "scheme-abbreviations",
   "questions",
   "expanded-practice-bank.generated",
@@ -54,6 +55,7 @@ try {
   const { SN1_NUCLEOPHILE_ASSIGNMENTS, SN1_NUCLEOPHILES } =
     await load("sn1-nucleophiles");
   const { ANSWER_KEYS, gradeStructure } = await load("answer-keys.server");
+  const { ALKENE_GEOMETRY_FEEDBACK } = await load("alkene-geometry");
   const { questionsForFilters, sessionQuestionsFor } =
     await load("practice-selection");
   const byId = new Map(QUESTIONS.map((question) => [question.id, question]));
@@ -273,6 +275,48 @@ try {
   const indigo = await Indigo();
   const options = new indigo.MapStringString();
   try {
+    // Independently enumerated with RDKit, then checked here using the same
+    // Indigo chemistry engine as Ketcher. Cover every active E1 target,
+    // including only the elimination slot of shared SN1/E1 questions.
+    const e1Products = JSON.parse(
+      readFileSync(resolve(root, "scripts/fixtures/e1-major-products.json"), "utf8"),
+    );
+    assert.deepEqual(
+      e1Products.map((product) => product.id).sort(),
+      Object.values(CURATED_PRACTICE_BANK.E1).flat().slice().sort(),
+      "Independent E1 product checks must cover the entire active E1 bank",
+    );
+    let geometryChecks = 0;
+    for (const product of e1Products) {
+      const question = byId.get(product.id);
+      const answer = answers.get(product.id);
+      const target = product.slot === "main" ? answer : answer[product.slot];
+      const majorKey = indigo.convert(product.productSmiles, "inchi-key", options);
+      assert.equal(majorKey, product.expectedKey, `${product.id}: RDKit/Indigo disagreement`);
+      assert.equal(target.correct, majorKey, `${product.id}: wrong E1 major-product key`);
+      assert.equal(target.requireStereo, product.geometryGraded);
+      assert.equal(Boolean(question.alkeneGeometryMatters), product.geometryGraded);
+      assert.equal(gradeStructure(product.id, majorKey, product.slot)?.verdict, "correct");
+      if (!product.geometryGraded) continue;
+      geometryChecks += 1;
+      const minorKey = indigo.convert(product.minorProductSmiles, "inchi-key", options);
+      assert.equal(minorKey, product.minorKey, `${product.id}: wrong Z reference`);
+      assert.equal(minorKey.split("-")[0], majorKey.split("-")[0]);
+      assert.notEqual(minorKey, majorKey);
+      for (const submitted of [minorKey, `${majorKey.split("-")[0]}-UHFFFAOYSA-N`]) {
+        const result = gradeStructure(product.id, submitted, product.slot);
+        assert.equal(result?.verdict, "partial", `${product.id}: Z/unspecified geometry accepted`);
+        assert.equal(result.message, ALKENE_GEOMETRY_FEEDBACK);
+        assert.doesNotMatch(result.message, /wedge|dash|reacting carbon/i);
+      }
+      if (product.slot === "elimination") {
+        assert.equal(answer.substitution.requireStereo, false);
+        assert.equal(gradeStructure(product.id, answer.substitution.correct, "substitution")?.verdict, "correct");
+      }
+    }
+    assert.equal(geometryChecks, 8);
+    console.log(`E1 major products verified: ${e1Products.length}; E/Z grading: ${geometryChecks}.`);
+
     let tosylateDrawings = 0;
     for (const question of PRACTICE_QUESTIONS) {
       const original = question.substrateSmiles;
@@ -394,11 +438,12 @@ try {
         /unrearranged ether/i,
       );
     }
-    // Changing the trapping solvent must preserve the competition alkene keys.
+    // Solvent changes preserve competition alkene connectivity; the major
+    // geometry is required where the elimination product has E/Z isomers.
     for (const [id, alkene] of [
       ["q78", "CC(C)=CCCCCC"],
       ["q79", "CC(C)(C)C1=CCCCCC1"],
-      ["q80", "CC(c1ccccc1)=CC"],
+      ["q80", "C/C=C(\\C)c1ccccc1"],
     ]) {
       assert.equal(
         gradeStructure(

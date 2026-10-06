@@ -19,6 +19,29 @@ const { getSn1Nucleophile, SN1_NUCLEOPHILES, sn1SolvolysisConditions } =
   await import(
     `data:text/javascript;base64,${Buffer.from(nucleophileModule).toString("base64")}`
   );
+const geometryModule = ts.transpileModule(
+  readFileSync(resolve(root, "src/lib/alkene-geometry.ts"), "utf8"),
+  {
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2022,
+      module: ts.ModuleKind.ES2022,
+    },
+  },
+).outputText;
+const { ALKENE_GEOMETRY_FEEDBACK } = await import(
+  `data:text/javascript;base64,${Buffer.from(geometryModule).toString("base64")}`
+);
+
+// Individually reviewed E major products in the curated E1 bank. These slash
+// directions encode actual E/Z geometry; do not infer E from slash matching.
+const E1_MAJOR_GEOMETRY_PRODUCTS = {
+  "g-e1-inter-21": "CC/C(C)=C(\\C)CC",
+  "g-e1-inter-22": "CCC/C(C)=C(\\C)CC",
+  "g-e1-inter-29": "CCCC/C(CC)=C(\\C)CC",
+  "g-e1-adv-23": "CC/C(C)=C(\\C)CC",
+  "g-e1-adv-24": "CCC/C(C)=C(\\C)CC",
+  "g-e1-adv-31": "CCCC/C(CC)=C(\\C)CC",
+};
 const outputQuestions = resolve(
   root,
   "src/lib/expanded-practice-bank.generated.ts",
@@ -424,11 +447,22 @@ function addQuestion({
   conditions,
   prompt,
   stereochemistryMatters = false,
+  alkeneGeometryMatters = false,
   conformationalHint,
   productSmiles,
   correctName,
   explanation,
 }) {
+  const e1GeometryProduct = E1_MAJOR_GEOMETRY_PRODUCTS[id];
+  if (mechanism === "E1" && e1GeometryProduct) {
+    // Updating the geometry must never change the product's connectivity.
+    if (inchiKey(e1GeometryProduct).split("-")[0] !== inchiKey(productSmiles).split("-")[0]) {
+      throw new Error(`${id}: E1 geometry correction changed connectivity`);
+    }
+    productSmiles = e1GeometryProduct;
+    alkeneGeometryMatters = true;
+    correctName = `the (E) ${correctName.replace(/^the /, "")}`;
+  }
   assertCarbonChainLimit(substrateSmiles, `${id} substrate`);
   assertCarbonChainLimit(productSmiles, `${id} product`);
 
@@ -455,12 +489,14 @@ function addQuestion({
     conditions,
     prompt,
     stereochemistryMatters,
+    ...(alkeneGeometryMatters ? { alkeneGeometryMatters: true } : {}),
     ...(conformationalHint ? { conformationalHint } : {}),
   });
   answerKeys.push({
     id,
     correct,
-    requireStereo: stereochemistryMatters,
+    requireStereo: stereochemistryMatters || alkeneGeometryMatters,
+    ...(alkeneGeometryMatters ? { stereoFeedback: ALKENE_GEOMETRY_FEEDBACK } : {}),
     correctName,
     explanation,
     distractors: {},

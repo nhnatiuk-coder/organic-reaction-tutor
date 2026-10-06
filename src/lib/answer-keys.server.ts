@@ -3,12 +3,15 @@
 // full key = connectivity + stereochemistry).
 import { isQuestionActive } from "./questions";
 import { GENERATED_ANSWER_KEYS } from "./expanded-answer-keys.generated.server";
+import { ALKENE_GEOMETRY_FEEDBACK } from "./alkene-geometry";
 
 export type AnswerTarget = {
   /** Full standard InChIKey of the correct major product. */
   correct: string;
   /** Whether the stereo block of the key must also match. */
   requireStereo: boolean;
+  /** Product-specific feedback for matching connectivity but incorrect/omitted stereo. */
+  stereoFeedback?: string;
   correctName: string;
   explanation: string;
   /** Recognised wrong answers keyed by InChIKey skeleton (first 14 chars). */
@@ -809,9 +812,10 @@ export const ANSWER_KEYS: AnswerKey[] = [
   },
   {
     id: "q76",
-    correct: "XTUXVDJHGIEBAA-UHFFFAOYSA-N",
-    requireStereo: false,
-    correctName: "3,4-dimethylhex-3-ene",
+    correct: "XTUXVDJHGIEBAA-BQYQJAHWSA-N",
+    requireStereo: true,
+    stereoFeedback: ALKENE_GEOMETRY_FEEDBACK,
+    correctName: "(E)-3,4-dimethylhex-3-ene",
     explanation:
       "Water leaves from C2 to give a secondary carbocation. A 1,2-hydride shift from C3 makes a tertiary C3 carbocation; removal of a beta hydrogen from C4 then gives the tetrasubstituted major alkene.",
     distractors: {
@@ -889,9 +893,10 @@ export const ANSWER_KEYS: AnswerKey[] = [
       },
     },
     elimination: {
-      correct: "UGUYQBMBIJFNRM-UHFFFAOYSA-N",
-      requireStereo: false,
-      correctName: "2-phenylbut-2-ene",
+      correct: "UGUYQBMBIJFNRM-YCRREMRBSA-N",
+      requireStereo: true,
+      stereoFeedback: ALKENE_GEOMETRY_FEEDBACK,
+      correctName: "(E)-2-phenylbut-2-ene",
       explanation:
         "Elimination from the same carbocation gives the more substituted alkene, which is also conjugated with the phenyl ring.",
       distractors: {},
@@ -1034,6 +1039,7 @@ export function gradeStructure(
     return {
       verdict: "partial" as const,
       message:
+        target.stereoFeedback ??
         "Right connectivity, wrong stereochemistry at the reacting carbon. Check your wedge/dash bonds.",
       explanation: target.explanation,
     };

@@ -1,0 +1,258 @@
+[
+  {
+    "id": "q4",
+    "slot": "main",
+    "reference": "RXN-0004",
+    "productSmiles": "CC1=CCCCC1",
+    "geometryGraded": false,
+    "expectedKey": "CTMHWPIWNRWQEG-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q41",
+    "slot": "main",
+    "reference": "RXN-0041",
+    "productSmiles": "C1=CCCCC1",
+    "geometryGraded": false,
+    "expectedKey": "HGCIXCUEYOPUTN-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q42",
+    "slot": "main",
+    "reference": "RXN-0042",
+    "productSmiles": "C1=CCCCCC1",
+    "geometryGraded": false,
+    "expectedKey": "ZXIJMRYMVAMXQP-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q43",
+    "slot": "main",
+    "reference": "RXN-0043",
+    "productSmiles": "C1=CCC1",
+    "geometryGraded": false,
+    "expectedKey": "CFBGXYDUODCMNS-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q46",
+    "slot": "main",
+    "reference": "RXN-0046",
+    "productSmiles": "CC(C)(C)C1=CCCCC1",
+    "geometryGraded": false,
+    "expectedKey": "GQBKAYONUCKYKT-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q75",
+    "slot": "main",
+    "reference": "RXN-0075",
+    "productSmiles": "CCCC(C)=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "RGYAVZGBAJFMIZ-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q76",
+    "slot": "main",
+    "reference": "RXN-0076",
+    "productSmiles": "CC/C(C)=C(\\C)CC",
+    "geometryGraded": true,
+    "expectedKey": "XTUXVDJHGIEBAA-BQYQJAHWSA-N",
+    "minorProductSmiles": "CC/C(C)=C(/C)CC",
+    "minorKey": "XTUXVDJHGIEBAA-FPLPWBNLSA-N"
+  },
+  {
+    "id": "q77",
+    "slot": "main",
+    "reference": "RXN-0077",
+    "productSmiles": "CCC1=C(CC)CCCC1",
+    "geometryGraded": false,
+    "expectedKey": "VJKWRJZRTVBJTH-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q78",
+    "slot": "elimination",
+    "reference": "RXN-0078",
+    "productSmiles": "CCCCCC=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "YBOZNTGUYASNRA-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q79",
+    "slot": "elimination",
+    "reference": "RXN-0079",
+    "productSmiles": "CC(C)(C)C1=CCCCCC1",
+    "geometryGraded": false,
+    "expectedKey": "UWBJPUXTTHBACI-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q80",
+    "slot": "elimination",
+    "reference": "RXN-0080",
+    "productSmiles": "C/C=C(\\C)c1ccccc1",
+    "geometryGraded": true,
+    "expectedKey": "UGUYQBMBIJFNRM-YCRREMRBSA-N",
+    "minorProductSmiles": "C/C=C(/C)c1ccccc1",
+    "minorKey": "UGUYQBMBIJFNRM-OQFOIZHKSA-N"
+  },
+  {
+    "id": "g-e1-intro-13",
+    "slot": "main",
+    "reference": "RXN-0401",
+    "productSmiles": "C=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "VQTUBCCKSQIDNK-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-14",
+    "slot": "main",
+    "reference": "RXN-0402",
+    "productSmiles": "CC=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "BKOOMYPCSUNDGP-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-15",
+    "slot": "main",
+    "reference": "RXN-0403",
+    "productSmiles": "CCC=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "JMMZCWZIJXAGKW-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-16",
+    "slot": "main",
+    "reference": "RXN-0404",
+    "productSmiles": "CCCC=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "BWEKDYGHDCHWEN-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-17",
+    "slot": "main",
+    "reference": "RXN-0405",
+    "productSmiles": "CCCCC=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "WEPNJTDVIIKRIK-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-18",
+    "slot": "main",
+    "reference": "RXN-0406",
+    "productSmiles": "CC(C)=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "WGLLSSPDPJPLOR-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-19",
+    "slot": "main",
+    "reference": "RXN-0407",
+    "productSmiles": "CCC(C)=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "WFHALSLYRWWUGH-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-20",
+    "slot": "main",
+    "reference": "RXN-0408",
+    "productSmiles": "CCCC(C)=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "RGYAVZGBAJFMIZ-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-21",
+    "slot": "main",
+    "reference": "RXN-0409",
+    "productSmiles": "CCC(C)C=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "IZSBIPQYBGDXJZ-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-22",
+    "slot": "main",
+    "reference": "RXN-0410",
+    "productSmiles": "CCCC(C)C=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "LJCMMOJGGBTOFK-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-intro-23",
+    "slot": "main",
+    "reference": "RXN-0411",
+    "productSmiles": "CC(C)=CCCC(C)C",
+    "geometryGraded": false,
+    "expectedKey": "JDJYGSMZGYTCML-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-inter-20",
+    "slot": "main",
+    "reference": "RXN-0458",
+    "productSmiles": "CCC(C)=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "WFHALSLYRWWUGH-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-inter-21",
+    "slot": "main",
+    "reference": "RXN-0459",
+    "productSmiles": "CC/C(C)=C(\\C)CC",
+    "geometryGraded": true,
+    "expectedKey": "XTUXVDJHGIEBAA-BQYQJAHWSA-N",
+    "minorProductSmiles": "CC/C(C)=C(/C)CC",
+    "minorKey": "XTUXVDJHGIEBAA-FPLPWBNLSA-N"
+  },
+  {
+    "id": "g-e1-inter-22",
+    "slot": "main",
+    "reference": "RXN-0460",
+    "productSmiles": "CCC/C(C)=C(\\C)CC",
+    "geometryGraded": true,
+    "expectedKey": "LVGIMZUCTYUIGT-CMDGGOBGSA-N",
+    "minorProductSmiles": "CCC/C(C)=C(/C)CC",
+    "minorKey": "LVGIMZUCTYUIGT-HJWRWDBZSA-N"
+  },
+  {
+    "id": "g-e1-inter-29",
+    "slot": "main",
+    "reference": "RXN-0467",
+    "productSmiles": "CCCC/C(CC)=C(\\C)CC",
+    "geometryGraded": true,
+    "expectedKey": "ZMHFYBOJQLJDDR-ZHACJKMWSA-N",
+    "minorProductSmiles": "CCCC/C(CC)=C(/C)CC",
+    "minorKey": "ZMHFYBOJQLJDDR-KHPPLWFESA-N"
+  },
+  {
+    "id": "g-e1-adv-22",
+    "slot": "main",
+    "reference": "RXN-0510",
+    "productSmiles": "CCC(C)=C(C)C",
+    "geometryGraded": false,
+    "expectedKey": "WFHALSLYRWWUGH-UHFFFAOYSA-N"
+  },
+  {
+    "id": "g-e1-adv-23",
+    "slot": "main",
+    "reference": "RXN-0511",
+    "productSmiles": "CC/C(C)=C(\\C)CC",
+    "geometryGraded": true,
+    "expectedKey": "XTUXVDJHGIEBAA-BQYQJAHWSA-N",
+    "minorProductSmiles": "CC/C(C)=C(/C)CC",
+    "minorKey": "XTUXVDJHGIEBAA-FPLPWBNLSA-N"
+  },
+  {
+    "id": "g-e1-adv-24",
+    "slot": "main",
+    "reference": "RXN-0512",
+    "productSmiles": "CCC/C(C)=C(\\C)CC",
+    "geometryGraded": true,
+    "expectedKey": "LVGIMZUCTYUIGT-CMDGGOBGSA-N",
+    "minorProductSmiles": "CCC/C(C)=C(/C)CC",
+    "minorKey": "LVGIMZUCTYUIGT-HJWRWDBZSA-N"
+  },
+  {
+    "id": "g-e1-adv-31",
+    "slot": "main",
+    "reference": "RXN-0519",
+    "productSmiles": "CCCC/C(CC)=C(\\C)CC",
+    "geometryGraded": true,
+    "expectedKey": "ZMHFYBOJQLJDDR-ZHACJKMWSA-N",
+    "minorProductSmiles": "CCCC/C(CC)=C(/C)CC",
+    "minorKey": "ZMHFYBOJQLJDDR-KHPPLWFESA-N"
+  }
+]
