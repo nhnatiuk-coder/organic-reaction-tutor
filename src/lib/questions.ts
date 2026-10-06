@@ -1291,7 +1291,17 @@ export const QUESTIONS: Question[] = [
   ...CORE_QUESTIONS,
   ...EXPANDED_QUESTIONS,
   ...GENERATED_QUESTIONS,
-];
+].map((question) => {
+  // Use the instructor's heat notation consistently in both the scheme and
+  // conditions card, including generated and shared SN1/E1 questions.
+  if (!getQuestionMechanisms(question).includes("SN1")) return question;
+  return {
+    ...question,
+    conditions: question.conditions
+      .replace(/\b\d+(?:\.\d+)?(?:\s*[–-]\s*\d+(?:\.\d+)?)?\s*°\s*C\b/g, "Δ")
+      .replace(/\b(?:heat|reflux)\b/gi, "Δ"),
+  };
+});
 
 /**
  * Permanent instructor/student references for questions. New questions should
