@@ -1,5 +1,6 @@
 import { ClientOnly } from "@tanstack/react-router";
 import { Suspense, lazy } from "react";
+import { getSchemeDisplaySmiles } from "@/lib/scheme-abbreviations";
 
 const SmilesStructure = lazy(() => import("./SmilesStructure"));
 
@@ -43,8 +44,11 @@ export default function ReactionScheme({
   conformationalHint,
   stereochemistryMatters = false,
 }: Props) {
-  const atomCount = (substrateSmiles.match(/Cl|Br|[A-Z][a-z]?|[cnops]/g) ?? [])
-    .length;
+  const atomCount = (
+    getSchemeDisplaySmiles(substrateSmiles).match(
+      /Cl|Br|[A-Z][a-z]?|[cnops]/g,
+    ) ?? []
+  ).length;
   const largeStructure = atomCount >= 14;
   const structureWidth = largeStructure ? 440 : 300;
   const structureHeight = largeStructure ? 280 : 190;

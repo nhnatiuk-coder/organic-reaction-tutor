@@ -12,6 +12,7 @@ const files = [
   "curated-practice-bank",
   "question-settings",
   "sn1-nucleophiles",
+  "scheme-abbreviations",
   "questions",
   "expanded-practice-bank.generated",
   "answer-keys.server",
@@ -47,6 +48,9 @@ try {
     getQuestionReference,
   } = await load("questions");
   const { DISABLED_QUESTION_IDS } = await load("question-settings");
+  const { getSchemeDisplaySmiles, TOSYLATE_DISPLAY_ATOM } = await load(
+    "scheme-abbreviations",
+  );
   const { SN1_NUCLEOPHILE_ASSIGNMENTS, SN1_NUCLEOPHILES } =
     await load("sn1-nucleophiles");
   const { ANSWER_KEYS, gradeStructure } = await load("answer-keys.server");
@@ -269,6 +273,39 @@ try {
   const indigo = await Indigo();
   const options = new indigo.MapStringString();
   try {
+    let tosylateDrawings = 0;
+    for (const question of PRACTICE_QUESTIONS) {
+      const original = question.substrateSmiles;
+      const display = getSchemeDisplaySmiles(original);
+      if (!original.includes("S(=O)") && !original.includes("S(=O)(=O)")) {
+        assert.equal(
+          display,
+          original,
+          `${question.id}: non-tosylate drawing changed`,
+        );
+      }
+      if (!display.includes(TOSYLATE_DISPLAY_ATOM)) continue;
+      tosylateDrawings += 1;
+      assert.ok(
+        display.length < original.length,
+        `${question.id}: group not shortened`,
+      );
+      // Re-expand at the retained oxygen using a branch. This independent
+      // molecular comparison checks attachment position and full stereochemistry
+      // for leading sulfonate, branch, terminal, and cyclic encodings alike.
+      const restored = display.replaceAll(
+        TOSYLATE_DISPLAY_ATOM,
+        "O(S(=O)(=O)c%99ccc(C)cc%99)",
+      );
+      assert.equal(
+        indigo.convert(restored, "inchi-key", options),
+        indigo.convert(original, "inchi-key", options),
+        `${question.id}: abbreviation changed connectivity or stereochemistry`,
+      );
+    }
+    assert.ok(tosylateDrawings > 0, "No active tosylate schemes were checked");
+    console.log(`Compact tosylate drawings verified: ${tosylateDrawings}.`);
+
     for (const [id, slot, smiles] of [
       ["q69", "main", "N#CCCC1CC1"],
       ["q83", "substitution", "CC(OCC)C(C)c1ccccc1"],

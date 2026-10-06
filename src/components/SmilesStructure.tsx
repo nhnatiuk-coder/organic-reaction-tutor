@@ -1,4 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
+import {
+  getSchemeDisplaySmiles,
+  TOSYLATE_DISPLAY_ATOM,
+  TOSYLATE_DISPLAY_ATOM_CLASS,
+} from "@/lib/scheme-abbreviations";
 
 type Props = {
   smiles: string;
@@ -24,6 +29,13 @@ type StereoVertex = {
     element: string;
     isStereoCenter: boolean;
     isDrawn: boolean;
+    class?: number;
+    attachPseudoElement?: (
+      element: string,
+      previousElement: string,
+      hydrogenCount: number,
+      charge: number,
+    ) => void;
   };
 };
 
@@ -41,8 +53,26 @@ type StereoCapableDrawer = {
   preprocessor?: {
     graph?: StereoGraph;
     annotateStereochemistry?: () => void;
+    initPseudoElements?: () => void;
   };
 };
+
+/** Use the library's own label positioning and bond masking, rather than
+ * placing text over an already laid-out sulfonate/benzene drawing. */
+function configureTosylateAbbreviations(rawDrawer: unknown): boolean {
+  const preprocessor = (rawDrawer as StereoCapableDrawer).preprocessor;
+  const abbreviate = preprocessor?.initPseudoElements;
+  if (!preprocessor || !abbreviate) return false;
+
+  preprocessor.initPseudoElements = () => {
+    abbreviate.call(preprocessor);
+    preprocessor.graph?.vertices.forEach((vertex) => {
+      if (vertex.value.class !== TOSYLATE_DISPLAY_ATOM_CLASS) return;
+      vertex.value.attachPseudoElement?.("Ts", "C", 0, 0);
+    });
+  };
+  return true;
+}
 
 /**
  * SmilesDrawer normally marks a stereocentre with one stereobond. That is a
@@ -89,10 +119,7 @@ function addComplementaryStereoBonds(
       const hydrogen = neighbours.find(
         (vertex) => vertex.value.element === "H",
       );
-      const carbonSubstituent = preferredCarbonSubstituent(
-        centre,
-        neighbours,
-      );
+      const carbonSubstituent = preferredCarbonSubstituent(centre, neighbours);
 
       if (preferHydrogenDashed && hydrogen && carbonSubstituent) {
         // These questions use chirality to show a reactive conformation but
@@ -126,8 +153,7 @@ function addComplementaryStereoBonds(
       if (!complementTarget) return;
 
       const complementaryBond = graph.getEdge(centre.id, complementTarget.id);
-      complementaryBond.wedge =
-        stereobond.edge.wedge === "up" ? "down" : "up";
+      complementaryBond.wedge = stereobond.edge.wedge === "up" ? "down" : "up";
       complementTarget.value.isDrawn = true;
     });
 }
@@ -199,8 +225,17 @@ export default function SmilesStructure({
           configureCompleteStereoDepiction(drawer, preferHydrogenDashed);
         }
 
+        let displaySmiles = getSchemeDisplaySmiles(smiles);
+        if (
+          displaySmiles.includes(TOSYLATE_DISPLAY_ATOM) &&
+          !configureTosylateAbbreviations(drawer)
+        ) {
+          // An incompatible renderer must still show the full, correct group.
+          displaySmiles = smiles;
+        }
+
         api.parse(
-          smiles,
+          displaySmiles,
           (tree) => {
             if (cancelled || !ref.current) return;
             try {
