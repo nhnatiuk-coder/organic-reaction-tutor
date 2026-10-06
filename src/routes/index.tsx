@@ -291,6 +291,9 @@ export function PracticePage({
   const [result, setResult] = useState<PracticeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [navigating, setNavigating] = useState(false);
+  const navigationInProgress = useRef(false);
   const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>(
     initialSessionQuestions[0]?.id ? [initialSessionQuestions[0].id] : [],
   );
@@ -306,37 +309,52 @@ export function PracticePage({
   const grade = useServerFn(gradeAnswer);
   const navigate = useNavigate();
   useEffect(() => {
-    const pending = takePracticeRestart(studentView);
-    if (!pending) return;
-    const restoredSettings = normalisePracticeSettings(pending.settings);
-    const restoredMode = PRACTICE_MODES.find(
-      (mode) => mode.id === restoredSettings.modeId,
-    )!;
-    const availableIds = new Set(
-      questionsForFilters(restoredMode, restoredSettings.difficulty).map(
-        (q) => q.id,
-      ),
-    );
-    const restoredIds = pending.questionIds.filter((id) =>
-      availableIds.has(id),
-    );
-    if (!restoredIds.length) return;
-    setPracticeModeId(restoredSettings.modeId);
-    setDifficulty(restoredSettings.difficulty);
-    setSessionLength(restoredSettings.sessionLength);
-    setSessionQuestionIds(restoredIds);
-    setCurrentQuestionId(restoredIds[0]!);
-    setSeenQuestionIds([restoredIds[0]!]);
-    setReportByQuestionId({});
-    setHintQuestionIds([]);
-    setSessionStartedAt(new Date());
-    setResult(null);
-    setError(null);
+    try {
+      const pending = takePracticeRestart(studentView);
+      if (!pending) return;
+      const restoredSettings = normalisePracticeSettings(pending.settings);
+      const restoredMode = PRACTICE_MODES.find(
+        (mode) => mode.id === restoredSettings.modeId,
+      )!;
+      const availableIds = new Set(
+        questionsForFilters(restoredMode, restoredSettings.difficulty).map(
+          (q) => q.id,
+        ),
+      );
+      const restoredIds = pending.questionIds.filter((id) =>
+        availableIds.has(id),
+      );
+      if (!restoredIds.length) return;
+      setPracticeModeId(restoredSettings.modeId);
+      setDifficulty(restoredSettings.difficulty);
+      setSessionLength(restoredSettings.sessionLength);
+      setSessionQuestionIds(restoredIds);
+      setCurrentQuestionId(restoredIds[0]!);
+      setSeenQuestionIds([restoredIds[0]!]);
+      setReportByQuestionId({});
+      setHintQuestionIds([]);
+      setSessionStartedAt(new Date());
+      setResult(null);
+      setError(null);
+    } finally {
+      // Restore a queued restart before students can advance the session.
+      setSessionReady(true);
+    }
   }, [studentView]);
   const practiceMode = PRACTICE_MODES.find(
     (mode) => mode.id === practiceModeId,
   )!;
   const activeQuestions = questionsForFilters(practiceMode, difficulty);
+
+  if (!sessionReady) {
+    return (
+      <main className="min-h-screen bg-background p-6">
+        <p role="status" className="mx-auto max-w-6xl text-muted-foreground">
+          Starting your practice session…
+        </p>
+      </main>
+    );
+  }
 
   if (activeQuestions.length === 0) {
     return (
@@ -480,6 +498,7 @@ export function PracticePage({
   }
 
   async function check() {
+    if (checking || navigationInProgress.current) return;
     setChecking(true);
     setError(null);
     setResult(null);
@@ -569,28 +588,46 @@ export function PracticePage({
   }
 
   async function goTo(nextQuestion: (typeof activeQuestions)[number]) {
-    setSeenQuestionIds((seen) =>
-      seen.includes(nextQuestion.id) ? seen : [...seen, nextQuestion.id],
-    );
-    await showQuestion(nextQuestion.id);
+    if (checking || navigationInProgress.current) return;
+    navigationInProgress.current = true;
+    setNavigating(true);
+    try {
+      setSeenQuestionIds((seen) =>
+        seen.includes(nextQuestion.id) ? seen : [...seen, nextQuestion.id],
+      );
+      await showQuestion(nextQuestion.id);
+    } finally {
+      navigationInProgress.current = false;
+      setNavigating(false);
+    }
   }
 
   async function nextRandomProblem() {
-    if (sessionComplete) {
-      await finishSession();
-      return;
-    }
+    if (checking || navigationInProgress.current) return;
+    navigationInProgress.current = true;
+    setNavigating(true);
+    try {
+      if (sessionComplete) {
+        await finishSession();
+        return;
+      }
 
-    const unvisited = sessionQuestions.filter(
-      (item) => !seenQuestionIds.includes(item.id),
-    );
-    const next =
-      difficulty === "progressive"
-        ? unvisited[0]
-        : unvisited[Math.floor(Math.random() * unvisited.length)];
-    if (!next) return;
-    setSeenQuestionIds((seen) => [...seen, next.id]);
-    await showQuestion(next.id);
+      const unvisited = sessionQuestions.filter(
+        (item) => !seenQuestionIds.includes(item.id),
+      );
+      const next =
+        difficulty === "progressive"
+          ? unvisited[0]
+          : unvisited[Math.floor(Math.random() * unvisited.length)];
+      if (!next) return;
+      setSeenQuestionIds((seen) =>
+        seen.includes(next.id) ? seen : [...seen, next.id],
+      );
+      await showQuestion(next.id);
+    } finally {
+      navigationInProgress.current = false;
+      setNavigating(false);
+    }
   }
 
   async function startPracticeSession(
@@ -711,7 +748,7 @@ export function PracticePage({
               )}
               <button
                 onClick={nextRandomProblem}
-                disabled={checking}
+                disabled={checking || navigating}
                 className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {sessionComplete
@@ -911,7 +948,7 @@ export function PracticePage({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={check}
-                disabled={checking}
+                disabled={checking || navigating}
                 className="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {checking
@@ -931,7 +968,7 @@ export function PracticePage({
               </button>
               <button
                 onClick={nextRandomProblem}
-                disabled={checking}
+                disabled={checking || navigating}
                 className="rounded-md border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-accent disabled:opacity-60"
               >
                 {sessionComplete ? "Finish set" : "Random next"}
