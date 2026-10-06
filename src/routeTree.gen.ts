@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PracticeRouteImport } from './routes/practice'
+import { Route as StructureEditorRouteImport } from './routes/structure-editor'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const PracticeRoute = PracticeRouteImport.update({
   path: '/practice',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StructureEditorRoute = StructureEditorRouteImport.update({
+  id: '/structure-editor',
+  path: '/structure-editor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/practice': typeof PracticeRoute
+  '/structure-editor': typeof StructureEditorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/practice': typeof PracticeRoute
+  '/structure-editor': typeof StructureEditorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/practice': typeof PracticeRoute
+  '/structure-editor': typeof StructureEditorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/practice'
+  fullPaths: '/' | '/practice' | '/structure-editor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/practice'
-  id: '__root__' | '/' | '/practice'
+  to: '/' | '/practice' | '/structure-editor'
+  id: '__root__' | '/' | '/practice' | '/structure-editor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PracticeRoute: typeof PracticeRoute
+  StructureEditorRoute: typeof StructureEditorRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PracticeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/structure-editor': {
+      id: '/structure-editor'
+      path: '/structure-editor'
+      fullPath: '/structure-editor'
+      preLoaderRoute: typeof StructureEditorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PracticeRoute: PracticeRoute,
+  StructureEditorRoute: StructureEditorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

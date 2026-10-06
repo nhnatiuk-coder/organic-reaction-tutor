@@ -233,7 +233,7 @@ function ProductEditor({
   onInit,
 }: {
   title: string;
-  onInit: (ketcher: Ketcher) => void;
+  onInit: (ketcher: Ketcher | null) => void;
 }) {
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
@@ -243,7 +243,7 @@ function ProductEditor({
       <div className="h-[560px]">
         <ClientOnly fallback={<EditorSkeleton />}>
           <Suspense fallback={<EditorSkeleton />}>
-            <KetcherCanvas onInit={onInit} />
+            <KetcherCanvas onInit={onInit} title={title} />
           </Suspense>
         </ClientOnly>
       </div>
@@ -983,7 +983,12 @@ export function PracticePage({
               title="Draw the major product"
               onInit={(ketcher) => {
                 ketcherRef.current = ketcher;
-                (window as unknown as { ketcher?: Ketcher }).ketcher = ketcher;
+                if (ketcher) {
+                  (window as unknown as { ketcher?: Ketcher }).ketcher =
+                    ketcher;
+                } else {
+                  delete (window as unknown as { ketcher?: Ketcher }).ketcher;
+                }
               }}
             />
           )}
