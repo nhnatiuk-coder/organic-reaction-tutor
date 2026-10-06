@@ -15,21 +15,21 @@ import {
 } from "./index";
 
 type StudentPracticeSearch = {
-  start?: string;
-  mode?: string;
-  difficulty?: string;
-  length?: string;
+  start?: string | undefined;
+  mode?: string | undefined;
+  difficulty?: string | undefined;
+  length?: string | undefined;
 };
 
 export const Route = createFileRoute("/practice")({
   validateSearch: (search: Record<string, unknown>): StudentPracticeSearch => ({
-    start: search.start === "1" || search.start === 1 ? "1" : undefined,
-    mode: typeof search.mode === "string" ? search.mode : undefined,
+    start: search["start"] === "1" || search["start"] === 1 ? "1" : undefined,
+    mode: typeof search["mode"] === "string" ? search["mode"] : undefined,
     difficulty:
-      typeof search.difficulty === "string" ? search.difficulty : undefined,
+      typeof search["difficulty"] === "string" ? search["difficulty"] : undefined,
     length:
-      typeof search.length === "string" || typeof search.length === "number"
-        ? String(search.length)
+      typeof search["length"] === "string" || typeof search["length"] === "number"
+        ? String(search["length"])
         : undefined,
   }),
   head: () => ({
@@ -134,9 +134,17 @@ function StudentSetupPage() {
               for immediate feedback. You may request a reaction-type hint when
               you decide you need one.
             </li>
+            <li>
+              After the final problem, select{" "}
+              <strong className="font-semibold text-card-foreground">
+                Finish set
+              </strong>{" "}
+              to open your report. You can download a PDF or restart the same
+              set.
+            </li>
           </ol>
           <p className="mt-5 rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
-            Your work is not saved and no account is required.
+            Reports stay only in this browser tab, and no account is required.
           </p>
         </section>
 

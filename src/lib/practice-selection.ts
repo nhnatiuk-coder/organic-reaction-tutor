@@ -9,6 +9,13 @@ import {
 
 export type DifficultyFilter = "progressive" | DifficultyLevel;
 export type SessionLength = 5 | 10 | 25 | 30 | 50 | "all";
+export type PracticeModeId =
+  "mixed" | "sn1" | "sn2" | "e1" | "e2" | "substitution" | "elimination";
+export type PracticeSettings = {
+  modeId: PracticeModeId;
+  difficulty: DifficultyFilter;
+  sessionLength: SessionLength;
+};
 
 export function questionsForFilters(
   mode: { mechanisms: readonly ElementaryMechanism[] },

@@ -127,7 +127,7 @@ function buildPdf(lines: string[]) {
   return new Blob([pdf], { type: "application/pdf" });
 }
 
-export function createPracticeReportPdf(data: PracticeReportData) {
+export function summarizePracticeReport(data: PracticeReportData) {
   const checked = data.outcomes.filter((outcome) => outcome.attempts > 0);
   const correct = checked.filter(
     (outcome) => outcome.latestAttempt === "correct",
@@ -141,6 +141,27 @@ export function createPracticeReportPdf(data: PracticeReportData) {
   const firstAttemptCorrect = checked.filter(
     (outcome) => outcome.firstAttempt === "correct",
   ).length;
+  return {
+    checkedCount: checked.length,
+    correct,
+    partial,
+    incorrect,
+    firstAttemptCorrect,
+    notChecked: data.totalProblems - checked.length,
+    accuracy: checked.length ? Math.round((correct / checked.length) * 100) : 0,
+  };
+}
+
+export function createPracticeReportPdf(data: PracticeReportData) {
+  const {
+    checkedCount,
+    correct,
+    partial,
+    incorrect,
+    firstAttemptCorrect,
+    notChecked,
+    accuracy,
+  } = summarizePracticeReport(data);
   const lines = [
     "Organic Chemistry I - Reaction Drawing Practice Report",
     `Generated: ${formatDate(data.finishedAt)}`,
@@ -153,13 +174,13 @@ export function createPracticeReportPdf(data: PracticeReportData) {
     "",
     "Summary",
     `Problems in session: ${data.totalProblems}`,
-    `Problems checked: ${checked.length}`,
+    `Problems checked: ${checkedCount}`,
     `Correct on final check: ${correct}`,
     `Partially correct on final check: ${partial}`,
     `Needs revision on final check: ${incorrect}`,
-    `Not checked: ${data.totalProblems - checked.length}`,
+    `Not checked: ${notChecked}`,
     `Correct on first check: ${firstAttemptCorrect}`,
-    `Final-check accuracy: ${checked.length ? Math.round((correct / checked.length) * 100) : 0}%`,
+    `Final-check accuracy: ${accuracy}%`,
     "",
     "This report was generated in this browser. No student name, answer, or report was sent to or stored by the practice site.",
   ];

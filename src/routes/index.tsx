@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Suspense, lazy, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import type { Ketcher } from "ketcher-core";
 
 import {
@@ -12,10 +12,13 @@ import {
 } from "@/lib/questions";
 import { gradeAnswer, type GradeResult } from "@/lib/grading.functions";
 import {
-  downloadPracticeReport,
   type PracticeReportOutcome,
   type PracticeReportVerdict,
 } from "@/lib/practice-report";
+import {
+  saveCompletedPracticeSession,
+  takePracticeRestart,
+} from "@/lib/practice-session-store";
 
 import ReactionScheme from "@/components/ReactionScheme";
 import {
@@ -23,8 +26,15 @@ import {
   sessionQuestionsFor,
   type DifficultyFilter,
   type SessionLength,
+  type PracticeModeId,
+  type PracticeSettings,
 } from "@/lib/practice-selection";
-export type { DifficultyFilter, SessionLength } from "@/lib/practice-selection";
+export type {
+  DifficultyFilter,
+  SessionLength,
+  PracticeModeId,
+  PracticeSettings,
+} from "@/lib/practice-selection";
 
 const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
 
@@ -46,9 +56,6 @@ type QuestionReportResult = {
   firstAttempt: PracticeReportVerdict;
   latestAttempt: PracticeReportVerdict;
 };
-
-export type PracticeModeId =
-  "mixed" | "sn1" | "sn2" | "e1" | "e2" | "substitution" | "elimination";
 
 type PracticeMode = {
   id: PracticeModeId;
@@ -128,12 +135,6 @@ export const SESSION_LENGTHS: readonly SessionLength[] = [
   50,
   "all",
 ];
-
-export type PracticeSettings = {
-  modeId: PracticeModeId;
-  difficulty: DifficultyFilter;
-  sessionLength: SessionLength;
-};
 
 export const DEFAULT_STUDENT_SETTINGS: PracticeSettings = {
   modeId: "mixed",
@@ -303,6 +304,35 @@ export function PracticePage({
   const eliminationKetcherRef = useRef<Ketcher | null>(null);
 
   const grade = useServerFn(gradeAnswer);
+  const navigate = useNavigate();
+  useEffect(() => {
+    const pending = takePracticeRestart(studentView);
+    if (!pending) return;
+    const restoredSettings = normalisePracticeSettings(pending.settings);
+    const restoredMode = PRACTICE_MODES.find(
+      (mode) => mode.id === restoredSettings.modeId,
+    )!;
+    const availableIds = new Set(
+      questionsForFilters(restoredMode, restoredSettings.difficulty).map(
+        (q) => q.id,
+      ),
+    );
+    const restoredIds = pending.questionIds.filter((id) =>
+      availableIds.has(id),
+    );
+    if (!restoredIds.length) return;
+    setPracticeModeId(restoredSettings.modeId);
+    setDifficulty(restoredSettings.difficulty);
+    setSessionLength(restoredSettings.sessionLength);
+    setSessionQuestionIds(restoredIds);
+    setCurrentQuestionId(restoredIds[0]!);
+    setSeenQuestionIds([restoredIds[0]!]);
+    setReportByQuestionId({});
+    setHintQuestionIds([]);
+    setSessionStartedAt(new Date());
+    setResult(null);
+    setError(null);
+  }, [studentView]);
   const practiceMode = PRACTICE_MODES.find(
     (mode) => mode.id === practiceModeId,
   )!;
@@ -368,18 +398,6 @@ export function PracticePage({
           };
     },
   );
-  const checkedCount = reportOutcomes.filter(
-    (outcome) => outcome.attempts > 0,
-  ).length;
-  const correctCount = reportOutcomes.filter(
-    (outcome) => outcome.attempts > 0 && outcome.latestAttempt === "correct",
-  ).length;
-  const partialCount = reportOutcomes.filter(
-    (outcome) => outcome.attempts > 0 && outcome.latestAttempt === "partial",
-  ).length;
-  const incorrectCount = reportOutcomes.filter(
-    (outcome) => outcome.attempts > 0 && outcome.latestAttempt === "incorrect",
-  ).length;
 
   function recordReportResult(verdict: PracticeReportVerdict) {
     setReportByQuestionId((report) => {
@@ -414,21 +432,28 @@ export function PracticePage({
     return "partial";
   }
 
-  function downloadReport() {
-    downloadPracticeReport({
-      practiceSet: practiceMode.label,
-      difficulty:
-        DIFFICULTY_OPTIONS.find((option) => option.id === difficulty)?.label ??
-        difficulty,
-      sessionLength:
-        sessionLength === "all"
-          ? "All available problems"
-          : `${questionsInSession} problems`,
-      startedAt: sessionStartedAt,
-      finishedAt: new Date(),
-      totalProblems: questionsInSession,
-      outcomes: reportOutcomes,
+  async function finishSession() {
+    if (checking || !sessionComplete) return;
+    saveCompletedPracticeSession({
+      settings: { modeId: practiceModeId, difficulty, sessionLength },
+      studentView,
+      questionIds: sessionQuestions.map((item) => item.id),
+      report: {
+        practiceSet: practiceMode.label,
+        difficulty:
+          DIFFICULTY_OPTIONS.find((option) => option.id === difficulty)
+            ?.label ?? difficulty,
+        sessionLength:
+          sessionLength === "all"
+            ? "All available problems"
+            : `${questionsInSession} problems`,
+        startedAt: sessionStartedAt,
+        finishedAt: new Date(),
+        totalProblems: questionsInSession,
+        outcomes: reportOutcomes,
+      },
     });
+    await navigate({ to: "/report" });
   }
 
   async function readInchiKey(
@@ -552,7 +577,7 @@ export function PracticePage({
 
   async function nextRandomProblem() {
     if (sessionComplete) {
-      await startPracticeSession(activeQuestions);
+      await finishSession();
       return;
     }
 
@@ -585,6 +610,7 @@ export function PracticePage({
     setCurrentQuestionId(firstQuestion.id);
     setSeenQuestionIds([firstQuestion.id]);
     setReportByQuestionId({});
+    setHintQuestionIds([]);
     setSessionStartedAt(new Date());
     setResult(null);
     setError(null);
@@ -627,7 +653,8 @@ export function PracticePage({
           <p className="max-w-2xl text-sm opacity-90">
             Draw the major product for each substitution or elimination
             reaction. Your drawing is graded on molecular structure, not on how
-            it is arranged. Nothing is saved — no account, no attempt history.
+            it is arranged. No account is required. Reports stay only in this
+            browser tab.
           </p>
         </div>
       </header>
@@ -664,7 +691,7 @@ export function PracticePage({
                   </>
                 )}
                 {sessionComplete
-                  ? " This session is complete — start a new one whenever you are ready."
+                  ? " All problems have been visited. Select Finish set when you are ready to view the report."
                   : ""}
               </p>
               {difficulty === "progressive" && (
@@ -684,50 +711,17 @@ export function PracticePage({
               )}
               <button
                 onClick={nextRandomProblem}
-                className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                disabled={checking}
+                className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {sessionComplete
-                  ? "Start new session"
+                  ? "Finish set"
                   : difficulty === "progressive"
                     ? "Next problem"
                     : "New random problem"}
               </button>
             </div>
           </div>
-          {sessionComplete && (
-            <section
-              aria-labelledby="session-report-heading"
-              className="mt-5 rounded-lg border border-primary/30 bg-accent p-4"
-            >
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Session complete
-              </p>
-              <h3
-                id="session-report-heading"
-                className="mt-1 text-base font-semibold text-accent-foreground"
-              >
-                Your practice report is ready
-              </h3>
-              <p className="mt-1 text-sm text-accent-foreground">
-                {correctCount} correct, {partialCount} partially correct, and{" "}
-                {incorrectCount} needing revision across {checkedCount} checked{" "}
-                {checkedCount === 1 ? "problem" : "problems"}.{" "}
-                {questionsInSession - checkedCount > 0
-                  ? `${questionsInSession - checkedCount} ${questionsInSession - checkedCount === 1 ? "problem was" : "problems were"} not checked.`
-                  : "Every problem was checked."}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                The PDF is created only in this browser. It does not include a
-                student name and is not saved by the site.
-              </p>
-              <button
-                onClick={downloadReport}
-                className="mt-4 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-              >
-                Download PDF report
-              </button>
-            </section>
-          )}
           {showSessionControls && (
             <div className="mt-4 border-t border-border pt-4">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -852,7 +846,9 @@ export function PracticePage({
               substrateName={question.substrate}
               above={question.reagents}
               below={question.conditions}
-              conformationalHint={question.conformationalHint}
+              {...(question.conformationalHint
+                ? { conformationalHint: question.conformationalHint }
+                : {})}
               stereochemistryMatters={question.stereochemistryMatters}
               drawingInstruction={`${drawingInstruction} in the ${isCompetition ? "editors" : "editor"}`}
             />
@@ -935,9 +931,10 @@ export function PracticePage({
               </button>
               <button
                 onClick={nextRandomProblem}
-                className="rounded-md border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-accent"
+                disabled={checking}
+                className="rounded-md border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-accent disabled:opacity-60"
               >
-                {sessionComplete ? "Start new session" : "Random next"}
+                {sessionComplete ? "Finish set" : "Random next"}
               </button>
             </div>
 

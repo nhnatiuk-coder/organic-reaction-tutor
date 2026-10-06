@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PracticeRouteImport } from './routes/practice'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as StructureEditorRouteImport } from './routes/structure-editor'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const PracticeRoute = PracticeRouteImport.update({
   path: '/practice',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StructureEditorRoute = StructureEditorRouteImport.update({
   id: '/structure-editor',
   path: '/structure-editor',
@@ -32,30 +38,34 @@ const StructureEditorRoute = StructureEditorRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/practice': typeof PracticeRoute
+  '/report': typeof ReportRoute
   '/structure-editor': typeof StructureEditorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/practice': typeof PracticeRoute
+  '/report': typeof ReportRoute
   '/structure-editor': typeof StructureEditorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/practice': typeof PracticeRoute
+  '/report': typeof ReportRoute
   '/structure-editor': typeof StructureEditorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/practice' | '/structure-editor'
+  fullPaths: '/' | '/practice' | '/report' | '/structure-editor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/practice' | '/structure-editor'
-  id: '__root__' | '/' | '/practice' | '/structure-editor'
+  to: '/' | '/practice' | '/report' | '/structure-editor'
+  id: '__root__' | '/' | '/practice' | '/report' | '/structure-editor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PracticeRoute: typeof PracticeRoute
+  ReportRoute: typeof ReportRoute
   StructureEditorRoute: typeof StructureEditorRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PracticeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/structure-editor': {
       id: '/structure-editor'
       path: '/structure-editor'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PracticeRoute: PracticeRoute,
+  ReportRoute: ReportRoute,
   StructureEditorRoute: StructureEditorRoute,
 }
 export const routeTree = rootRouteImport
