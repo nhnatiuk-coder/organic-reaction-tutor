@@ -1,5 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import {
+  configureCompleteStereoDepiction,
+  STEREO_DRAWING_OPTIONS,
+} from "@/lib/stereo-depiction";
+import {
   getSchemeDisplaySmiles,
   TOSYLATE_DISPLAY_ATOM,
   TOSYLATE_DISPLAY_ATOM_CLASS,
@@ -13,12 +17,6 @@ type Props = {
   height?: number;
   /** Add the complementary 3D bond for the hydrogen at a stereocentre. */
   showCompleteStereoDepiction?: boolean;
-  /**
-   * Use the teaching convention H on a dashed bond and the smallest carbon
-   * substituent on a solid wedge. Used when configuration is shown but not
-   * itself graded, such as the constrained E2 schemes.
-   */
-  preferHydrogenDashed?: boolean;
 };
 
 type StereoVertex = {
@@ -59,119 +57,22 @@ type StereoCapableDrawer = {
 
 /** Use the library's own label positioning and bond masking, rather than
  * placing text over an already laid-out sulfonate/benzene drawing. */
-function configureTosylateAbbreviations(rawDrawer: unknown): boolean {
+function configureTosylateAbbreviations(
+  rawDrawer: unknown,
+  keepStereoBranchesExplicit: boolean,
+): boolean {
   const preprocessor = (rawDrawer as StereoCapableDrawer).preprocessor;
   const abbreviate = preprocessor?.initPseudoElements;
   if (!preprocessor || !abbreviate) return false;
 
   preprocessor.initPseudoElements = () => {
-    abbreviate.call(preprocessor);
+    if (!keepStereoBranchesExplicit) abbreviate.call(preprocessor);
     preprocessor.graph?.vertices.forEach((vertex) => {
       if (vertex.value.class !== TOSYLATE_DISPLAY_ATOM_CLASS) return;
       vertex.value.attachPseudoElement?.("Ts", "C", 0, 0);
     });
   };
   return true;
-}
-
-/**
- * SmilesDrawer normally marks a stereocentre with one stereobond. That is a
- * valid convention, but can be hard to read in a student practice question.
- * We change the graph before SmilesDrawer paints it so its own SVG renderer
- * draws both a solid wedge and a dashed wedge at every marked centre.
- */
-function preferredCarbonSubstituent(
-  centre: StereoVertex,
-  neighbours: StereoVertex[],
-) {
-  return [...neighbours]
-    .filter(
-      (vertex) =>
-        vertex.value.element === "C" &&
-        !vertex.value.isStereoCenter &&
-        vertex.id !== centre.id,
-    )
-    .sort((first, second) => {
-      const firstDegree = first.neighbours.length;
-      const secondDegree = second.neighbours.length;
-      return firstDegree - secondDegree || first.id - second.id;
-    })[0];
-}
-
-function addComplementaryStereoBonds(
-  graph: StereoGraph,
-  preferHydrogenDashed: boolean,
-) {
-  graph.vertices
-    .filter((centre) => centre.value.isStereoCenter)
-    .forEach((centre) => {
-      const neighbours = centre.neighbours
-        .map((id) => graph.vertices[id])
-        .filter((vertex): vertex is StereoVertex => Boolean(vertex));
-      const stereobond = neighbours
-        .map((vertex) => ({
-          vertex,
-          edge: graph.getEdge(centre.id, vertex.id),
-        }))
-        .find(({ edge }) => edge.wedge === "up" || edge.wedge === "down");
-      if (!stereobond) return;
-
-      const hydrogen = neighbours.find(
-        (vertex) => vertex.value.element === "H",
-      );
-      const carbonSubstituent = preferredCarbonSubstituent(centre, neighbours);
-
-      if (preferHydrogenDashed && hydrogen && carbonSubstituent) {
-        // These questions use chirality to show a reactive conformation but
-        // do not grade R/S configuration. Keep the leaving group in the plane
-        // and draw the conventional, easy-to-read H-dash / C-wedge pair.
-        neighbours.forEach((vertex) => {
-          graph.getEdge(centre.id, vertex.id).wedge = "";
-        });
-        graph.getEdge(centre.id, hydrogen.id).wedge = "down";
-        graph.getEdge(centre.id, carbonSubstituent.id).wedge = "up";
-        hydrogen.value.isDrawn = true;
-        carbonSubstituent.value.isDrawn = true;
-        return;
-      }
-
-      const hydrogenTarget =
-        hydrogen?.id !== stereobond.vertex.id ? hydrogen : undefined;
-      const complementTarget =
-        hydrogenTarget ??
-        neighbours.find((vertex) => {
-          if (vertex.id === stereobond.vertex.id) return false;
-          if (vertex.value.isStereoCenter) return false;
-          const edge = graph.getEdge(centre.id, vertex.id);
-          return edge.wedge !== "up" && edge.wedge !== "down";
-        }) ??
-        neighbours.find((vertex) => {
-          if (vertex.id === stereobond.vertex.id) return false;
-          const edge = graph.getEdge(centre.id, vertex.id);
-          return edge.wedge !== "up" && edge.wedge !== "down";
-        });
-      if (!complementTarget) return;
-
-      const complementaryBond = graph.getEdge(centre.id, complementTarget.id);
-      complementaryBond.wedge = stereobond.edge.wedge === "up" ? "down" : "up";
-      complementTarget.value.isDrawn = true;
-    });
-}
-
-function configureCompleteStereoDepiction(
-  rawDrawer: unknown,
-  preferHydrogenDashed: boolean,
-) {
-  const preprocessor = (rawDrawer as StereoCapableDrawer).preprocessor;
-  const annotate = preprocessor?.annotateStereochemistry;
-  if (!preprocessor || !annotate) return;
-
-  preprocessor.annotateStereochemistry = () => {
-    annotate.call(preprocessor);
-    if (preprocessor.graph) {
-      addComplementaryStereoBonds(preprocessor.graph, preferHydrogenDashed);
-    }
-  };
 }
 
 /**
@@ -184,7 +85,6 @@ export default function SmilesStructure({
   width = 220,
   height = 150,
   showCompleteStereoDepiction = false,
-  preferHydrogenDashed = false,
 }: Props) {
   const ref = useRef<SVGSVGElement | null>(null);
   const rawId = useId();
@@ -220,15 +120,20 @@ export default function SmilesStructure({
           bondThickness: 1.1,
           padding: 12,
           terminalCarbons: false,
+          ...(showCompleteStereoDepiction ? STEREO_DRAWING_OPTIONS : {}),
         });
         if (showCompleteStereoDepiction) {
-          configureCompleteStereoDepiction(drawer, preferHydrogenDashed);
+          configureCompleteStereoDepiction(drawer);
         }
 
+        const abbreviationsConfigured = configureTosylateAbbreviations(
+          drawer,
+          showCompleteStereoDepiction,
+        );
         let displaySmiles = getSchemeDisplaySmiles(smiles);
         if (
           displaySmiles.includes(TOSYLATE_DISPLAY_ATOM) &&
-          !configureTosylateAbbreviations(drawer)
+          !abbreviationsConfigured
         ) {
           // An incompatible renderer must still show the full, correct group.
           displaySmiles = smiles;
@@ -254,14 +159,7 @@ export default function SmilesStructure({
     return () => {
       cancelled = true;
     };
-  }, [
-    smiles,
-    width,
-    height,
-    showCompleteStereoDepiction,
-    preferHydrogenDashed,
-    svgId,
-  ]);
+  }, [smiles, width, height, showCompleteStereoDepiction, svgId]);
 
   if (failed) {
     return (

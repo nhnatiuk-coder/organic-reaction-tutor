@@ -53,8 +53,6 @@ export default function ReactionScheme({
     ) ?? []
   ).length;
   const largeStructure = atomCount >= 14;
-  const structureWidth = largeStructure ? 440 : 300;
-  const structureHeight = largeStructure ? 280 : 190;
   // A question can show a chiral starting material even when the product's
   // configuration is not graded (for example, a constrained E2 problem).
   // The depiction still has to be unambiguous, so do not tie its wedge/dash
@@ -62,6 +60,18 @@ export default function ReactionScheme({
   const hasDisplayedStereocentre = substrateSmiles.includes("@");
   const showCompleteStereoDepiction =
     stereochemistryMatters || hasDisplayedStereocentre;
+  const structureWidth = showCompleteStereoDepiction
+    ? largeStructure
+      ? 520
+      : 460
+    : largeStructure
+      ? 440
+      : 300;
+  const structureHeight = showCompleteStereoDepiction
+    ? 320
+    : largeStructure
+      ? 280
+      : 190;
 
   return (
     <figure
@@ -69,7 +79,7 @@ export default function ReactionScheme({
       aria-label={`Reaction scheme: ${substrateName} reacts with ${above} under ${below}. ${drawingInstruction}.`}
     >
       <div className="flex flex-wrap items-center justify-center gap-4 lg:flex-nowrap">
-        <div className="shrink-0 rounded-md bg-background p-1">
+        <div className="min-w-0 max-w-full shrink-0 rounded-md bg-background p-1">
           <ClientOnly
             fallback={
               <StructureFallback
@@ -94,9 +104,6 @@ export default function ReactionScheme({
                 width={structureWidth}
                 height={structureHeight}
                 showCompleteStereoDepiction={showCompleteStereoDepiction}
-                preferHydrogenDashed={
-                  hasDisplayedStereocentre && !stereochemistryMatters
-                }
               />
             </Suspense>
           </ClientOnly>
