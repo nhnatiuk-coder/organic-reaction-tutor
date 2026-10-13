@@ -84,14 +84,23 @@ export function completeStereoDepiction(graph: StereoGraph) {
     );
     if (!expected) continue;
 
-    // Use the shortest carbon branch where possible, avoiding a stereo bond
-    // between two stereocentres. Explicit CH3 labels make terminal wedges clear.
-    const targets = neighbours
+    // Keep the carbon skeleton in the plane: use H and the leaving group for
+    // the stereo pair. A centre with three carbon ligands instead uses its
+    // smallest side branch, never the bond joining two stereocentres.
+    const nonCarbonTargets = neighbours
+      .filter(
+        (vertex) =>
+          !["C", "H"].includes(vertex.value.element) &&
+          !vertex.value.isStereoCenter,
+      )
+      .sort((a, b) => a.neighbours.length - b.neighbours.length || a.id - b.id);
+    const carbonTargets = neighbours
       .filter(
         (vertex) =>
           vertex.value.element === "C" && !vertex.value.isStereoCenter,
       )
       .sort((a, b) => a.neighbours.length - b.neighbours.length || a.id - b.id);
+    const targets = nonCarbonTargets.length ? nonCarbonTargets : carbonTargets;
     if (!targets.length) continue;
     const original = { ...hydrogen.position };
     const length = Math.hypot(
@@ -129,7 +138,7 @@ export function completeStereoDepiction(graph: StereoGraph) {
         if (separation < Math.PI / 5) continue;
         hydrogen.position.x = centre.position.x + length * Math.cos(angle);
         hydrogen.position.y = centre.position.y + length * Math.sin(angle);
-        const carbonForward = handedness(
+        const targetForward = handedness(
           graph,
           centre,
           new Map([[target.id, 1]]),
@@ -141,7 +150,7 @@ export function completeStereoDepiction(graph: StereoGraph) {
         );
         // Both marks must independently describe the same configuration.
         // Opposite marks on unsuitable opposing bonds are contradictory.
-        if (!carbonForward || carbonForward !== hydrogenBack) continue;
+        if (!targetForward || targetForward !== hydrogenBack) continue;
         const clearance =
           Math.min(
             ...graph.vertices
@@ -158,19 +167,17 @@ export function completeStereoDepiction(graph: StereoGraph) {
                 ),
               ),
           ) / length;
-        const score =
-          Math.min(clearance, 2) +
-          separation / Math.PI -
-          target.neighbours.length * 0.08;
+        const score = Math.min(clearance, 2) + separation / Math.PI;
         if (!best || score > best.score) {
           best = {
             position: { ...hydrogen.position },
             target,
-            direction: carbonForward === expected ? 1 : -1,
+            direction: targetForward === expected ? 1 : -1,
             score,
           };
         }
       }
+      if (best) break;
     }
     hydrogen.position.x = best?.position.x ?? original.x;
     hydrogen.position.y = best?.position.y ?? original.y;
@@ -183,8 +190,10 @@ export function completeStereoDepiction(graph: StereoGraph) {
       best.direction === 1 ? "down" : "up";
     hydrogen.value.isDrawn = true;
     best.target.value.isDrawn = true;
-    if (best.target.neighbours.length === 1)
-      best.target.value.drawExplicit = true;
+    for (const neighbour of neighbours) {
+      if (neighbour.value.element === "C" && neighbour.neighbours.length === 1)
+        neighbour.value.drawExplicit = true;
+    }
   }
 }
 

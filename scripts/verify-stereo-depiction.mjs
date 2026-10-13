@@ -143,6 +143,35 @@ try {
           ["down", "up"],
           `${question.id}: centre ${centre.id} lacks a wedge/dash pair`,
         );
+        const hasNonCarbonLigand = neighbours.some(
+          (vertex) => !["C", "H"].includes(vertex.value.element),
+        );
+        for (const vertex of neighbours.filter(
+          (vertex) => vertex.value.element === "C",
+        )) {
+          if (hasNonCarbonLigand || vertex.value.isStereoCenter) {
+            assert.ok(
+              !graph.getEdge(centre.id, vertex.id).wedge,
+              `${question.id}: carbon backbone moved out of the plane`,
+            );
+          }
+        }
+        if (!hasNonCarbonLigand) {
+          const carbonBranches = neighbours.filter(
+            (vertex) =>
+              vertex.value.element === "C" && !vertex.value.isStereoCenter,
+          );
+          const markedBranch = carbonBranches.find(
+            (vertex) => graph.getEdge(centre.id, vertex.id).wedge,
+          );
+          assert.equal(
+            markedBranch?.neighbours.length,
+            Math.min(
+              ...carbonBranches.map((vertex) => vertex.neighbours.length),
+            ),
+            `${question.id}: the small side branch should carry the stereo mark`,
+          );
+        }
         const hydrogen = neighbours.find(
           (vertex) => vertex.value.element === "H",
         );
