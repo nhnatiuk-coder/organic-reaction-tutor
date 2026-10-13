@@ -124,6 +124,20 @@ try {
       drawer.preprocessor.initDraw(tree, "light", true);
       drawer.preprocessor.processGraph();
       const graph = drawer.preprocessor.graph;
+      for (const ring of drawer.preprocessor.rings) {
+        const centroid = ring.members.reduce(
+          (sum, id) => ({
+            x: sum.x + graph.vertices[id].position.x / ring.members.length,
+            y: sum.y + graph.vertices[id].position.y / ring.members.length,
+          }),
+          { x: 0, y: 0 },
+        );
+        assert.ok(
+          Math.hypot(centroid.x - ring.center.x, centroid.y - ring.center.y) <
+            1e-6,
+          `${question.id}: aromatic ring centre no longer matches its bonds`,
+        );
+      }
       const centres = graph.vertices.filter(
         (vertex) => vertex.value.isStereoCenter,
       );
@@ -146,6 +160,32 @@ try {
         const hasNonCarbonLigand = neighbours.some(
           (vertex) => !["C", "H"].includes(vertex.value.element),
         );
+        const planarCarbons = neighbours.filter(
+          (vertex) =>
+            vertex.value.element === "C" &&
+            !graph.getEdge(centre.id, vertex.id).wedge,
+        );
+        if (planarCarbons.length === 2) {
+          const angles = planarCarbons.map((vertex) =>
+            Math.atan2(
+              vertex.position.y - centre.position.y,
+              vertex.position.x - centre.position.x,
+            ),
+          );
+          const degrees =
+            (Math.abs(
+              Math.atan2(
+                Math.sin(angles[0] - angles[1]),
+                Math.cos(angles[0] - angles[1]),
+              ),
+            ) *
+              180) /
+            Math.PI;
+          assert.ok(
+            degrees >= 95 && degrees <= 140,
+            `${question.id}: planar C–C*–C angle is ${degrees.toFixed(1)}°, not a tetrahedral zigzag`,
+          );
+        }
         for (const vertex of neighbours.filter(
           (vertex) => vertex.value.element === "C",
         )) {

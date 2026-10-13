@@ -27,6 +27,8 @@ export type StereoGraph = {
 type StereoPreprocessor = {
   graph?: StereoGraph;
   annotateStereochemistry?: () => void;
+  rings?: unknown[];
+  setRingCenter?: (ring: unknown) => void;
 };
 
 /** Signed tetrahedral volume in the renderer's original neighbour order.
@@ -59,6 +61,91 @@ function angleDistance(first: number, second: number) {
   return Math.abs(
     Math.atan2(Math.sin(first - second), Math.cos(first - second)),
   );
+}
+
+/** Give a cramped or straight C–C*–C segment a tetrahedral projection. Rotate the
+ * smaller whole branch so its internal bonds and any rings stay intact. */
+function normalisePlanarCarbonAngle(
+  graph: StereoGraph,
+  centre: StereoVertex,
+  stereoTarget: StereoVertex,
+) {
+  const carbons = centre.neighbours
+    .map((id) => graph.vertices[id]!)
+    .filter(
+      (vertex) => vertex.value.element === "C" && vertex !== stereoTarget,
+    );
+  if (carbons.length !== 2) return;
+  const bearing = (vertex: StereoVertex) =>
+    Math.atan2(
+      vertex.position.y - centre.position.y,
+      vertex.position.x - centre.position.x,
+    );
+  const originalDegrees =
+    (angleDistance(bearing(carbons[0]!), bearing(carbons[1]!)) * 180) / Math.PI;
+  if (originalDegrees >= 100 && originalDegrees <= 140) return;
+
+  const branches = carbons
+    .map((start) => {
+      const ids = new Set<number>();
+      const pending = [start.id];
+      while (pending.length) {
+        const id = pending.pop()!;
+        if (id === centre.id || ids.has(id)) continue;
+        ids.add(id);
+        pending.push(...graph.vertices[id]!.neighbours);
+      }
+      return { start, ids };
+    })
+    .sort((first, second) => first.ids.size - second.ids.size);
+  const branch = branches[0]!;
+  const fixed = carbons.find((vertex) => vertex !== branch.start)!;
+  // A ring joining the two carbon neighbours must retain its ring geometry.
+  if (branch.ids.has(fixed.id)) return;
+  const original = [...branch.ids].map((id) => ({
+    vertex: graph.vertices[id]!,
+    x: graph.vertices[id]!.position.x - centre.position.x,
+    y: graph.vertices[id]!.position.y - centre.position.y,
+  }));
+  const fixedAngle = bearing(fixed);
+  const originalAngle = bearing(branch.start);
+  const tetrahedralAngle = Math.acos(-1 / 3);
+  const stationary = graph.vertices.filter(
+    (vertex) =>
+      vertex !== centre &&
+      !branch.ids.has(vertex.id) &&
+      vertex.value.element !== "H",
+  );
+  let bestAngle = 0;
+  let bestScore = -Infinity;
+  for (const direction of [-1, 1]) {
+    const rotation = fixedAngle + direction * tetrahedralAngle - originalAngle;
+    const cosine = Math.cos(rotation);
+    const sine = Math.sin(rotation);
+    let clearance = Infinity;
+    for (const point of original) {
+      const x = centre.position.x + point.x * cosine - point.y * sine;
+      const y = centre.position.y + point.x * sine + point.y * cosine;
+      for (const other of stationary) {
+        clearance = Math.min(
+          clearance,
+          Math.hypot(x - other.position.x, y - other.position.y),
+        );
+      }
+    }
+    if (clearance > bestScore) {
+      bestScore = clearance;
+      bestAngle = rotation;
+    }
+  }
+  const cosine = Math.cos(bestAngle);
+  const sine = Math.sin(bestAngle);
+  for (const point of original) {
+    point.vertex.position.x =
+      centre.position.x + point.x * cosine - point.y * sine;
+    point.vertex.position.y =
+      centre.position.y + point.x * sine + point.y * cosine;
+  }
 }
 
 export function completeStereoDepiction(graph: StereoGraph) {
@@ -102,6 +189,10 @@ export function completeStereoDepiction(graph: StereoGraph) {
       .sort((a, b) => a.neighbours.length - b.neighbours.length || a.id - b.id);
     const targets = nonCarbonTargets.length ? nonCarbonTargets : carbonTargets;
     if (!targets.length) continue;
+    // Capture the original configuration first, then adjust the planar angles
+    // and recompute the stereo pair against that configuration. At a carbon-
+    // only centre, keep the selected small side branch out of the planar pair.
+    normalisePlanarCarbonAngle(graph, centre, targets[0]!);
     const original = { ...hydrogen.position };
     const length = Math.hypot(
       original.x - centre.position.x,
@@ -204,6 +295,12 @@ export function configureCompleteStereoDepiction(rawDrawer: unknown) {
   if (!preprocessor || !annotate) return;
   preprocessor.annotateStereochemistry = () => {
     annotate.call(preprocessor);
-    if (preprocessor.graph) completeStereoDepiction(preprocessor.graph);
+    if (preprocessor.graph) {
+      completeStereoDepiction(preprocessor.graph);
+      // A rotated aryl side chain also moves its aromatic circle and the
+      // reference centre used to draw double bonds inside the ring.
+      for (const ring of preprocessor.rings ?? [])
+        preprocessor.setRingCenter?.(ring);
+    }
   };
 }
