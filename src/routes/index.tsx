@@ -581,10 +581,15 @@ export function PracticePage({
   }
 
   async function showQuestion(nextQuestionId: string) {
+    // Keep the current iframe alive until its asynchronous clear completes.
+    // Switching between one and two editors first would strand that request.
+    await clearEditors();
     setCurrentQuestionId(nextQuestionId);
+    setSeenQuestionIds((seen) =>
+      seen.includes(nextQuestionId) ? seen : [...seen, nextQuestionId],
+    );
     setResult(null);
     setError(null);
-    await clearEditors();
   }
 
   async function goTo(nextQuestion: (typeof activeQuestions)[number]) {
@@ -592,9 +597,6 @@ export function PracticePage({
     navigationInProgress.current = true;
     setNavigating(true);
     try {
-      setSeenQuestionIds((seen) =>
-        seen.includes(nextQuestion.id) ? seen : [...seen, nextQuestion.id],
-      );
       await showQuestion(nextQuestion.id);
     } finally {
       navigationInProgress.current = false;
@@ -620,9 +622,6 @@ export function PracticePage({
           ? unvisited[0]
           : unvisited[Math.floor(Math.random() * unvisited.length)];
       if (!next) return;
-      setSeenQuestionIds((seen) =>
-        seen.includes(next.id) ? seen : [...seen, next.id],
-      );
       await showQuestion(next.id);
     } finally {
       navigationInProgress.current = false;
@@ -634,7 +633,9 @@ export function PracticePage({
     questions: typeof activeQuestions,
     nextDifficulty = difficulty,
     nextSessionLength = sessionLength,
+    nextModeId = practiceModeId,
   ) {
+    if (checking || navigationInProgress.current) return;
     const nextSessionQuestions = sessionQuestionsFor(
       questions,
       nextDifficulty,
@@ -642,29 +643,37 @@ export function PracticePage({
     );
     const firstQuestion = nextSessionQuestions[0];
     if (!firstQuestion) return;
-
-    setSessionQuestionIds(nextSessionQuestions.map((question) => question.id));
-    setCurrentQuestionId(firstQuestion.id);
-    setSeenQuestionIds([firstQuestion.id]);
-    setReportByQuestionId({});
-    setHintQuestionIds([]);
-    setSessionStartedAt(new Date());
-    setResult(null);
-    setError(null);
-    await clearEditors();
+    navigationInProgress.current = true;
+    setNavigating(true);
+    try {
+      await clearEditors();
+      setPracticeModeId(nextModeId);
+      setDifficulty(nextDifficulty);
+      setSessionLength(nextSessionLength);
+      setSessionQuestionIds(nextSessionQuestions.map((question) => question.id));
+      setCurrentQuestionId(firstQuestion.id);
+      setSeenQuestionIds([firstQuestion.id]);
+      setReportByQuestionId({});
+      setHintQuestionIds([]);
+      setSessionStartedAt(new Date());
+      setResult(null);
+      setError(null);
+    } finally {
+      navigationInProgress.current = false;
+      setNavigating(false);
+    }
   }
 
   async function selectPracticeMode(nextMode: PracticeMode) {
-    setPracticeModeId(nextMode.id);
     await startPracticeSession(
       questionsForFilters(nextMode, difficulty),
       difficulty,
       sessionLength,
+      nextMode.id,
     );
   }
 
   async function selectDifficulty(nextDifficulty: DifficultyFilter) {
-    setDifficulty(nextDifficulty);
     await startPracticeSession(
       questionsForFilters(practiceMode, nextDifficulty),
       nextDifficulty,
@@ -673,7 +682,6 @@ export function PracticePage({
   }
 
   async function selectSessionLength(nextLength: SessionLength) {
-    setSessionLength(nextLength);
     await startPracticeSession(activeQuestions, difficulty, nextLength);
   }
 
@@ -773,6 +781,7 @@ export function PracticePage({
                   <button
                     key={mode.id}
                     onClick={() => selectPracticeMode(mode)}
+                    disabled={checking || navigating}
                     aria-pressed={mode.id === practiceMode.id}
                     className={
                       "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors " +
@@ -797,6 +806,7 @@ export function PracticePage({
                   <button
                     key={option.id}
                     onClick={() => selectDifficulty(option.id)}
+                    disabled={checking || navigating}
                     aria-pressed={option.id === difficulty}
                     title={option.description}
                     className={
@@ -826,7 +836,7 @@ export function PracticePage({
                       key={String(length)}
                       onClick={() => selectSessionLength(length)}
                       aria-pressed={length === sessionLength}
-                      disabled={!available}
+                      disabled={!available || checking || navigating}
                       className={
                         "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 " +
                         (length === sessionLength
@@ -852,6 +862,7 @@ export function PracticePage({
                 <li key={q.id}>
                   <button
                     onClick={() => goTo(q)}
+                    disabled={checking || navigating}
                     aria-current={i === index ? "step" : undefined}
                     aria-label={`Question ${i + 1}, ${
                       q.format === "scheme" ? "reaction scheme" : "text prompt"
