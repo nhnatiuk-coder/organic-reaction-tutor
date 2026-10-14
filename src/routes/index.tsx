@@ -264,15 +264,8 @@ export function PracticePage({
   setupHref?: string;
 }) {
   const settings = normalisePracticeSettings(initialSettings);
-  const initialPracticeMode = PRACTICE_MODES.find(
-    (mode) => mode.id === settings.modeId,
-  )!;
-  const initialSessionQuestions = sessionQuestionsFor(
-    questionsForFilters(initialPracticeMode, settings.difficulty),
-    settings.difficulty,
-    settings.sessionLength,
-    false,
-  );
+  const startingSettings = useRef(settings);
+  const sessionInitialized = useRef(false);
   const [practiceModeId, setPracticeModeId] = useState<PracticeModeId>(
     settings.modeId,
   );
@@ -282,21 +275,15 @@ export function PracticePage({
   const [sessionLength, setSessionLength] = useState<SessionLength>(
     settings.sessionLength,
   );
-  const [sessionQuestionIds, setSessionQuestionIds] = useState(
-    initialSessionQuestions.map((question) => question.id),
-  );
-  const [currentQuestionId, setCurrentQuestionId] = useState(
-    initialSessionQuestions[0]?.id ?? "",
-  );
+  const [sessionQuestionIds, setSessionQuestionIds] = useState<string[]>([]);
+  const [currentQuestionId, setCurrentQuestionId] = useState("");
   const [result, setResult] = useState<PracticeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [navigating, setNavigating] = useState(false);
   const navigationInProgress = useRef(false);
-  const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>(
-    initialSessionQuestions[0]?.id ? [initialSessionQuestions[0].id] : [],
-  );
+  const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>([]);
   const [hintQuestionIds, setHintQuestionIds] = useState<string[]>([]);
   const [reportByQuestionId, setReportByQuestionId] = useState<
     Record<string, QuestionReportResult>
@@ -309,35 +296,47 @@ export function PracticePage({
   const grade = useServerFn(gradeAnswer);
   const navigate = useNavigate();
   useEffect(() => {
+    // Initialize after hydration so each new session is random without a
+    // server/client mismatch. The guard also preserves a consumed restart
+    // when React replays effects in development.
+    if (sessionInitialized.current) return;
+    sessionInitialized.current = true;
     try {
       const pending = takePracticeRestart(studentView);
-      if (!pending) return;
-      const restoredSettings = normalisePracticeSettings(pending.settings);
-      const restoredMode = PRACTICE_MODES.find(
-        (mode) => mode.id === restoredSettings.modeId,
+      const nextSettings = pending
+        ? normalisePracticeSettings(pending.settings)
+        : startingSettings.current;
+      const nextMode = PRACTICE_MODES.find(
+        (mode) => mode.id === nextSettings.modeId,
       )!;
-      const availableIds = new Set(
-        questionsForFilters(restoredMode, restoredSettings.difficulty).map(
-          (q) => q.id,
-        ),
+      const availableQuestions = questionsForFilters(
+        nextMode,
+        nextSettings.difficulty,
       );
-      const restoredIds = pending.questionIds.filter((id) =>
+      const availableIds = new Set(availableQuestions.map((q) => q.id));
+      const restoredIds = pending?.questionIds.filter((id) =>
         availableIds.has(id),
       );
-      if (!restoredIds.length) return;
-      setPracticeModeId(restoredSettings.modeId);
-      setDifficulty(restoredSettings.difficulty);
-      setSessionLength(restoredSettings.sessionLength);
-      setSessionQuestionIds(restoredIds);
-      setCurrentQuestionId(restoredIds[0]!);
-      setSeenQuestionIds([restoredIds[0]!]);
+      const nextIds = restoredIds?.length
+        ? restoredIds
+        : sessionQuestionsFor(
+            availableQuestions,
+            nextSettings.difficulty,
+            nextSettings.sessionLength,
+          ).map((question) => question.id);
+      setPracticeModeId(nextSettings.modeId);
+      setDifficulty(nextSettings.difficulty);
+      setSessionLength(nextSettings.sessionLength);
+      setSessionQuestionIds(nextIds);
+      setCurrentQuestionId(nextIds[0] ?? "");
+      setSeenQuestionIds(nextIds[0] ? [nextIds[0]] : []);
       setReportByQuestionId({});
       setHintQuestionIds([]);
       setSessionStartedAt(new Date());
       setResult(null);
       setError(null);
     } finally {
-      // Restore a queued restart before students can advance the session.
+      // Finish choosing/restoring the set before students can advance it.
       setSessionReady(true);
     }
   }, [studentView]);
@@ -650,7 +649,9 @@ export function PracticePage({
       setPracticeModeId(nextModeId);
       setDifficulty(nextDifficulty);
       setSessionLength(nextSessionLength);
-      setSessionQuestionIds(nextSessionQuestions.map((question) => question.id));
+      setSessionQuestionIds(
+        nextSessionQuestions.map((question) => question.id),
+      );
       setCurrentQuestionId(firstQuestion.id);
       setSeenQuestionIds([firstQuestion.id]);
       setReportByQuestionId({});
