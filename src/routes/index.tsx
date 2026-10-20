@@ -11,16 +11,21 @@ import {
   type ElementaryMechanism,
 } from "@/lib/questions";
 import { gradeAnswer, type GradeResult } from "@/lib/grading.functions";
-import {
-  type PracticeReportOutcome,
-  type PracticeReportVerdict,
-} from "@/lib/practice-report";
+import { type PracticeReportOutcome } from "@/lib/practice-report";
 import {
   saveCompletedPracticeSession,
   takePracticeRestart,
 } from "@/lib/practice-session-store";
 
 import ReactionScheme from "@/components/ReactionScheme";
+import CorrectAnswer from "@/components/CorrectAnswer";
+import {
+  MAX_PRACTICE_ATTEMPTS,
+  isPracticeQuestionFinished,
+  recordPracticeAttempt,
+  type PracticeResult,
+  type QuestionAttemptState,
+} from "@/lib/practice-attempts";
 import {
   questionsForFilters,
   sessionQuestionsFor,
@@ -37,25 +42,6 @@ export type {
 } from "@/lib/practice-selection";
 
 const KetcherCanvas = lazy(() => import("@/components/KetcherCanvas"));
-
-type SinglePracticeResult = {
-  kind: "single";
-  grade: GradeResult;
-};
-
-type CompetitionPracticeResult = {
-  kind: "competition";
-  substitution: GradeResult;
-  elimination: GradeResult;
-};
-
-type PracticeResult = SinglePracticeResult | CompetitionPracticeResult;
-
-type QuestionReportResult = {
-  attempts: number;
-  firstAttempt: PracticeReportVerdict;
-  latestAttempt: PracticeReportVerdict;
-};
 
 type PracticeMode = {
   id: PracticeModeId;
@@ -277,16 +263,16 @@ export function PracticePage({
   );
   const [sessionQuestionIds, setSessionQuestionIds] = useState<string[]>([]);
   const [currentQuestionId, setCurrentQuestionId] = useState("");
-  const [result, setResult] = useState<PracticeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const checkingInProgress = useRef(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [navigating, setNavigating] = useState(false);
   const navigationInProgress = useRef(false);
   const [seenQuestionIds, setSeenQuestionIds] = useState<string[]>([]);
   const [hintQuestionIds, setHintQuestionIds] = useState<string[]>([]);
   const [reportByQuestionId, setReportByQuestionId] = useState<
-    Record<string, QuestionReportResult>
+    Record<string, QuestionAttemptState>
   >({});
   const [sessionStartedAt, setSessionStartedAt] = useState(() => new Date());
   const ketcherRef = useRef<Ketcher | null>(null);
@@ -333,7 +319,6 @@ export function PracticePage({
       setReportByQuestionId({});
       setHintQuestionIds([]);
       setSessionStartedAt(new Date());
-      setResult(null);
       setError(null);
     } finally {
       // Finish choosing/restoring the set before students can advance it.
@@ -387,6 +372,27 @@ export function PracticePage({
   const index = sessionQuestions.indexOf(question);
   const questionReference = getQuestionReference(question);
   const isCompetition = question.answerMode === "competition";
+  const attemptState = reportByQuestionId[question.id];
+  const attemptsUsed = attemptState?.attempts ?? 0;
+  const questionFinished = isPracticeQuestionFinished(attemptState);
+  const result = attemptState?.result ?? null;
+  const revealCorrectAnswer =
+    attemptsUsed >= MAX_PRACTICE_ATTEMPTS &&
+    attemptState?.latestAttempt !== "correct";
+  const answerGrades =
+    result?.kind === "competition"
+      ? [
+          { label: "Substitution product", grade: result.substitution },
+          { label: "Elimination product", grade: result.elimination },
+        ]
+      : result?.kind === "single"
+        ? [{ label: "Major product", grade: result.grade }]
+        : [];
+  const correctProducts = revealCorrectAnswer
+    ? answerGrades.flatMap(({ label, grade }) =>
+        grade.solution ? [{ label, ...grade.solution }] : [],
+      )
+    : [];
   const drawingInstruction = isCompetition
     ? "Draw both major products"
     : question.mechanism === "SN1"
@@ -404,7 +410,9 @@ export function PracticePage({
         ? {
             questionNumber: questionNumber + 1,
             reference: getQuestionReference(sessionQuestion),
-            ...report,
+            attempts: report.attempts,
+            firstAttempt: report.firstAttempt,
+            latestAttempt: report.latestAttempt,
           }
         : {
             questionNumber: questionNumber + 1,
@@ -416,37 +424,11 @@ export function PracticePage({
     },
   );
 
-  function recordReportResult(verdict: PracticeReportVerdict) {
-    setReportByQuestionId((report) => {
-      const previous = report[question.id];
-      return {
-        ...report,
-        [question.id]: {
-          attempts: (previous?.attempts ?? 0) + 1,
-          firstAttempt: previous?.firstAttempt ?? verdict,
-          latestAttempt: verdict,
-        },
-      };
-    });
-  }
-
-  function competitionVerdict(
-    substitution: GradeResult,
-    elimination: GradeResult,
-  ): PracticeReportVerdict {
-    if (
-      substitution.verdict === "correct" &&
-      elimination.verdict === "correct"
-    ) {
-      return "correct";
-    }
-    if (
-      substitution.verdict === "incorrect" &&
-      elimination.verdict === "incorrect"
-    ) {
-      return "incorrect";
-    }
-    return "partial";
+  function recordReportResult(feedback: PracticeResult) {
+    setReportByQuestionId((report) => ({
+      ...report,
+      [question.id]: recordPracticeAttempt(report[question.id], feedback),
+    }));
   }
 
   async function finishSession() {
@@ -497,10 +479,16 @@ export function PracticePage({
   }
 
   async function check() {
-    if (checking || navigationInProgress.current) return;
+    if (
+      checkingInProgress.current ||
+      navigationInProgress.current ||
+      questionFinished
+    )
+      return;
+    checkingInProgress.current = true;
     setChecking(true);
+    const attemptNumber = attemptsUsed + 1;
     setError(null);
-    setResult(null);
     try {
       if (isCompetition) {
         const substitutionInchiKey = await readInchiKey(
@@ -520,6 +508,7 @@ export function PracticePage({
             data: {
               questionId: question.id,
               productSlot: "substitution",
+              attemptNumber,
               inchiKey: substitutionInchiKey,
             },
           }),
@@ -527,17 +516,17 @@ export function PracticePage({
             data: {
               questionId: question.id,
               productSlot: "elimination",
+              attemptNumber,
               inchiKey: eliminationInchiKey,
             },
           }),
         ]);
 
-        setResult({
+        recordReportResult({
           kind: "competition",
           substitution,
           elimination,
         });
-        recordReportResult(competitionVerdict(substitution, elimination));
         return;
       }
 
@@ -547,18 +536,20 @@ export function PracticePage({
       );
       if (!inchiKey) return;
       const graded = await grade({
-        data: { questionId: question.id, productSlot: "main", inchiKey },
+        data: {
+          questionId: question.id,
+          productSlot: "main",
+          inchiKey,
+          attemptNumber,
+        },
       });
-      setResult({
-        kind: "single",
-        grade: graded,
-      });
-      recordReportResult(graded.verdict);
+      recordReportResult({ kind: "single", grade: graded });
     } catch {
       setError(
-        "Could not read that structure. Check for open valences or unfinished bonds.",
+        "Could not check that structure. Check for unfinished bonds or try again. No attempt was used.",
       );
     } finally {
+      checkingInProgress.current = false;
       setChecking(false);
     }
   }
@@ -587,7 +578,6 @@ export function PracticePage({
     setSeenQuestionIds((seen) =>
       seen.includes(nextQuestionId) ? seen : [...seen, nextQuestionId],
     );
-    setResult(null);
     setError(null);
   }
 
@@ -657,7 +647,6 @@ export function PracticePage({
       setReportByQuestionId({});
       setHintQuestionIds([]);
       setSessionStartedAt(new Date());
-      setResult(null);
       setError(null);
     } finally {
       navigationInProgress.current = false;
@@ -957,17 +946,31 @@ export function PracticePage({
               )}
             </article>
 
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-sm font-medium text-card-foreground"
+            >
+              Attempts used: {attemptsUsed} of {MAX_PRACTICE_ATTEMPTS}.
+              {attemptState?.latestAttempt === "correct"
+                ? " Correct — continue when you are ready."
+                : questionFinished
+                  ? " No attempts remaining. Review the correct answer below."
+                  : ` ${MAX_PRACTICE_ATTEMPTS - attemptsUsed} remaining.`}
+            </p>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={check}
-                disabled={checking || navigating}
+                disabled={checking || navigating || questionFinished}
                 className="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {checking
                   ? "Checking…"
-                  : isCompetition
-                    ? "Check both structures"
-                    : "Check my structure"}
+                  : questionFinished
+                    ? "Problem complete"
+                    : isCompetition
+                      ? "Check both structures"
+                      : "Check my structure"}
               </button>
               <button
                 onClick={showMechanismHint}
@@ -1050,6 +1053,9 @@ export function PracticePage({
             />
           )}
         </div>
+        {correctProducts.length > 0 && (
+          <CorrectAnswer products={correctProducts} />
+        )}
       </div>
     </main>
   );

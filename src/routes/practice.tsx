@@ -26,9 +26,12 @@ export const Route = createFileRoute("/practice")({
     start: search["start"] === "1" || search["start"] === 1 ? "1" : undefined,
     mode: typeof search["mode"] === "string" ? search["mode"] : undefined,
     difficulty:
-      typeof search["difficulty"] === "string" ? search["difficulty"] : undefined,
+      typeof search["difficulty"] === "string"
+        ? search["difficulty"]
+        : undefined,
     length:
-      typeof search["length"] === "string" || typeof search["length"] === "number"
+      typeof search["length"] === "string" ||
+      typeof search["length"] === "number"
         ? String(search["length"])
         : undefined,
   }),
@@ -131,8 +134,10 @@ function StudentSetupPage() {
               <strong className="font-semibold text-card-foreground">
                 Check my structure
               </strong>{" "}
-              for immediate feedback. You may request a reaction-type hint when
-              you decide you need one.
+              for immediate feedback. You have three attempts per problem; after
+              three unsuccessful attempts, the correct product structures
+              appear. You may request a reaction-type hint when you decide you
+              need one.
             </li>
             <li>
               After the final problem, select{" "}

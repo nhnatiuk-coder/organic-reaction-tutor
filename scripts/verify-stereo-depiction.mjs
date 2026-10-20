@@ -19,6 +19,9 @@ try {
     "questions",
     "expanded-practice-bank.generated",
     "stereo-depiction",
+    "practice-attempts",
+    "answer-keys.server",
+    "expanded-answer-keys.generated.server",
   ]) {
     const source = readFileSync(resolve(root, `src/lib/${name}.ts`), "utf8");
     const compiled = ts
@@ -34,6 +37,7 @@ try {
   const load = (name) =>
     import(pathToFileURL(resolve(temporary, `${name}.mjs`)).href);
   const { PRACTICE_QUESTIONS, getQuestionReference } = await load("questions");
+  const { ANSWER_KEYS } = await load("answer-keys.server");
   const { getSchemeDisplaySmiles, TOSYLATE_DISPLAY_ATOM_CLASS } = await load(
     "scheme-abbreviations",
   );
@@ -110,7 +114,15 @@ try {
   );
   assert.ok(questions.some((question) => question.id === "q58"));
   assert.ok(questions.some((question) => question.id === "q59"));
-  for (const question of questions) {
+  const productDrawings = PRACTICE_QUESTIONS.flatMap((question) => {
+    const answer = ANSWER_KEYS.find((key) => key.id === question.id);
+    const targets = "correct" in answer ? [answer] : [answer.substitution, answer.elimination];
+    return targets.filter((target) => target.correctSmiles?.includes("@")).map((target) => ({
+      ...question,
+      substrateSmiles: target.correctSmiles,
+    }));
+  });
+  for (const question of [...questions, ...productDrawings]) {
     for (const smiles of new Set([
       question.substrateSmiles,
       getSchemeDisplaySmiles(question.substrateSmiles),

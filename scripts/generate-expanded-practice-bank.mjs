@@ -495,6 +495,7 @@ function addQuestion({
   answerKeys.push({
     id,
     correct,
+    correctSmiles: productSmiles,
     requireStereo: stereochemistryMatters || alkeneGeometryMatters,
     ...(alkeneGeometryMatters ? { stereoFeedback: ALKENE_GEOMETRY_FEEDBACK } : {}),
     correctName,

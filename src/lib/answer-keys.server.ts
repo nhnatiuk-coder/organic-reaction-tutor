@@ -4,10 +4,13 @@
 import { isQuestionActive } from "./questions";
 import { GENERATED_ANSWER_KEYS } from "./expanded-answer-keys.generated.server";
 import { ALKENE_GEOMETRY_FEEDBACK } from "./alkene-geometry";
+import { MAX_PRACTICE_ATTEMPTS } from "./practice-attempts";
 
 export type AnswerTarget = {
   /** Full standard InChIKey of the correct major product. */
   correct: string;
+  /** Model product for completed practice. Legacy archived keys may omit it. */
+  correctSmiles?: string;
   /** Whether the stereo block of the key must also match. */
   requireStereo: boolean;
   /** Product-specific feedback for matching connectivity but incorrect/omitted stereo. */
@@ -37,6 +40,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q1",
     correct: "RFFFKMOABOFIDF-UHFFFAOYSA-N",
+    correctSmiles: "CCCCC#N",
     requireStereo: false,
     correctName: "pentanenitrile (CH₃CH₂CH₂CH₂C≡N)",
     explanation:
@@ -69,6 +73,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q3",
     correct: "MHNNAWXXUZQSNM-UHFFFAOYSA-N",
+    correctSmiles: "C=C(C)CC",
     requireStereo: false,
     correctName: "2-methylbut-1-ene",
     explanation:
@@ -85,6 +90,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q4",
     correct: "CTMHWPIWNRWQEG-UHFFFAOYSA-N",
+    correctSmiles: "CC1=CCCCC1",
     requireStereo: false,
     correctName: "1-methylcyclohex-1-ene",
     explanation:
@@ -99,6 +105,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q5",
     correct: "BTANRVKWQNVYAZ-SCSAIBSYSA-N",
+    correctSmiles: "C[C@@H](O)CC",
     requireStereo: true,
     correctName: "(R)-butan-2-ol",
     explanation:
@@ -113,6 +120,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q6",
     correct: "VNKYTQGIUYNRMY-UHFFFAOYSA-N",
+    correctSmiles: "CCCOC",
     requireStereo: false,
     correctName: "1-methoxypropane (methyl propyl ether)",
     explanation:
@@ -159,6 +167,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q9",
     correct: "QMMOXUPEWRXHJS-HWKANZROSA-N",
+    correctSmiles: "CC/C=C/C",
     requireStereo: false,
     correctName: "pent-2-ene (E isomer favoured)",
     explanation:
@@ -175,6 +184,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q10",
     correct: "LIKMAJRDDDTEIG-UHFFFAOYSA-N",
+    correctSmiles: "C=CCCCC",
     requireStereo: false,
     correctName: "hex-1-ene",
     explanation:
@@ -236,6 +246,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q16",
     correct: "PFNHSEQQEPMLNI-UHFFFAOYSA-N",
+    correctSmiles: "OCC(C)CCC",
     requireStereo: false,
     correctName: "2-methylpentan-1-ol",
     explanation:
@@ -245,6 +256,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q17",
     correct: "UYVAUDQQSCEZEL-UHFFFAOYSA-N",
+    correctSmiles: "CCOCCC(C)CC",
     requireStereo: false,
     correctName: "1-ethoxy-3-methylpentane",
     explanation:
@@ -254,6 +266,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q18",
     correct: "ZRBLVTMNOAUKIX-UHFFFAOYSA-N",
+    correctSmiles: "N#CCC(C)(C)CC",
     requireStereo: false,
     correctName: "3,3-dimethylhexanenitrile",
     explanation:
@@ -335,6 +348,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q27",
     correct: "GQKZBCPTCWJTAS-UHFFFAOYSA-N",
+    correctSmiles: "COCc1ccccc1",
     requireStereo: false,
     correctName: "benzyl methyl ether",
     explanation:
@@ -344,6 +358,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q28",
     correct: "SJNALLRHIVGIBI-UHFFFAOYSA-N",
+    correctSmiles: "C=CCC#N",
     requireStereo: false,
     correctName: "but-3-enenitrile",
     explanation:
@@ -380,6 +395,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q32",
     correct: "AQGPVCBVZAHVBN-UHFFFAOYSA-N",
+    correctSmiles: "CC(OCCCC)c1ccccc1",
     requireStereo: false,
     correctName: "1-butoxy-1-phenylethane",
     explanation:
@@ -392,6 +408,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q33",
     correct: "BDCFWIDZNLCTMF-UHFFFAOYSA-N",
+    correctSmiles: "CC(O)(C)c1ccccc1",
     requireStereo: false,
     correctName: "2-phenylpropan-2-ol",
     explanation:
@@ -401,6 +418,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q34",
     correct: "RYBNGIBEGIRICU-UHFFFAOYSA-N",
+    correctSmiles: "CCCOC(c1ccccc1)c1ccccc1",
     requireStereo: false,
     correctName: "benzhydryl propyl ether",
     explanation:
@@ -413,6 +431,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q35",
     correct: "HJIPILMKRASVNP-UHFFFAOYSA-N",
+    correctSmiles: "CC1(OC)CCCC1",
     requireStereo: false,
     correctName: "1-methoxy-1-methylcyclopentane",
     explanation:
@@ -425,6 +444,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q36",
     correct: "YRMJRPYEZILWBX-UHFFFAOYSA-N",
+    correctSmiles: "CCC1(OCC)CCCCC1",
     requireStereo: false,
     correctName: "1-ethoxy-1-ethylcyclohexane",
     explanation:
@@ -437,6 +457,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q37",
     correct: "KILPZIWPHGDLHP-UHFFFAOYSA-N",
+    correctSmiles: "CCCOC1(c2ccccc2)CCCCC1",
     requireStereo: false,
     correctName: "1-phenyl-1-propoxycyclohexane",
     explanation:
@@ -449,6 +470,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q38",
     correct: "YJZZRXJJZPDBIP-UHFFFAOYSA-N",
+    correctSmiles: "CCC1(OC(C)C)CCCC1",
     requireStereo: false,
     correctName: "1-ethyl-1-isopropoxycyclopentane",
     explanation:
@@ -461,6 +483,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q39",
     correct: "HDZKQIFGSFAYGK-UHFFFAOYSA-N",
+    correctSmiles: "CCCC1(OCCCC)CCCC1",
     requireStereo: false,
     correctName: "1-butoxy-1-propylcyclopentane",
     explanation:
@@ -482,6 +505,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q41",
     correct: "HGCIXCUEYOPUTN-UHFFFAOYSA-N",
+    correctSmiles: "C1=CCCCC1",
     requireStereo: false,
     correctName: "cyclohexene",
     explanation:
@@ -491,6 +515,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q42",
     correct: "ZXIJMRYMVAMXQP-UHFFFAOYSA-N",
+    correctSmiles: "C1=CCCCCC1",
     requireStereo: false,
     correctName: "cycloheptene",
     explanation:
@@ -500,6 +525,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q43",
     correct: "CFBGXYDUODCMNS-UHFFFAOYSA-N",
+    correctSmiles: "C1=CCC1",
     requireStereo: false,
     correctName: "cyclobutene",
     explanation:
@@ -527,6 +553,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q46",
     correct: "GQBKAYONUCKYKT-UHFFFAOYSA-N",
+    correctSmiles: "CC(C)(C)C1=CCCCC1",
     requireStereo: false,
     correctName: "1-tert-butylcyclohex-1-ene",
     explanation:
@@ -581,6 +608,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q52",
     correct: "LPIQUOYDBNQMRZ-UHFFFAOYSA-N",
+    correctSmiles: "C1=CCCC1",
     requireStereo: false,
     correctName: "cyclopentene",
     explanation:
@@ -590,6 +618,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q53",
     correct: "URYYVOIYTNXXBN-UHFFFAOYSA-N",
+    correctSmiles: "C1=CCCCCCC1",
     requireStereo: false,
     correctName: "cyclooctene",
     explanation:
@@ -608,6 +637,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q55",
     correct: "BWYHTITWPWGSHN-UHFFFAOYSA-N",
+    correctSmiles: "C1=CC(C)(C)CCC1",
     requireStereo: false,
     correctName: "3,3-dimethylcyclohex-1-ene",
     explanation:
@@ -617,6 +647,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q56",
     correct: "FONFXXNTLGAHGI-UHFFFAOYSA-N",
+    correctSmiles: "C1=CC(C)(C)CC1",
     requireStereo: false,
     correctName: "3,3-dimethylcyclopent-1-ene",
     explanation:
@@ -626,8 +657,9 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q57",
     correct: "JDRWZCSQCGVIFT-UHFFFAOYSA-N",
+    correctSmiles: "C1=CC(C)(C)CCCCC1",
     requireStereo: false,
-    correctName: "3,3-dimethylcyclohept-1-ene",
+    correctName: "3,3-dimethylcyclooct-1-ene",
     explanation:
       "The gem-dimethyl β-carbon cannot donate a β-hydrogen. Elimination therefore occurs only at the β-carbon with the anti-periplanar hydrogen.",
     distractors: {},
@@ -635,6 +667,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q58",
     correct: "SOSOLNHZGZXTFK-ZHACJKMWSA-N",
+    correctSmiles: "CC(C)(C)/C=C(\\C)c1ccccc1",
     requireStereo: true,
     correctName: "(E)-1-tert-butyl-2-methyl-2-phenylethene",
     explanation:
@@ -644,6 +677,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q59",
     correct: "HZSSEAVJEGAJAU-QXMHVHEDSA-N",
+    correctSmiles: "CC(C)(C)/C=C(/CC)c1ccccc1",
     requireStereo: true,
     correctName: "(Z)-1-tert-butyl-2-ethyl-2-phenylethene",
     explanation:
@@ -653,6 +687,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q60",
     correct: "RRMMRGUHEYXOQZ-UHFFFAOYSA-N",
+    correctSmiles: "ICCCC(C)CCC",
     requireStereo: false,
     correctName: "1-iodo-4-methylheptane",
     explanation:
@@ -662,6 +697,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q61",
     correct: "JHKJQWFHNIOUKY-UHFFFAOYSA-N",
+    correctSmiles: "ICC1CC1",
     requireStereo: false,
     correctName: "iodomethylcyclopropane",
     explanation:
@@ -671,6 +707,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q62",
     correct: "ASGAOGZVKDPMHV-UHFFFAOYSA-N",
+    correctSmiles: "NCCC(CC)CCC",
     requireStereo: false,
     correctName: "3-ethylhexan-1-amine",
     explanation:
@@ -689,6 +726,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q64",
     correct: "BDTAOZDLJWEHSP-UHFFFAOYSA-N",
+    correctSmiles: "COCCCN=[N+]=[N-]",
     requireStereo: false,
     correctName: "1-azido-3-methoxypropane",
     explanation:
@@ -698,6 +736,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q65",
     correct: "YVPUHRTVWANKKE-UHFFFAOYSA-N",
+    correctSmiles: "CC(C)(C)c1ccc(CN=[N+]=[N-])cc1",
     requireStereo: false,
     correctName: "1-(azidomethyl)-4-tert-butylbenzene",
     explanation:
@@ -707,6 +746,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q66",
     correct: "QJEZJFBJQUYOCP-UHFFFAOYSA-N",
+    correctSmiles: "CCOCCCC(CC)CC",
     requireStereo: false,
     correctName: "1-ethoxy-4-ethylhexane",
     explanation:
@@ -725,6 +765,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q68",
     correct: "MQUOOEBCMHJVBN-UHFFFAOYSA-N",
+    correctSmiles: "COCCN=[N+]=[N-]",
     requireStereo: false,
     correctName: "1-azido-2-methoxyethane",
     explanation:
@@ -734,6 +775,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q69",
     correct: "INDZKZONOLGFIL-UHFFFAOYSA-N",
+    correctSmiles: "N#CCCC1CC1",
     requireStereo: false,
     correctName: "3-cyclopropylpropanenitrile",
     explanation:
@@ -752,6 +794,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q71",
     correct: "CGNLNKFBSBFJHY-UHFFFAOYSA-N",
+    correctSmiles: "NCCCCCc1ccccc1",
     requireStereo: false,
     correctName: "5-phenylpentan-1-amine",
     explanation:
@@ -761,6 +804,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q72",
     correct: "CUZOKTJMVUSVMD-UHFFFAOYSA-N",
+    correctSmiles: "CC(OC(C)C)(C)CCCCC",
     requireStereo: false,
     correctName: "2-isopropoxy-2-methylheptane",
     explanation:
@@ -775,6 +819,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q73",
     correct: "QXHNAFGNCLEWDN-UHFFFAOYSA-N",
+    correctSmiles: "CC(OCCCC)(C)C(C)CCC",
     requireStereo: false,
     correctName: "2-butoxy-2,3-dimethylhexane",
     explanation:
@@ -789,6 +834,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q74",
     correct: "PQOSNJHBSNZITJ-UHFFFAOYSA-N",
+    correctSmiles: "CCC(O)(C)CCCC",
     requireStereo: false,
     correctName: "3-methylheptan-3-ol",
     explanation:
@@ -801,6 +847,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q75",
     correct: "RGYAVZGBAJFMIZ-UHFFFAOYSA-N",
+    correctSmiles: "CCCC(C)=C(C)C",
     requireStereo: false,
     correctName: "2,3-dimethylhex-2-ene",
     explanation:
@@ -813,6 +860,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q76",
     correct: "XTUXVDJHGIEBAA-BQYQJAHWSA-N",
+    correctSmiles: "CC/C(C)=C(\\C)CC",
     requireStereo: true,
     stereoFeedback: ALKENE_GEOMETRY_FEEDBACK,
     correctName: "(E)-3,4-dimethylhex-3-ene",
@@ -826,6 +874,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q77",
     correct: "VJKWRJZRTVBJTH-UHFFFAOYSA-N",
+    correctSmiles: "CCC1=C(CC)CCCC1",
     requireStereo: false,
     correctName: "1,2-diethylcyclohexene",
     explanation:
@@ -839,6 +888,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     id: "q78",
     substitution: {
       correct: "HYGKLKBMIGKOEL-UHFFFAOYSA-N",
+      correctSmiles: "CC(OC)(C)CCCCCC",
       requireStereo: false,
       correctName: "2-methoxy-2-methyloctane",
       explanation:
@@ -850,6 +900,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     },
     elimination: {
       correct: "YBOZNTGUYASNRA-UHFFFAOYSA-N",
+      correctSmiles: "CC(C)=CCCCCC",
       requireStereo: false,
       correctName: "2-methyloct-2-ene",
       explanation:
@@ -861,6 +912,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     id: "q79",
     substitution: {
       correct: "XEFFCTVIEYGYQS-UHFFFAOYSA-N",
+      correctSmiles: "CC(C)(C)C1(OCC)CCCCCC1",
       requireStereo: false,
       correctName: "1-tert-butyl-1-ethoxycycloheptane",
       explanation:
@@ -872,6 +924,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     },
     elimination: {
       correct: "UWBJPUXTTHBACI-UHFFFAOYSA-N",
+      correctSmiles: "CC(C)(C)C1=CCCCCC1",
       requireStereo: false,
       correctName: "1-tert-butylcycloheptene",
       explanation:
@@ -883,6 +936,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     id: "q80",
     substitution: {
       correct: "LFAFRBOMRGLILO-UHFFFAOYSA-N",
+      correctSmiles: "CC(OCCC)(c1ccccc1)CC",
       requireStereo: false,
       correctName: "2-phenyl-2-propoxybutane",
       explanation:
@@ -894,6 +948,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     },
     elimination: {
       correct: "UGUYQBMBIJFNRM-YCRREMRBSA-N",
+      correctSmiles: "C/C=C(\\C)c1ccccc1",
       requireStereo: true,
       stereoFeedback: ALKENE_GEOMETRY_FEEDBACK,
       correctName: "(E)-2-phenylbut-2-ene",
@@ -906,6 +961,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     id: "q81",
     substitution: {
       correct: "WQFKYNXJNJCUFL-UHFFFAOYSA-N",
+      correctSmiles: "CC(OCC)CC(C)CCCC",
       requireStereo: false,
       correctName: "2-ethoxy-4-methyloctane",
       explanation:
@@ -914,6 +970,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     },
     elimination: {
       correct: "HJJLGGXQXVNFBB-UHFFFAOYSA-N",
+      correctSmiles: "CC=CC(C)CCCC",
       requireStereo: false,
       correctName: "4-methyloct-2-ene",
       explanation:
@@ -925,6 +982,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     id: "q82",
     substitution: {
       correct: "XEESOCAITTXSRE-UHFFFAOYSA-N",
+      correctSmiles: "COC1C(C2CCCC2)CCCC1",
       requireStereo: false,
       correctName: "1-cyclopentyl-2-methoxycyclohexane",
       explanation:
@@ -933,6 +991,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     },
     elimination: {
       correct: "BACFZZWHDQYTDB-UHFFFAOYSA-N",
+      correctSmiles: "C1=C(C2CCCC2)CCCC1",
       requireStereo: false,
       correctName: "1-cyclopentylcyclohexene",
       explanation:
@@ -944,6 +1003,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     id: "q83",
     substitution: {
       correct: "COFBSJOCWUSRFY-UHFFFAOYSA-N",
+      correctSmiles: "CC(OCC)C(C)c1ccccc1",
       requireStereo: false,
       correctName: "2-ethoxy-3-phenylbutane",
       explanation:
@@ -952,6 +1012,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
     },
     elimination: {
       correct: "UGUYQBMBIJFNRM-UHFFFAOYSA-N",
+      correctSmiles: "CC=C(C)c1ccccc1",
       requireStereo: false,
       correctName: "2-phenylbut-2-ene",
       explanation:
@@ -962,6 +1023,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q84",
     correct: "OBGYQMRSTONMCE-BRFYHDHCSA-N",
+    correctSmiles: "C[C@@H](I)CCC(C)CC",
     requireStereo: true,
     correctName: "2-iodo-5-methylheptane with inversion",
     explanation:
@@ -980,6 +1042,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q86",
     correct: "VSDRTHPRMPEAQI-JTQLQIEISA-N",
+    correctSmiles: "c1ccccc1C[C@@H](C#N)CC",
     requireStereo: true,
     correctName: "2-benzylbutanenitrile with inversion",
     explanation:
@@ -989,6 +1052,7 @@ export const ANSWER_KEYS: AnswerKey[] = [
   {
     id: "q87",
     correct: "YFEPGJZYSICJGG-AWKYBWMHSA-N",
+    correctSmiles: "CC[C@@H](Sc1ccccc1)C(CC)CCC",
     requireStereo: true,
     correctName: "4-ethyl-3-(phenylsulfanyl)heptane with inversion",
     explanation:
@@ -1011,7 +1075,15 @@ export function gradeStructure(
   questionId: string,
   inchiKey: string,
   productSlot: "main" | "substitution" | "elimination" = "main",
+  attemptNumber = 1,
 ) {
+  if (
+    !Number.isInteger(attemptNumber) ||
+    attemptNumber < 1 ||
+    attemptNumber > MAX_PRACTICE_ATTEMPTS
+  ) {
+    throw new Error("No more than three checks are allowed per problem.");
+  }
   const key = ANSWER_KEYS.find((k) => k.id === questionId);
   if (!key || !isQuestionActive(questionId)) return null;
 
@@ -1023,6 +1095,17 @@ export function gradeStructure(
       : key[productSlot];
   if (!target) return null;
 
+  if (attemptNumber === MAX_PRACTICE_ATTEMPTS && !target.correctSmiles) {
+    throw new Error("This problem has no model product structure.");
+  }
+
+  const solution =
+    attemptNumber === MAX_PRACTICE_ATTEMPTS
+      ? {
+          solution: { name: target.correctName, smiles: target.correctSmiles! },
+        }
+      : {};
+
   const submitted = inchiKey.trim().toUpperCase();
   const sameSkeleton = skeleton(submitted) === skeleton(target.correct);
   const sameStereo = submitted.split("-")[1] === target.correct.split("-")[1];
@@ -1032,6 +1115,7 @@ export function gradeStructure(
       verdict: "correct" as const,
       message: `Correct — that's ${target.correctName}.`,
       explanation: target.explanation,
+      ...solution,
     };
   }
 
@@ -1042,6 +1126,7 @@ export function gradeStructure(
         target.stereoFeedback ??
         "Right connectivity, wrong stereochemistry at the reacting carbon. Check your wedge/dash bonds.",
       explanation: target.explanation,
+      ...solution,
     };
   }
 
@@ -1050,5 +1135,6 @@ export function gradeStructure(
     verdict: "incorrect" as const,
     message: hint ?? "That isn't the major product of this reaction.",
     explanation: target.explanation,
+    ...solution,
   };
 }

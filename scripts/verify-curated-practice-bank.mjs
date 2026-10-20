@@ -19,6 +19,7 @@ const files = [
   "answer-keys.server",
   "expanded-answer-keys.generated.server",
   "practice-selection",
+  "practice-attempts",
 ];
 
 try {

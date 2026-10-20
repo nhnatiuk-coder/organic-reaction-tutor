@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/generate-expanded-practice-bank.mjs && vite dev",
-    "build": "node scripts/generate-expanded-practice-bank.mjs && node scripts/verify-curated-practice-bank.mjs && node scripts/verify-stereo-depiction.mjs && node scripts/verify-practice-report.mjs && vite build",
+    "build": "node scripts/generate-expanded-practice-bank.mjs && node scripts/verify-curated-practice-bank.mjs && node scripts/verify-stereo-depiction.mjs && node scripts/verify-practice-report.mjs && node scripts/verify-practice-attempts.mjs && vite build",
     "build:dev": "node scripts/generate-expanded-practice-bank.mjs && vite build --mode development",
     "preview": "vite preview",
     "verify:bank": "node scripts/generate-expanded-practice-bank.mjs && node scripts/verify-curated-practice-bank.mjs",
+    "verify:attempts": "node scripts/verify-practice-attempts.mjs",
     "verify:reports": "node scripts/verify-practice-report.mjs",
     "verify:stereo": "node scripts/verify-stereo-depiction.mjs",
     "lint": "eslint .",
