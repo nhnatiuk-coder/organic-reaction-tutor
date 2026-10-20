@@ -6,6 +6,9 @@ const GradeInput = z.object({
   questionId: z.string().min(1).max(20),
   productSlot: z.enum(["main", "substitution", "elimination"]).default("main"),
   attemptNumber: z.number().int().min(1).max(MAX_PRACTICE_ATTEMPTS),
+  practiceMode: z
+    .enum(["mixed", "sn1", "sn2", "e1", "e2", "substitution", "elimination"])
+    .default("sn1"),
   inchiKey: z
     .string()
     .trim()
@@ -32,6 +35,7 @@ export const gradeAnswer = createServerFn({ method: "POST" })
       data.inchiKey,
       data.productSlot,
       data.attemptNumber,
+      data.practiceMode,
     );
     if (!result) throw new Error("Unknown question");
     return result;

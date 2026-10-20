@@ -17,6 +17,8 @@ const files = [
   "questions",
   "expanded-practice-bank.generated",
   "answer-keys.server",
+  "mixed-sn1-targets.server",
+  "mixed-practice",
   "expanded-answer-keys.generated.server",
   "practice-selection",
   "practice-attempts",

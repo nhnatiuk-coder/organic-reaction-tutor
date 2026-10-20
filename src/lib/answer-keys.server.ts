@@ -1,16 +1,24 @@
 // SERVER ONLY. Never import this from a component or a *.functions.ts module scope.
 // Structures are stored as standard InChIKeys (skeleton block = connectivity,
 // full key = connectivity + stereochemistry).
-import { isQuestionActive } from "./questions";
+import { getQuestion, isQuestionActive } from "./questions";
 import { GENERATED_ANSWER_KEYS } from "./expanded-answer-keys.generated.server";
 import { ALKENE_GEOMETRY_FEEDBACK } from "./alkene-geometry";
 import { MAX_PRACTICE_ATTEMPTS } from "./practice-attempts";
+import { MIXED_SN1_ELIMINATION_TARGETS } from "./mixed-sn1-targets.server";
+import type { PracticeModeId } from "./practice-selection";
 
 export type AnswerTarget = {
   /** Full standard InChIKey of the correct major product. */
   correct: string;
   /** Model product for completed practice. Legacy archived keys may omit it. */
   correctSmiles?: string;
+  /** Equally substituted alkene alternatives for an otherwise ambiguous elimination. */
+  alternatives?: {
+    correct: string;
+    correctSmiles: string;
+    correctName: string;
+  }[];
   /** Whether the stereo block of the key must also match. */
   requireStereo: boolean;
   /** Product-specific feedback for matching connectivity but incorrect/omitted stereo. */
@@ -1071,11 +1079,36 @@ export const ANSWER_KEYS: AnswerKey[] = [
   ...GENERATED_ANSWER_KEYS,
 ];
 
+export function getAnswerTarget(
+  questionId: string,
+  productSlot: "main" | "substitution" | "elimination" = "main",
+  practiceMode: PracticeModeId = "sn1",
+): AnswerTarget | null {
+  const key = ANSWER_KEYS.find((k) => k.id === questionId);
+  if (!key || !isQuestionActive(questionId)) return null;
+  if (
+    practiceMode === "mixed" &&
+    getQuestion(questionId)?.mechanism === "SN1"
+  ) {
+    const elimination = MIXED_SN1_ELIMINATION_TARGETS[questionId];
+    if (!elimination || !("correct" in key)) return null;
+    if (productSlot === "substitution") return key;
+    if (productSlot === "elimination") return elimination;
+    return null;
+  }
+  return productSlot === "main"
+    ? "correct" in key
+      ? key
+      : null
+    : (key[productSlot] ?? null);
+}
+
 export function gradeStructure(
   questionId: string,
   inchiKey: string,
   productSlot: "main" | "substitution" | "elimination" = "main",
   attemptNumber = 1,
+  practiceMode: PracticeModeId = "sn1",
 ) {
   if (
     !Number.isInteger(attemptNumber) ||
@@ -1084,37 +1117,33 @@ export function gradeStructure(
   ) {
     throw new Error("No more than three checks are allowed per problem.");
   }
-  const key = ANSWER_KEYS.find((k) => k.id === questionId);
-  if (!key || !isQuestionActive(questionId)) return null;
-
-  const target: AnswerTarget | undefined =
-    productSlot === "main"
-      ? "correct" in key
-        ? key
-        : undefined
-      : key[productSlot];
+  const target = getAnswerTarget(questionId, productSlot, practiceMode);
   if (!target) return null;
 
   const submitted = inchiKey.trim().toUpperCase();
-  const sameSkeleton = skeleton(submitted) === skeleton(target.correct);
-  const sameStereo = submitted.split("-")[1] === target.correct.split("-")[1];
+  const matched = [target, ...(target.alternatives ?? [])].find(
+    (product) => skeleton(submitted) === skeleton(product.correct),
+  );
+  const model = matched ?? target;
+  const sameSkeleton = Boolean(matched);
+  const sameStereo = submitted.split("-")[1] === model.correct.split("-")[1];
   const isCorrect = sameSkeleton && (!target.requireStereo || sameStereo);
   const revealSolution = isCorrect || attemptNumber === MAX_PRACTICE_ATTEMPTS;
 
-  if (revealSolution && !target.correctSmiles) {
+  if (revealSolution && !model.correctSmiles) {
     throw new Error("This problem has no model product structure.");
   }
 
   const solution = revealSolution
     ? {
-        solution: { name: target.correctName, smiles: target.correctSmiles! },
+        solution: { name: model.correctName, smiles: model.correctSmiles! },
       }
     : {};
 
   if (isCorrect) {
     return {
       verdict: "correct" as const,
-      message: `Correct — that's ${target.correctName}.`,
+      message: `Correct — that's ${model.correctName}.`,
       explanation: target.explanation,
       ...solution,
     };

@@ -507,6 +507,7 @@ export function PracticePage({
               questionId: question.id,
               productSlot: "substitution",
               attemptNumber,
+              practiceMode: practiceModeId,
               inchiKey: substitutionInchiKey,
             },
           }),
@@ -515,6 +516,7 @@ export function PracticePage({
               questionId: question.id,
               productSlot: "elimination",
               attemptNumber,
+              practiceMode: practiceModeId,
               inchiKey: eliminationInchiKey,
             },
           }),
@@ -539,6 +541,7 @@ export function PracticePage({
           productSlot: "main",
           inchiKey,
           attemptNumber,
+          practiceMode: practiceModeId,
         },
       });
       recordReportResult({ kind: "single", grade: graded });

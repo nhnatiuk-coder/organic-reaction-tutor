@@ -21,6 +21,8 @@ try {
     "stereo-depiction",
     "practice-attempts",
     "answer-keys.server",
+    "mixed-sn1-targets.server",
+    "mixed-practice",
     "expanded-answer-keys.generated.server",
   ]) {
     const source = readFileSync(resolve(root, `src/lib/${name}.ts`), "utf8");

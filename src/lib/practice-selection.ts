@@ -6,6 +6,7 @@ import {
   type ElementaryMechanism,
   type Question,
 } from "./questions";
+import { questionForPracticeMode } from "./mixed-practice";
 
 export type DifficultyFilter = "progressive" | DifficultyLevel;
 export type SessionLength = 5 | 10 | 25 | 30 | 50 | "all";
@@ -18,9 +19,14 @@ export type PracticeSettings = {
 };
 
 export function questionsForFilters(
-  mode: { mechanisms: readonly ElementaryMechanism[] },
+  mode: { id?: PracticeModeId; mechanisms: readonly ElementaryMechanism[] },
   difficulty: DifficultyFilter,
 ) {
+  const mixed = mode.id
+    ? mode.id === "mixed"
+    : ["SN1", "SN2", "E1", "E2"].every((mechanism) =>
+        mode.mechanisms.includes(mechanism as ElementaryMechanism),
+      );
   return PRACTICE_QUESTIONS.filter(
     (question) =>
       getQuestionMechanisms(question).some((mechanism) =>
@@ -28,7 +34,13 @@ export function questionsForFilters(
       ) &&
       (difficulty === "progressive" ||
         getQuestionDifficulty(question) === difficulty),
-  );
+  ).flatMap((question) => {
+    const presented = questionForPracticeMode(
+      question,
+      mixed ? "mixed" : "sn1",
+    );
+    return presented ? [presented] : [];
+  });
 }
 
 function shuffle<T>(items: readonly T[]) {
