@@ -686,8 +686,8 @@ export function PracticePage({
           <p className="max-w-2xl text-sm opacity-90">
             Draw the major product for each substitution or elimination
             reaction. Your drawing is graded on molecular structure, not on how
-            it is arranged. No account is required. Reports stay only in this
-            browser tab.
+            it is arranged. You get three attempts per problem. No account is
+            required. Reports stay only in this browser tab.
           </p>
         </div>
       </header>

@@ -130,14 +130,16 @@ function StudentSetupPage() {
               in the structure editor.
             </li>
             <li>
+              <strong className="font-semibold text-card-foreground">
+                You get three attempts per problem.
+              </strong>{" "}
               Select{" "}
               <strong className="font-semibold text-card-foreground">
                 Check my structure
               </strong>{" "}
-              for immediate feedback. You have three attempts per problem; after
-              three unsuccessful attempts or a correct answer, the model product
-              structures appear. You may request a reaction-type hint when you
-              decide you need one.
+              for immediate feedback. The correct product structures appear when
+              you answer correctly or after three unsuccessful attempts. You may
+              request a reaction-type hint when you decide you need one.
             </li>
             <li>
               After the final problem, select{" "}
