@@ -53,8 +53,9 @@ try {
   const { getSchemeDisplaySmiles, TOSYLATE_DISPLAY_ATOM } = await load(
     "scheme-abbreviations",
   );
-  const { SN1_NUCLEOPHILE_ASSIGNMENTS, SN1_NUCLEOPHILES } =
+  const { SN1_NUCLEOPHILE_ASSIGNMENTS, SN1_NUCLEOPHILES, sn1SolvolysisConditions } =
     await load("sn1-nucleophiles");
+  const { GENERATED_QUESTIONS } = await load("expanded-practice-bank.generated");
   const { ANSWER_KEYS, gradeStructure } = await load("answer-keys.server");
   const { ALKENE_GEOMETRY_FEEDBACK } = await load("alkene-geometry");
   const { questionsForFilters, sessionQuestionsFor } =
@@ -354,6 +355,28 @@ try {
     }
   }
   for (const count of Object.values(solventCounts)) assert.equal(count, 5);
+
+  // Check both raw generated data and the displayed bank so normalisation
+  // cannot add silver back to a tosylate question during solvent selection.
+  const hasSilver = /AgNO[3₃]|\bsilver\b/i;
+  const activeTosylates = new Set();
+  for (const question of [...GENERATED_QUESTIONS, ...QUESTIONS]) {
+    if (!question.substrateSmiles || !getSchemeDisplaySmiles(question.substrateSmiles).includes(TOSYLATE_DISPLAY_ATOM)) continue;
+    assert.doesNotMatch(
+      [question.title, question.substrate, question.reagents, question.conditions, question.prompt].join(" "),
+      hasSilver,
+      `${question.id}: tosylate conditions incorrectly include silver`,
+    );
+    if (PRACTICE_QUESTIONS.includes(question)) activeTosylates.add(getQuestionReference(question));
+  }
+  assert.ok(activeTosylates.size > 0);
+  for (const solvent of Object.values(SN1_NUCLEOPHILES)) {
+    for (const label of ["tosylate", "tosylate (OTs)", "OTs", "TsO"]) {
+      assert.doesNotMatch(sn1SolvolysisConditions(solvent, "AgNO₃", label), hasSilver);
+    }
+    assert.match(sn1SolvolysisConditions(solvent, "AgNO₃", "bromide"), /AgNO₃/);
+  }
+  console.log(`Silver-free tosylates verified: ${activeTosylates.size} active questions plus generated drafts; halide conditions retained.`);
 
   // Regression checks for the two retained drawings whose old keys contained
   // the wrong number of carbons. Chemistry software derives these fingerprints

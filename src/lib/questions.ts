@@ -1305,7 +1305,11 @@ export const QUESTIONS: Question[] = [
         .replace(/\bhydrolysis\b/gi, "solvolysis")
         .replace(/\bin (?:water|methanol)\b/gi, `in ${nucleophile.label}`),
       reagents: nucleophile.reagents,
-      conditions: sn1SolvolysisConditions(nucleophile, question.conditions),
+      conditions: sn1SolvolysisConditions(
+        nucleophile,
+        question.conditions,
+        question.substrate,
+      ),
       prompt:
         question.answerMode === "competition"
           ? question.prompt

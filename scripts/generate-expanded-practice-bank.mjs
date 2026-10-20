@@ -639,7 +639,7 @@ fill(
       substrate: `Tertiary alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
       reagents: nucleophile.reagents,
-      conditions: sn1SolvolysisConditions(nucleophile, "aqueous acetone"),
+      conditions: sn1SolvolysisConditions(nucleophile, "aqueous acetone", leavingGroup.id),
       prompt:
         "Draw the organic substitution product of this solvolysis. The displayed solvent is the nucleophile.",
       correctName: `the tertiary ${nucleophile.productType}`,
@@ -679,7 +679,7 @@ fill(
       substrate: `Highly substituted alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
       reagents: nucleophile.reagents,
-      conditions: sn1SolvolysisConditions(nucleophile, "no added base"),
+      conditions: sn1SolvolysisConditions(nucleophile, "no added base", leavingGroup.id),
       prompt:
         "Draw the organic substitution product. The displayed solvent is the nucleophile.",
       correctName: `the tertiary ${nucleophile.productType}`,
@@ -719,7 +719,7 @@ fill(
       substrate: `Branched secondary alkyl ${leavingGroup.label} (see scheme)`,
       substrateSmiles,
       reagents: nucleophile.reagents,
-      conditions: sn1SolvolysisConditions(nucleophile, "AgNO₃"),
+      conditions: sn1SolvolysisConditions(nucleophile, "AgNO₃", leavingGroup.id),
       prompt:
         "Draw the organic substitution product. Consider the more stable carbocation that can form before the displayed solvent attacks.",
       correctName: `the rearranged tertiary ${nucleophile.productType}`,

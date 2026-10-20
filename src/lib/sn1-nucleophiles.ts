@@ -84,16 +84,18 @@ export function getSn1Nucleophile(id: string): Sn1Nucleophile | undefined {
 }
 
 /** Use one trapping solvent, rather than an aqueous alcohol mixture with two
- * competing nucleophiles. Retain silver-assisted ionisation when specified. */
+ * competing nucleophiles. Tosylates do not need silver-assisted ionisation. */
 export function sn1SolvolysisConditions(
   nucleophile: Sn1Nucleophile,
   previousConditions: string,
+  leavingGroup: string,
 ): string {
+  const isTosylate = /tosylate|\bOTs\b|\bTsO\b/i.test(leavingGroup);
   return [
     nucleophile === SN1_NUCLEOPHILES.water
       ? "aqueous acetone"
       : `${nucleophile.label} (solvent)`,
-    ...(previousConditions.includes("AgNO₃") ? ["AgNO₃"] : []),
+    ...(previousConditions.includes("AgNO₃") && !isTosylate ? ["AgNO₃"] : []),
     "Δ",
     "no added base",
   ].join(", ");
