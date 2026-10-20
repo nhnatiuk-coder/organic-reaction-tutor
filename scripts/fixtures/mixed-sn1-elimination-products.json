@@ -412,66 +412,6 @@
     ]
   },
   {
-    "id": "g-sn1-adv-13",
-    "reference": "RXN-0351",
-    "substrateSmiles": "CC(Br)C(C)CCC",
-    "substitutionSmiles": "CCC(O)(C)CCC",
-    "substitutionKey": "KYWJZCSJMOILIZ-UHFFFAOYSA-N",
-    "maxAlkeneSubstitution": 3,
-    "products": [
-      {
-        "smiles": "C/C=C(\\C)CCC",
-        "key": "JZMUUSXQSKCZNO-FNORWQNLSA-N",
-        "substitution": 3,
-        "endocyclic": false,
-        "geometryGraded": true,
-        "minorSmiles": "C/C=C(/C)CCC",
-        "minorKey": "JZMUUSXQSKCZNO-ALCCZGGFSA-N",
-        "name": "(E)-3-methylhex-2-ene"
-      },
-      {
-        "smiles": "CC/C=C(\\C)CC",
-        "key": "FHHSSXNRVNXTBG-VOTSOKGWSA-N",
-        "substitution": 3,
-        "endocyclic": false,
-        "geometryGraded": true,
-        "minorSmiles": "CC/C=C(/C)CC",
-        "minorKey": "FHHSSXNRVNXTBG-SREVYHEPSA-N",
-        "name": "(E)-3-methylhex-3-ene"
-      }
-    ]
-  },
-  {
-    "id": "g-sn1-adv-14",
-    "reference": "RXN-0352",
-    "substrateSmiles": "CC(I)C(C)CCCC",
-    "substitutionSmiles": "CCC(OC)(C)CCCC",
-    "substitutionKey": "AVUQKWATVIZTLZ-UHFFFAOYSA-N",
-    "maxAlkeneSubstitution": 3,
-    "products": [
-      {
-        "smiles": "C/C=C(\\C)CCCC",
-        "key": "OFKLSPUVNMOIJB-VMPITWQZSA-N",
-        "substitution": 3,
-        "endocyclic": false,
-        "geometryGraded": true,
-        "minorSmiles": "C/C=C(/C)CCCC",
-        "minorKey": "OFKLSPUVNMOIJB-YVMONPNESA-N",
-        "name": "(E)-3-methylhept-2-ene"
-      },
-      {
-        "smiles": "CCC/C=C(\\C)CC",
-        "key": "AAUHUDBDDBJONC-BQYQJAHWSA-N",
-        "substitution": 3,
-        "endocyclic": false,
-        "geometryGraded": true,
-        "minorSmiles": "CCC/C=C(/C)CC",
-        "minorKey": "AAUHUDBDDBJONC-FPLPWBNLSA-N",
-        "name": "(E)-3-methylhept-3-ene"
-      }
-    ]
-  },
-  {
     "id": "g-sn1-adv-15",
     "reference": "RXN-0353",
     "substrateSmiles": "CC(OS(=O)(=O)c1ccc(C)cc1)C(C)CCCCC",

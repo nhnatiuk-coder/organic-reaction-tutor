@@ -219,38 +219,6 @@ const targets: Record<string, AnswerTarget> = {
       "Loss of the leaving group gives a carbocation. Removal of a beta hydrogen forms a more substituted alkene; solvent capture gives the competing substitution product. Include any carbocation rearrangement before drawing either product.",
     distractors: {},
   },
-  "g-sn1-adv-13": {
-    correct: "JZMUUSXQSKCZNO-FNORWQNLSA-N",
-    correctSmiles: "C/C=C(\\C)CCC",
-    requireStereo: true,
-    correctName: "(E)-3-methylhex-2-ene",
-    explanation:
-      "Loss of the leaving group gives a carbocation. Removal of a beta hydrogen forms a more substituted alkene; solvent capture gives the competing substitution product. Include any carbocation rearrangement before drawing either product.",
-    distractors: {},
-    alternatives: [
-      {
-        correct: "FHHSSXNRVNXTBG-VOTSOKGWSA-N",
-        correctSmiles: "CC/C=C(\\C)CC",
-        correctName: "(E)-3-methylhex-3-ene",
-      },
-    ],
-  },
-  "g-sn1-adv-14": {
-    correct: "OFKLSPUVNMOIJB-VMPITWQZSA-N",
-    correctSmiles: "C/C=C(\\C)CCCC",
-    requireStereo: true,
-    correctName: "(E)-3-methylhept-2-ene",
-    explanation:
-      "Loss of the leaving group gives a carbocation. Removal of a beta hydrogen forms a more substituted alkene; solvent capture gives the competing substitution product. Include any carbocation rearrangement before drawing either product.",
-    distractors: {},
-    alternatives: [
-      {
-        correct: "AAUHUDBDDBJONC-BQYQJAHWSA-N",
-        correctSmiles: "CCC/C=C(\\C)CC",
-        correctName: "(E)-3-methylhept-3-ene",
-      },
-    ],
-  },
   "g-sn1-adv-15": {
     correct: "VOKPUAYTTWEUPZ-WEVVVXLNSA-N",
     correctSmiles: "C/C=C(\\C)CCCCC",

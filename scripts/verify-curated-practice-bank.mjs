@@ -68,8 +68,8 @@ try {
   assert.equal(answers.size, ANSWER_KEYS.length, "Duplicate answer-key IDs");
   assert.equal(
     CURATED_QUESTION_LEVELS.size,
-    114,
-    "Expected 114 distinct questions, including six shared competition questions",
+    112,
+    "Expected 112 distinct questions, including eight shared competition questions",
   );
 
   const quotas = { introductory: 5, intermediate: 10, advanced: 15 };
@@ -127,6 +127,8 @@ try {
     "q81",
     "q82",
     "q83", // competition
+    "q89",
+    "q90", // advanced ring-expansion competition
     "q5",
     "q84",
     "q86",
@@ -386,6 +388,57 @@ try {
   const indigo = await Indigo();
   const options = new indigo.MapStringString();
   try {
+    // RDKit independently migrated a ring C-C bond, captured the new cation,
+    // and eliminated a ring beta hydrogen. These fingerprints also pin the
+    // expanded ring size and carbon count, rather than merely matching names.
+    const ringExpansions = JSON.parse(
+      readFileSync(resolve(root, "scripts/fixtures/ring-expansion-products.json"), "utf8"),
+    );
+    assert.deepEqual(ringExpansions.map((item) => item.id), ["q89", "q90"]);
+    for (const fixture of ringExpansions) {
+      const question = byId.get(fixture.id);
+      assert.equal(question.mechanism, "SN1/E1");
+      assert.equal(question.answerMode, "competition");
+      assert.equal(getQuestionDifficulty(question), "advanced");
+      assert.equal(getQuestionReference(question), fixture.reference);
+      assert.match(question.prompt, /only the ring-expansion pathway/i);
+      assert.equal(question.substrateSmiles, fixture.substrateSmiles);
+      assert.equal(indigo.convert(question.substrateSmiles, "inchi-key", options), fixture.substrateKey);
+      assert.equal(fixture.expandedRingSize, fixture.startingRingSize + 1);
+      assert.equal(fixture.substrateAlkylCarbons, fixture.expandedRingSize + 1);
+      for (const [slot, product, key] of [
+        ["substitution", fixture.substitutionSmiles, fixture.substitutionKey],
+        ["elimination", fixture.eliminationSmiles, fixture.eliminationKey],
+      ]) {
+        const target = answers.get(fixture.id)[slot];
+        assert.equal(indigo.convert(product, "inchi-key", options), key);
+        assert.equal(indigo.convert(target.correctSmiles, "inchi-key", options), key);
+        assert.equal(target.correct, key);
+        for (const mode of ["sn1", "e1", "substitution", "elimination", "mixed"]) {
+          assert.equal(gradeStructure(fixture.id, key, slot, 1, mode)?.verdict, "correct");
+        }
+        assert.equal(gradeStructure(fixture.id, key, "main"), null);
+      }
+      for (const [slot, product, key, hint] of [
+        ["substitution", fixture.unrearrangedSubstitutionSmiles, fixture.unrearrangedSubstitutionKey, /retains.*ring/],
+        ["elimination", fixture.exocyclicAlkeneSmiles, fixture.exocyclicAlkeneKey, /more substituted/],
+      ]) {
+        assert.equal(indigo.convert(product, "inchi-key", options), key);
+        const result = gradeStructure(fixture.id, key, slot);
+        assert.equal(result?.verdict, "incorrect");
+        assert.match(result.message, hint);
+      }
+      for (const mechanism of ["SN1", "E1"]) {
+        for (const level of ["advanced", "progressive"]) {
+          assert.ok(questionsForFilters({ mechanisms: [mechanism] }, level).some((q) => q.id === fixture.id));
+        }
+        for (const level of ["introductory", "intermediate"]) {
+          assert.ok(!questionsForFilters({ mechanisms: [mechanism] }, level).some((q) => q.id === fixture.id));
+        }
+      }
+    }
+    console.log("Advanced ring expansions verified: 4→5 and 5→6, four independent products, both-product grading, stable serials, and targeted wrong-answer feedback.");
+
     // Independently enumerated with RDKit, then checked here using the same
     // Indigo chemistry engine as Ketcher. Cover every active E1 target,
     // including only the elimination slot of shared SN1/E1 questions.
@@ -504,8 +557,8 @@ try {
       ["q80", "CCCOC(C)(CC)c1ccccc1", "CC(O)(c1ccccc1)CC"],
       ["g-sn1-adv-11", "CCC(OC(C)C)(C)C", "CCC(O)(C)C"],
       ["g-sn1-adv-12", "CCC(OCCCC)(C)CC", "CCC(O)(C)CC"],
-      ["g-sn1-adv-13", "CCC(O)(C)CCC", "CCC(OC)(C)CCC"],
-      ["g-sn1-adv-14", "CCC(OC)(C)CCCC", "CCC(O)(C)CCCC"],
+      ["q89", "CC1(O)CCCC1", "CC1(OC)CCCC1"],
+      ["q90", "COC1(C)CCCCC1", "CC1(O)CCCCC1"],
       ["g-sn1-adv-15", "CCC(OCC)(C)CCCCC", "CCC(O)(C)CCCCC"],
       ["g-sn1-adv-19", "CCC(OCCC)(C)CC(C)CC", "CCC(O)(C)CC(C)CC"],
       ["g-sn1-adv-20", "CCC(OC(C)C)(C)CC(C)CCC", "CCC(O)(C)CC(C)CCC"],

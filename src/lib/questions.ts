@@ -1292,10 +1292,47 @@ const EXPANDED_QUESTIONS: Question[] = [
   },
 ];
 
+/** Append new material after the generated bank to preserve permanent serials. */
+const RING_EXPANSION_QUESTIONS: Question[] = [
+  {
+    id: "q89",
+    skeletonId: "1,1-dimethylcyclobutane",
+    mechanism: "SN1/E1",
+    difficulty: "advanced",
+    answerMode: "competition",
+    format: "scheme",
+    title: "Solvolysis with a four-membered ring",
+    substrate: "1-(bromomethyl)-1-methylcyclobutane",
+    substrateSmiles: "CC1(CBr)CCC1",
+    reagents: "H₂O",
+    conditions: "aqueous acetone, AgNO₃, Δ, no added base",
+    prompt:
+      "Consider only the ring-expansion pathway. Draw both products from the expanded-ring intermediate: the solvent-trapped substitution product and the more substituted endocyclic elimination product. Retain every substrate carbon. Products that retain the original ring size are not requested.",
+    stereochemistryMatters: false,
+  },
+  {
+    id: "q90",
+    skeletonId: "1,1-dimethylcyclopentane",
+    mechanism: "SN1/E1",
+    difficulty: "advanced",
+    answerMode: "competition",
+    format: "scheme",
+    title: "Solvolysis with a five-membered ring",
+    substrate: "(1-methylcyclopentyl)methyl tosylate",
+    substrateSmiles: "CC1(COS(=O)(=O)c2ccc(C)cc2)CCCC1",
+    reagents: "CH₃OH (methanol)",
+    conditions: "methanol (solvent), Δ, no added base",
+    prompt:
+      "Consider only the ring-expansion pathway. Draw both products from the expanded-ring intermediate: the solvent-trapped substitution product and the more substituted endocyclic elimination product. Retain every carbon of the substrate's alkyl group. Products that retain the original ring size are not requested.",
+    stereochemistryMatters: false,
+  },
+];
+
 export const QUESTIONS: Question[] = [
   ...CORE_QUESTIONS,
   ...EXPANDED_QUESTIONS,
   ...GENERATED_QUESTIONS,
+  ...RING_EXPANSION_QUESTIONS,
 ].map((question) => {
   const nucleophile = getSn1Nucleophile(question.id);
   if (nucleophile) {

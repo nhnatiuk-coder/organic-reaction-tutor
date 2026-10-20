@@ -180,14 +180,6 @@
     "expectedKey": "JDJYGSMZGYTCML-UHFFFAOYSA-N"
   },
   {
-    "id": "g-e1-inter-20",
-    "slot": "main",
-    "reference": "RXN-0458",
-    "productSmiles": "CCC(C)=C(C)C",
-    "geometryGraded": false,
-    "expectedKey": "WFHALSLYRWWUGH-UHFFFAOYSA-N"
-  },
-  {
     "id": "g-e1-inter-21",
     "slot": "main",
     "reference": "RXN-0459",
@@ -218,14 +210,6 @@
     "minorKey": "ZMHFYBOJQLJDDR-KHPPLWFESA-N"
   },
   {
-    "id": "g-e1-adv-22",
-    "slot": "main",
-    "reference": "RXN-0510",
-    "productSmiles": "CCC(C)=C(C)C",
-    "geometryGraded": false,
-    "expectedKey": "WFHALSLYRWWUGH-UHFFFAOYSA-N"
-  },
-  {
     "id": "g-e1-adv-23",
     "slot": "main",
     "reference": "RXN-0511",
@@ -254,5 +238,21 @@
     "expectedKey": "ZMHFYBOJQLJDDR-ZHACJKMWSA-N",
     "minorProductSmiles": "CCCC/C(CC)=C(/C)CC",
     "minorKey": "ZMHFYBOJQLJDDR-KHPPLWFESA-N"
+  },
+  {
+    "id": "q89",
+    "slot": "elimination",
+    "reference": "RXN-0689",
+    "productSmiles": "CC1=CCCC1",
+    "geometryGraded": false,
+    "expectedKey": "ATQUFXWBVZUTKO-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q90",
+    "slot": "elimination",
+    "reference": "RXN-0690",
+    "productSmiles": "CC1=CCCCC1",
+    "geometryGraded": false,
+    "expectedKey": "CTMHWPIWNRWQEG-UHFFFAOYSA-N"
   }
 ]

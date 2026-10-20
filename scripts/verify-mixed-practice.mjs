@@ -60,7 +60,7 @@ try {
     "progressive",
   );
   assert.equal(sn1.length, 30);
-  assert.equal(mixed.length, 113);
+  assert.equal(mixed.length, 111);
   assert.equal(new Set(mixed.map((q) => q.id)).size, mixed.length);
   assert.ok(sn1.some((q) => q.id === "q34"));
   assert.ok(
@@ -311,7 +311,7 @@ try {
   assert.equal(getAnswerTarget("q2", "substitution", "mixed"), null);
   assert.equal(
     PRACTICE_QUESTIONS.length,
-    114,
+    112,
     "Keep all dedicated topic-bank questions",
   );
   console.log(

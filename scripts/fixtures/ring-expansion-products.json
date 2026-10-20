@@ -1,0 +1,38 @@
+[
+  {
+    "id": "q89",
+    "reference": "RXN-0689",
+    "substrateSmiles": "CC1(CBr)CCC1",
+    "substrateKey": "BHJMIRNMEIFCGF-UHFFFAOYSA-N",
+    "startingRingSize": 4,
+    "expandedRingSize": 5,
+    "substrateAlkylCarbons": 6,
+    "expandedCationSmiles": "C[C+]1CCCC1",
+    "substitutionSmiles": "CC1(O)CCCC1",
+    "substitutionKey": "CAKWRXVKWGUISE-UHFFFAOYSA-N",
+    "eliminationSmiles": "CC1=CCCC1",
+    "eliminationKey": "ATQUFXWBVZUTKO-UHFFFAOYSA-N",
+    "unrearrangedSubstitutionSmiles": "CC1(CO)CCC1",
+    "unrearrangedSubstitutionKey": "VLBAFQVSLHQELL-UHFFFAOYSA-N",
+    "exocyclicAlkeneSmiles": "C=C1CCCC1",
+    "exocyclicAlkeneKey": "NFJPEKRRHIYYES-UHFFFAOYSA-N"
+  },
+  {
+    "id": "q90",
+    "reference": "RXN-0690",
+    "substrateSmiles": "CC1(COS(=O)(=O)c2ccc(C)cc2)CCCC1",
+    "substrateKey": "HNPIOWQYKWUYIC-UHFFFAOYSA-N",
+    "startingRingSize": 5,
+    "expandedRingSize": 6,
+    "substrateAlkylCarbons": 7,
+    "expandedCationSmiles": "C[C+]1CCCCC1",
+    "substitutionSmiles": "COC1(C)CCCCC1",
+    "substitutionKey": "CDUHDFNXTKLDEU-UHFFFAOYSA-N",
+    "eliminationSmiles": "CC1=CCCCC1",
+    "eliminationKey": "CTMHWPIWNRWQEG-UHFFFAOYSA-N",
+    "unrearrangedSubstitutionSmiles": "CC1(COC)CCCC1",
+    "unrearrangedSubstitutionKey": "ZRVYMRHQWZKLKY-UHFFFAOYSA-N",
+    "exocyclicAlkeneSmiles": "C=C1CCCCC1",
+    "exocyclicAlkeneKey": "YULMNMJFAZWLLN-UHFFFAOYSA-N"
+  }
+]

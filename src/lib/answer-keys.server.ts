@@ -1077,6 +1077,60 @@ export const ANSWER_KEYS: AnswerKey[] = [
     distractors: {},
   },
   ...GENERATED_ANSWER_KEYS,
+  {
+    id: "q89",
+    substitution: {
+      correct: "CAKWRXVKWGUISE-UHFFFAOYSA-N",
+      correctSmiles: "CC1(O)CCCC1",
+      requireStereo: false,
+      correctName: "1-methylcyclopentan-1-ol",
+      explanation:
+        "A ring C–C bond migrates to the adjacent carbon bearing the departing group. That carbon joins the ring, expanding it from four to five members and placing positive charge at the methyl-bearing ring carbon. Water traps this tertiary carbocation; loss of a proton gives the alcohol. The requested ring-expansion branch is shown, rather than every possible solvolysis product.",
+      distractors: {
+        VLBAFQVSLHQELL:
+          "That alcohol retains the four-membered ring. In the requested pathway, migrate a ring C–C bond to incorporate the former bromomethyl carbon into a five-membered ring before solvent capture.",
+      },
+    },
+    elimination: {
+      correct: "ATQUFXWBVZUTKO-UHFFFAOYSA-N",
+      correctSmiles: "CC1=CCCC1",
+      requireStereo: false,
+      correctName: "1-methylcyclopent-1-ene",
+      explanation:
+        "The ring C–C migration expands the four-membered ring to a five-membered tertiary carbocation. Removal of a beta hydrogen from a ring carbon gives the trisubstituted endocyclic alkene; removal from the methyl group would give a less substituted exocyclic alkene. The small ring fixes the permitted alkene geometry, so no separate E/Z drawing is required.",
+      distractors: {
+        NFJPEKRRHIYYES:
+          "The ring expansion is correct. Move the double bond into the ring to obtain the more substituted endocyclic alkene requested.",
+      },
+    },
+  },
+  {
+    id: "q90",
+    substitution: {
+      correct: "CDUHDFNXTKLDEU-UHFFFAOYSA-N",
+      correctSmiles: "COC1(C)CCCCC1",
+      requireStereo: false,
+      correctName: "1-methoxy-1-methylcyclohexane",
+      explanation:
+        "For the specified ring-expansion branch, a ring C–C bond migrates as tosylate leaves. The former CH₂–OTs carbon becomes part of a six-membered ring, and the methyl-bearing ring carbon becomes a tertiary carbocation. Methanol traps that carbon through oxygen; deprotonation gives the methyl ether. Other rearrangement or capture pathways are outside this question.",
+      distractors: {
+        ZRVYMRHQWZKLKY:
+          "That ether retains the five-membered ring. In the requested pathway, incorporate the former CH₂–OTs carbon into a six-membered ring before methanol traps the rearranged carbocation.",
+      },
+    },
+    elimination: {
+      correct: "CTMHWPIWNRWQEG-UHFFFAOYSA-N",
+      correctSmiles: "CC1=CCCCC1",
+      requireStereo: false,
+      correctName: "1-methylcyclohex-1-ene",
+      explanation:
+        "Expansion from five to six ring atoms gives a tertiary carbocation at the methyl-bearing ring carbon. Loss of a beta hydrogen from the ring gives the more substituted endocyclic alkene. The alternative exocyclic methylene alkene is less substituted and is not the requested product.",
+      distractors: {
+        YULMNMJFAZWLLN:
+          "The ring size is correct. The requested elimination product has the more substituted double bond inside the six-membered ring.",
+      },
+    },
+  },
 ];
 
 export function getAnswerTarget(

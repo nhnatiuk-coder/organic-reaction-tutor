@@ -42,7 +42,7 @@ export type Sn1NucleophileId = keyof typeof SN1_NUCLEOPHILES;
 export type Sn1Nucleophile = (typeof SN1_NUCLEOPHILES)[Sn1NucleophileId];
 
 /** Five examples per solvent across the 30 curated SN1 questions, including
- * the substitution half of the three shared SN1/E1 questions. */
+ * the substitution half of shared SN1/E1 questions. */
 export const SN1_NUCLEOPHILE_ASSIGNMENTS: Readonly<
   Record<string, Sn1NucleophileId>
 > = {
@@ -70,8 +70,8 @@ export const SN1_NUCLEOPHILE_ASSIGNMENTS: Readonly<
   q80: "propanol",
   "g-sn1-adv-11": "isopropanol",
   "g-sn1-adv-12": "butanol",
-  "g-sn1-adv-13": "water",
-  "g-sn1-adv-14": "methanol",
+  q89: "water",
+  q90: "methanol",
   "g-sn1-adv-15": "ethanol",
   "g-sn1-adv-19": "propanol",
   "g-sn1-adv-20": "isopropanol",

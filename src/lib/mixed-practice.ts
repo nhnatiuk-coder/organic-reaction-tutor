@@ -7,8 +7,6 @@ const MIXED_SN1_GEOMETRY_IDS = new Set([
   "g-sn1-inter-10",
   "g-sn1-inter-11",
   "g-sn1-adv-12",
-  "g-sn1-adv-13",
-  "g-sn1-adv-14",
   "g-sn1-adv-15",
   "g-sn1-adv-19",
   "g-sn1-adv-20",
