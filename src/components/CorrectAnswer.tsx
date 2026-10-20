@@ -2,8 +2,10 @@ import SmilesStructure from "./SmilesStructure";
 
 export default function CorrectAnswer({
   products,
+  solved,
 }: {
   products: { label: string; name: string; smiles: string }[];
+  solved: boolean;
 }) {
   return (
     <section
@@ -14,7 +16,10 @@ export default function CorrectAnswer({
         {products.length > 1 ? "Correct answers" : "Correct answer"}
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        You have used all three attempts. Compare your drawing with the model
+        {solved
+          ? "You answered correctly."
+          : "You have used all three attempts."}{" "}
+        Compare your drawing with the model
         {products.length > 1 ? " products" : " product"}, then continue to the
         next problem. Your report keeps the result of your own final check.
       </p>

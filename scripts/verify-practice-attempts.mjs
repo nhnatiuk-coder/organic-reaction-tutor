@@ -130,6 +130,36 @@ try {
           1,
         ),
       );
+      for (const slot of slots) {
+        const target = slot === "main" ? key : key[slot];
+        for (const attempt of [1, 2, 3]) {
+          const correct = gradeStructure(
+            question.id,
+            target.correct,
+            slot,
+            attempt,
+          );
+          assert.equal(correct.verdict, "correct");
+          assert.deepEqual(
+            correct.solution,
+            {
+              name: target.correctName,
+              smiles: target.correctSmiles,
+            },
+            `${question.id} ${slot}: correct attempt ${attempt} did not return its model product`,
+          );
+        }
+        if (target.requireStereo) {
+          const unspecified = `${target.correct.split("-")[0]}-UHFFFAOYSA-N`;
+          const partial = gradeStructure(question.id, unspecified, slot, 1);
+          assert.equal(partial.verdict, "partial");
+          assert.equal(
+            partial.solution,
+            undefined,
+            "Incomplete stereochemistry must not reveal an unsolved product early",
+          );
+        }
+      }
       const correctResult =
         slots.length === 1
           ? { kind: "single", grade: correctGrades[0] }
@@ -161,11 +191,17 @@ try {
     elimination: grade("incorrect"),
   });
   assert.equal(partial.latestAttempt, "partial");
+  assert.equal(
+    isPracticeQuestionFinished(partial),
+    false,
+    "One correct competition product does not finish the problem",
+  );
   partial = recordPracticeAttempt(partial, {
     kind: "competition",
     substitution: grade("correct"),
     elimination: grade("partial"),
   });
+  assert.equal(isPracticeQuestionFinished(partial), false);
   partial = recordPracticeAttempt(partial, {
     kind: "competition",
     substitution: grade("correct"),

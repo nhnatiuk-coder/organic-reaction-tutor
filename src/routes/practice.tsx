@@ -135,9 +135,9 @@ function StudentSetupPage() {
                 Check my structure
               </strong>{" "}
               for immediate feedback. You have three attempts per problem; after
-              three unsuccessful attempts, the correct product structures
-              appear. You may request a reaction-type hint when you decide you
-              need one.
+              three unsuccessful attempts or a correct answer, the model product
+              structures appear. You may request a reaction-type hint when you
+              decide you need one.
             </li>
             <li>
               After the final problem, select{" "}

@@ -19,7 +19,7 @@ export type GradeResult = {
   verdict: "correct" | "partial" | "incorrect";
   message: string;
   explanation: string;
-  /** Returned only with the final allowed check, never in the public bank. */
+  /** Returned on a correct check or the final allowed check, never in the public bank. */
   solution?: { name: string; smiles: string };
 };
 

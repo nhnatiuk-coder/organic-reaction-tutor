@@ -1095,22 +1095,23 @@ export function gradeStructure(
       : key[productSlot];
   if (!target) return null;
 
-  if (attemptNumber === MAX_PRACTICE_ATTEMPTS && !target.correctSmiles) {
-    throw new Error("This problem has no model product structure.");
-  }
-
-  const solution =
-    attemptNumber === MAX_PRACTICE_ATTEMPTS
-      ? {
-          solution: { name: target.correctName, smiles: target.correctSmiles! },
-        }
-      : {};
-
   const submitted = inchiKey.trim().toUpperCase();
   const sameSkeleton = skeleton(submitted) === skeleton(target.correct);
   const sameStereo = submitted.split("-")[1] === target.correct.split("-")[1];
+  const isCorrect = sameSkeleton && (!target.requireStereo || sameStereo);
+  const revealSolution = isCorrect || attemptNumber === MAX_PRACTICE_ATTEMPTS;
 
-  if (sameSkeleton && (!target.requireStereo || sameStereo)) {
+  if (revealSolution && !target.correctSmiles) {
+    throw new Error("This problem has no model product structure.");
+  }
+
+  const solution = revealSolution
+    ? {
+        solution: { name: target.correctName, smiles: target.correctSmiles! },
+      }
+    : {};
+
+  if (isCorrect) {
     return {
       verdict: "correct" as const,
       message: `Correct — that's ${target.correctName}.`,

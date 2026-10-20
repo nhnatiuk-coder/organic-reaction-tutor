@@ -376,9 +376,7 @@ export function PracticePage({
   const attemptsUsed = attemptState?.attempts ?? 0;
   const questionFinished = isPracticeQuestionFinished(attemptState);
   const result = attemptState?.result ?? null;
-  const revealCorrectAnswer =
-    attemptsUsed >= MAX_PRACTICE_ATTEMPTS &&
-    attemptState?.latestAttempt !== "correct";
+  const revealCorrectAnswer = questionFinished;
   const answerGrades =
     result?.kind === "competition"
       ? [
@@ -1054,7 +1052,10 @@ export function PracticePage({
           )}
         </div>
         {correctProducts.length > 0 && (
-          <CorrectAnswer products={correctProducts} />
+          <CorrectAnswer
+            products={correctProducts}
+            solved={attemptState?.latestAttempt === "correct"}
+          />
         )}
       </div>
     </main>
