@@ -126,8 +126,10 @@ function StudentSetupPage() {
               this session.
             </li>
             <li>
-              Read the reaction scheme, then draw only the major organic product
-              in the structure editor.
+              Read the reaction scheme. SN1, SN2, and SN1 + SN2 sets ask only for
+              substitution products. E1, E2, and E1 + E2 sets ask only for
+              elimination products. Mixed may ask for both products in separate
+              editors when both pathways are available.
             </li>
             <li>
               <strong className="font-semibold text-card-foreground">

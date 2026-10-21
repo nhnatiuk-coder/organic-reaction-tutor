@@ -384,7 +384,7 @@ export function PracticePage({
           { label: "Elimination product", grade: result.elimination },
         ]
       : result?.kind === "single"
-        ? [{ label: "Major product", grade: result.grade }]
+        ? [{ label: question.mechanism.startsWith("SN") ? "Substitution product" : "Elimination product", grade: result.grade }]
         : [];
   const correctProducts = revealCorrectAnswer
     ? answerGrades.flatMap(({ label, grade }) =>
@@ -393,9 +393,9 @@ export function PracticePage({
     : [];
   const drawingInstruction = isCompetition
     ? "Draw both major products"
-    : question.mechanism === "SN1"
+    : question.mechanism.startsWith("SN")
       ? "Draw the substitution product"
-      : "Draw the major product";
+      : "Draw the elimination product";
   const isMechanismHintShown = hintQuestionIds.includes(question.id);
   const completedInCurrentSet = seenQuestionIds.filter((id) =>
     sessionQuestions.some((item) => item.id === id),

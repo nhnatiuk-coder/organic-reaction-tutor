@@ -22,11 +22,17 @@ export function questionsForFilters(
   mode: { id?: PracticeModeId; mechanisms: readonly ElementaryMechanism[] },
   difficulty: DifficultyFilter,
 ) {
-  const mixed = mode.id
-    ? mode.id === "mixed"
-    : ["SN1", "SN2", "E1", "E2"].every((mechanism) =>
-        mode.mechanisms.includes(mechanism as ElementaryMechanism),
-      );
+  const modeId: PracticeModeId =
+    mode.id ??
+    (["SN1", "SN2", "E1", "E2"].every((mechanism) =>
+      mode.mechanisms.includes(mechanism as ElementaryMechanism),
+    )
+      ? "mixed"
+      : mode.mechanisms.length === 1
+        ? (mode.mechanisms[0]!.toLowerCase() as PracticeModeId)
+        : mode.mechanisms.every((mechanism) => mechanism.startsWith("SN"))
+          ? "substitution"
+          : "elimination");
   return PRACTICE_QUESTIONS.filter(
     (question) =>
       getQuestionMechanisms(question).some((mechanism) =>
@@ -35,10 +41,7 @@ export function questionsForFilters(
       (difficulty === "progressive" ||
         getQuestionDifficulty(question) === difficulty),
   ).flatMap((question) => {
-    const presented = questionForPracticeMode(
-      question,
-      mixed ? "mixed" : "sn1",
-    );
+    const presented = questionForPracticeMode(question, modeId);
     return presented ? [presented] : [];
   });
 }

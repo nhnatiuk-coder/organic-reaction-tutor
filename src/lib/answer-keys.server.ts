@@ -6,6 +6,7 @@ import { GENERATED_ANSWER_KEYS } from "./expanded-answer-keys.generated.server";
 import { ALKENE_GEOMETRY_FEEDBACK } from "./alkene-geometry";
 import { MAX_PRACTICE_ATTEMPTS } from "./practice-attempts";
 import { MIXED_SN1_ELIMINATION_TARGETS } from "./mixed-sn1-targets.server";
+import { questionForPracticeMode } from "./mixed-practice";
 import type { PracticeModeId } from "./practice-selection";
 
 export type AnswerTarget = {
@@ -1136,10 +1137,24 @@ export const ANSWER_KEYS: AnswerKey[] = [
 export function getAnswerTarget(
   questionId: string,
   productSlot: "main" | "substitution" | "elimination" = "main",
-  practiceMode: PracticeModeId = "sn1",
+  practiceMode?: PracticeModeId,
 ): AnswerTarget | null {
   const key = ANSWER_KEYS.find((k) => k.id === questionId);
   if (!key || !isQuestionActive(questionId)) return null;
+  // Request handlers always supply the selected mode. An omitted mode is used
+  // only by internal bank validation to inspect the original authored targets.
+  if (practiceMode) {
+    const source = getQuestion(questionId)!;
+    const presented = questionForPracticeMode(source, practiceMode);
+    if (!presented) return null;
+    if (presented.answerMode !== "competition") {
+      const requested = presented.mechanism.startsWith("SN")
+        ? "substitution"
+        : "elimination";
+      if (productSlot !== "main" && productSlot !== requested) return null;
+      return "correct" in key ? key : key[requested];
+    }
+  }
   if (
     practiceMode === "mixed" &&
     getQuestion(questionId)?.mechanism === "SN1"
@@ -1162,7 +1177,7 @@ export function gradeStructure(
   inchiKey: string,
   productSlot: "main" | "substitution" | "elimination" = "main",
   attemptNumber = 1,
-  practiceMode: PracticeModeId = "sn1",
+  practiceMode?: PracticeModeId,
 ) {
   if (
     !Number.isInteger(attemptNumber) ||

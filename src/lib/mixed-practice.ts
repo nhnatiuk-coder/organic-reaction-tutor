@@ -1,4 +1,4 @@
-import type { Question } from "./questions";
+import { getQuestionMechanisms, type Question } from "./questions";
 import type { PracticeModeId } from "./practice-selection";
 
 /** Public presentation metadata only; model structures remain on the server. */
@@ -17,7 +17,45 @@ export function questionForPracticeMode(
   question: Question,
   modeId: PracticeModeId,
 ): Question | null {
-  if (modeId !== "mixed" || question.mechanism !== "SN1") return question;
+  if (modeId !== "mixed") {
+    const substitution = ["sn1", "sn2", "substitution"].includes(modeId);
+    const mechanism = getQuestionMechanisms(question).find((candidate) =>
+      modeId === "substitution" || modeId === "elimination"
+        ? candidate.startsWith(substitution ? "SN" : "E")
+        : candidate.toLowerCase() === modeId,
+    );
+    if (!mechanism) return null;
+    if (question.answerMode !== "competition") return question;
+
+    const request = substitution
+      ? "Draw the organic substitution product."
+      : "Draw the major organic elimination product.";
+    const prompt = question.prompt.includes("only the ring-expansion pathway")
+      ? question.prompt.replace(
+          "Draw both products from the expanded-ring intermediate: the solvent-trapped substitution product and the more substituted endocyclic elimination product.",
+          substitution
+            ? "Draw the solvent-trapped substitution product from the expanded-ring intermediate."
+            : "Draw the more substituted endocyclic elimination product from the expanded-ring intermediate.",
+        )
+      : [
+          request,
+          ...(question.stereochemistryMatters
+            ? ["Include the required stereochemistry."]
+            : []),
+          ...(!substitution && question.alkeneGeometryMatters
+            ? ["Include the more stable E/Z arrangement of the double bond."]
+            : []),
+        ].join(" ");
+    return {
+      ...question,
+      mechanism,
+      answerMode: "single",
+      alkeneGeometryMatters:
+        !substitution && Boolean(question.alkeneGeometryMatters),
+      prompt,
+    };
+  }
+  if (question.mechanism !== "SN1") return question;
   // Benzhydryl chloride has no beta hydrogen for ordinary E1 elimination.
   // It remains available in the dedicated SN1 bank.
   if (question.id === "q34") return null;

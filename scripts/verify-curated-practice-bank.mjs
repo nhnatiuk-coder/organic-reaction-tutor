@@ -415,7 +415,12 @@ try {
         assert.equal(indigo.convert(target.correctSmiles, "inchi-key", options), key);
         assert.equal(target.correct, key);
         for (const mode of ["sn1", "e1", "substitution", "elimination", "mixed"]) {
-          assert.equal(gradeStructure(fixture.id, key, slot, 1, mode)?.verdict, "correct");
+          const allowed = mode === "mixed" || (
+            slot === "substitution"
+              ? ["sn1", "substitution"].includes(mode)
+              : ["e1", "elimination"].includes(mode)
+          );
+          assert.equal(gradeStructure(fixture.id, key, slot, 1, mode)?.verdict ?? null, allowed ? "correct" : null);
         }
         assert.equal(gradeStructure(fixture.id, key, "main"), null);
       }

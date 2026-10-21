@@ -87,7 +87,7 @@ try {
       "A substitution-only submission must not complete a Mixed solvolysis question",
     );
   }
-  const expectedIds = sn1
+  const expectedIds = PRACTICE_QUESTIONS
     .filter((q) => q.mechanism === "SN1" && q.id !== "q34")
     .map((q) => q.id)
     .sort();
