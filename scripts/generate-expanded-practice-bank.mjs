@@ -231,8 +231,31 @@ function primarySubstitutionProduct(variant, tail, nucleophile) {
   return products[nucleophile];
 }
 
-function primaryEliminationProduct(variant, tail) {
-  return variant.atTailEnd ? `C${tail}=C` : `C=${tail}`;
+/** Keep primary E2 templates reactive when a fragment starts at a quaternary
+ * carbon. A methylene spacer supplies a beta hydrogen in those draft items. */
+function primaryE2Tail(tail) {
+  const lines = indigo.convert(`BrC${tail}`, "molfile", options).split(/\r?\n/);
+  const start = lines.findIndex((line) => /V2000\s*$/.test(line));
+  if (start < 0) throw new Error(`Could not inspect E2 fragment ${tail}`);
+  const atomCount = Number(lines[start].slice(0, 3));
+  const bondCount = Number(lines[start].slice(3, 6));
+  const atoms = lines.slice(start + 1, start + 1 + atomCount)
+    .map((line) => line.trim().split(/\s+/)[3]);
+  const neighbours = atoms.map(() => []);
+  const bondOrders = atoms.map(() => 0);
+  for (const line of lines.slice(start + 1 + atomCount, start + 1 + atomCount + bondCount)) {
+    const first = Number(line.slice(0, 3)) - 1;
+    const second = Number(line.slice(3, 6)) - 1;
+    const order = Number(line.slice(6, 9));
+    neighbours[first].push(second);
+    neighbours[second].push(first);
+    bondOrders[first] += order;
+    bondOrders[second] += order;
+  }
+  const alpha = neighbours[atoms.indexOf("Br")][0];
+  const beta = neighbours[alpha].find((index) => atoms[index] === "C");
+  if (beta === undefined) throw new Error(`Missing E2 beta carbon for ${tail}`);
+  return bondOrders[beta] < 4 ? tail : `C${tail}`;
 }
 
 function secondarySubstrateSmiles(index, tail, pattern, options) {
@@ -816,15 +839,19 @@ fill(
       "A strong bulky base removes a beta hydrogen as bromide leaves. With only one beta carbon, the alkene position is fixed.",
   },
   (index) => {
-    const tail = takeTail();
-    const variant = primaryLeavingGroupVariant(index, tail);
+    const tail = primaryE2Tail(takeTail());
+    const variant = leavingGroupVariant(index);
     return {
       title: `Primary alkyl ${variant.label} with bulky base`,
       substrate: `Primary alkyl ${variant.label} (see scheme)`,
-      substrateSmiles: variant.substrateSmiles,
+      // Put every leaving group on the same existing primary carbon. A
+      // tosylate is an O-bound branch, not an extra carbon at the tail end.
+      substrateSmiles: variant.id === "tosylate"
+        ? `C(${variant.smiles})${tail}`
+        : `${variant.smiles}C${tail}`,
       conditions: conditionsForLeavingGroup(variant, "tert-butanol, heat"),
       explanation: `A strong bulky base removes a beta hydrogen as the ${variant.label} leaves. With only one beta carbon, the alkene position is fixed.`,
-      productSmiles: primaryEliminationProduct(variant, tail),
+      productSmiles: `C=${tail}`,
     };
   },
 );

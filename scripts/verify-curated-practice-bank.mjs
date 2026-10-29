@@ -388,6 +388,109 @@ try {
   const indigo = await Indigo();
   const options = new indigo.MapStringString();
   try {
+    // Count actual atoms, independently of the generator's SMILES templates.
+    // For a tosylate, cut the O-S bond and retain the alkyl-side fragment so
+    // the seven carbons in the departing tosyl group are not counted.
+    function eliminationMolecule(smiles) {
+      const lines = indigo.convert(smiles, "molfile", options).split(/\r?\n/);
+      const start = lines.findIndex((line) => /V2000\s*$/.test(line));
+      assert.ok(start >= 0, `Missing atom table for ${smiles}`);
+      const count = Number(lines[start].slice(0, 3));
+      const bondCount = Number(lines[start].slice(3, 6));
+      const atoms = lines.slice(start + 1, start + 1 + count)
+        .map((line) => line.trim().split(/\s+/)[3]);
+      const neighbours = atoms.map(() => []);
+      const bondOrders = atoms.map(() => 0);
+      for (const line of lines.slice(start + 1 + count, start + 1 + count + bondCount)) {
+        const first = Number(line.slice(0, 3)) - 1;
+        const second = Number(line.slice(3, 6)) - 1;
+        const order = Number(line.slice(6, 9));
+        neighbours[first].push(second);
+        neighbours[second].push(first);
+        bondOrders[first] += order;
+        bondOrders[second] += order;
+      }
+      return { atoms, neighbours, bondOrders };
+    }
+    function eliminationCarbonCount(smiles, stripTosylate = false) {
+      const { atoms, neighbours } = eliminationMolecule(smiles);
+      if (stripTosylate) {
+        const sulfur = atoms.indexOf("S");
+        if (sulfur >= 0) {
+          const oxygen = neighbours[sulfur].find((index) =>
+            atoms[index] === "O" && neighbours[index].some((other) => atoms[other] === "C"),
+          );
+          assert.notEqual(oxygen, undefined, `Missing alkyl O-S attachment: ${smiles}`);
+          const retained = new Set([oxygen]);
+          const queue = [oxygen];
+          while (queue.length) {
+            for (const next of neighbours[queue.pop()]) {
+              if (next !== sulfur && !retained.has(next)) {
+                retained.add(next);
+                queue.push(next);
+              }
+            }
+          }
+          return [...retained].filter((index) => atoms[index] === "C").length;
+        }
+      }
+      return atoms.filter((atom) => atom === "C").length;
+    }
+    let eliminationStructuresChecked = 0;
+    let tosylateStructuresChecked = 0;
+    const { MIXED_SN1_ELIMINATION_TARGETS } = await load("mixed-sn1-targets.server");
+    for (const question of QUESTIONS) {
+      const answer = answers.get(question.id);
+      const elimination = getQuestionMechanisms(question).some((mechanism) => mechanism.startsWith("E"))
+        ? ("correct" in answer ? answer : answer.elimination)
+        : MIXED_SN1_ELIMINATION_TARGETS[question.id];
+      if (!elimination?.correctSmiles || !question.substrateSmiles) continue;
+      const isTosylate = /S\(=O\)|O=S/.test(question.substrateSmiles);
+      const substrateCarbons = eliminationCarbonCount(question.substrateSmiles, isTosylate);
+      if (question.id.startsWith("g-e2-intro-")) {
+        const { atoms, neighbours, bondOrders } = eliminationMolecule(question.substrateSmiles);
+        const leavingGroup = atoms.findIndex((atom, index) =>
+          ["Br", "I", "Cl"].includes(atom) || (
+            atom === "O" && neighbours[index].some((next) => atoms[next] === "S") &&
+            neighbours[index].some((next) => atoms[next] === "C")
+          ),
+        );
+        const alpha = neighbours[leavingGroup]?.find((next) => atoms[next] === "C");
+        assert.notEqual(alpha, undefined, `${question.id}: missing leaving-group carbon`);
+        const beta = neighbours[alpha].filter((next) => atoms[next] === "C");
+        assert.equal(beta.length, 1, `${question.id}: the starting carbon must be primary`);
+        assert.ok(beta.some((index) => bondOrders[index] < 4), `${question.id}: E2 requires a beta hydrogen`);
+        const product = eliminationMolecule(elimination.correctSmiles);
+        assert.ok(product.atoms.every((atom, index) => atom !== "C" || product.bondOrders[index] <= 4), `${question.id}: elimination produced a pentavalent carbon`);
+      }
+      for (const target of [elimination, ...(elimination.alternatives ?? [])]) {
+        assert.equal(
+          eliminationCarbonCount(target.correctSmiles),
+          substrateCarbons,
+          `${getQuestionReference(question)}: elimination must retain exactly ${substrateCarbons} substrate carbons`,
+        );
+        eliminationStructuresChecked += 1;
+        if (isTosylate) tosylateStructuresChecked += 1;
+      }
+    }
+    // Individually authored regression products for the reported extra-carbon
+    // bug: ethyl tosylate gives ethene; hexyl tosylate gives hex-1-ene.
+    for (const [id, reference, expected, extraCarbon] of [
+      ["g-e2-intro-19", "RXN-0557", "C=C", "CC=C"],
+      ["g-e2-intro-23", "RXN-0561", "C=CCCCC", "C=CCCCCC"],
+    ]) {
+      assert.equal(getQuestionReference(byId.get(id)), reference);
+      const expectedKey = indigo.convert(expected, "inchi-key", options);
+      const wrongKey = indigo.convert(extraCarbon, "inchi-key", options);
+      for (const mode of ["e2", "elimination", "mixed"]) {
+        assert.equal(gradeStructure(id, expectedKey, "main", 1, mode)?.verdict, "correct");
+        assert.equal(gradeStructure(id, wrongKey, "main", 1, mode)?.verdict, "incorrect");
+        const final = gradeStructure(id, wrongKey, "main", 3, mode);
+        assert.equal(indigo.convert(final.solution.smiles, "inchi-key", options), expectedKey);
+      }
+    }
+    console.log(`Elimination carbon conservation verified: ${eliminationStructuresChecked} products, including ${tosylateStructuresChecked} tosylate products and both extra-carbon regressions.`);
+
     // RDKit independently migrated a ring C-C bond, captured the new cation,
     // and eliminated a ring beta hydrogen. These fingerprints also pin the
     // expanded ring size and carbon count, rather than merely matching names.
